@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+body {
+	margin: 0;
+}
+
+.rubik {
+	font-family: 'Rubik', sans-serif;
+}
+
+.poppins {
+	font-family: 'Poppins';
+}
+
+.inter {
+	font-family: 'Inter';
+}
+
+.montserrat {
+	font-family: 'Montserrat';
+}
+
+/* light */
+:root {
+  --bg-gradient: linear-gradient(
+    275deg,
+    rgba(229, 240, 250, 1) 0%,
+    rgba(242, 236, 242, 1) 80%,
+    rgba(250, 241, 241, 1) 100%
+  );
+}
+
+/* dark */
+.dark {
+  --bg-gradient: linear-gradient(
+    275deg,
+    #0f172a 0%,
+    #111827 80%,
+    #020617 100%
+  );
+}
