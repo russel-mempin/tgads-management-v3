@@ -56,30 +56,113 @@ class ServiceTypeBase(SQLModel):
 
     
 class ServiceType(ServiceTypeBase, table=True):
+    __tablename__ = "service_types" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     
 
 # ====================== EXTRA TYPES =========================
-class ExtraTypeBase(SQLModel):
-    name: str = Field()
-    price: float = Field(default=0.0)
-
-    
-class ExtraType(ExtraTypeBase, table=True):
+class ExtraType(SQLModel, table=True):
+    __tablename__ = "extra_types" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field()
+    price: float = Field(default=0.0)    
     
     
 # ====================== JOB ORDERS =========================
 class JobOrderBase(SQLModel):
     jo_number: str = Field()
-    date_received: date = Field()
+    date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
         
 class JobOrder(JobOrderBase, table=True):
+    __tablename__ = "job_orders" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     customer_id: uuid.UUID = Field(foreign_key="customers.id")
     
     customer: "Customer" = Relationship(back_populates="job_orders")
+    job_items: list["JobItem"] = Relationship(back_populates="job_order")
+    payments: list["Payment"] = Relationship(back_populates="job_order")
+    claims: list["ClaimingHistory"] = Relationship(back_populates="job_order")
     
 
 # ====================== JOB ITEMS =========================
+class SizeUnit(str, Enum):
+    INCHES = "in."
+    FEET = "ft."
+    CENTIMETER = "cm."
+    
+    
+class JobStatus(str, Enum):
+    FOR_LAYOUT = "For Layout"
+    FOR_APPROVAL = "For Approval"
+    FOR_PRINTING = "For Printing"
+    FOR_PICKUP = "For Pickup"
+    RELEASED = "Released"
+    CANCELLED = "Cancelled"
+    
+    
+class PaymentStatus(str, Enum):
+    UNPAID = "Unpaid"
+    PARTIAL = "Partial"
+    FULLY_PAID = "Fully Paid"
+    CREDIT = "Credit"
+    REFUNDED = "Refunded"
+
+    
+class PaperSize(SQLModel, table=True):
+    __tablename__ = "paper_sizes" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field()
+
+
+class JobItemBase(SQLModel):
+    description: str = Field()
+    height: float = Field(default=0.0)
+    width: float = Field(default=0.0)
+    size_unit: SizeUnit
+    unit_price: float = Field(default=0.0)
+    quantity: int = Field(default=0)
+    subtotal: float = Field(default=0.0)
+    job_status: JobStatus
+    payment_status: PaymentStatus
+    due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+
+class JobItem(JobItemBase, table=True):
+    __tablename__ = "job_items" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    job_order_id: uuid.UUID = Field(foreign_key="job_orders.id")
+    
+    job_order: "JobOrder" = Relationship(back_populates="job_items")
+    
+
+# ====================== PAYMENTS =========================
+class PaymentMethod(str, Enum):
+    CASH = "Cash"
+    GCASH = "GCash"
+    CHEQUE = "Cheque"
+
+class Payment(SQLModel, table=True):
+    __tablename__ = "payments" # type: ignore
+    date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    method: PaymentMethod
+    amount: float = Field(default=0.0)
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    job_order_id: uuid.UUID = Field(foreign_key="job_orders.id")
+    
+    job_order: "JobOrder" = Relationship(back_populates="payments")
+    
+
+# ====================== CLAIMING HISTORY =========================
+class ClaimingHistory(SQLModel, table=True):
+    __tablename__ = "claiming_history" # type: ignore
+    date_claimed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    name: str = Field()
+    pcs_claimed: int = Field(default=0)
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    job_order_id: uuid.UUID = Field(foreign_key="job_orders.id")
+    
+    job_order: "JobOrder" = Relationship(back_populates="claims")
+        
