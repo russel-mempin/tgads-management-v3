@@ -1,0 +1,4 @@
+first_name,last_name,username,email,role,is_active,password
+Russel,Mempin,russel.mempin,russelmempin216@gmail.com,Admin,True,defaultpass
+Bok,Mempin,bok.mempin,renatomempiniii@gmail.com,Admin,True,defaultpass
+Regular,User,regular.user,regularuser@gmail.com,User,True,defaultpass

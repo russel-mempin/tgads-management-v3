@@ -1,3 +1,5 @@
 database.db
-app/__pycache__
 .env
+app/__pycache__
+seed_code/__pycache__
+services/__pycache__

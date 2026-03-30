@@ -1,12 +1,9 @@
 from fastapi import FastAPI
-from sqlmodel import Session, SQLModel
 from app.database import engine
-from app import models
+from app.seed import seed_dev_data
 
 app = FastAPI()
-
-with Session(engine) as session:
-    SQLModel.metadata.create_all(engine)
+seed_dev_data()
 
 @app.get("/")
 async def root():
