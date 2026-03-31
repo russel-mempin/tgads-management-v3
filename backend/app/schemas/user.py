@@ -17,8 +17,8 @@ class Token(BaseModel):
     role: str
     
 class TokenData(BaseModel):
-    username: str | None = None
+    username: str
     
 class UserLogin(BaseModel):
-    username: str | None = None
+    username: str
     hashed_password: str
