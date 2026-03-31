@@ -5,6 +5,9 @@ from app.database import engine
 from app.seed_code.seed_users import seed_users_from_csv
 from app.seed_code.seed_service_types import seed_service_types_from_csv
 from app.seed_code.seed_extra_types import seed_extra_types_from_csv
+from app.seed_code.seed_customers import seed_customers_from_csv
+from app.seed_code.seed_job_orders import seed_job_orders_from_csv
+from app.seed_code.seed_job_items import seed_job_items_from_csv
 
 BASE_DIR = os.path.dirname(__file__)
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -17,7 +20,7 @@ def seed_dev_data():
     2. service_types
     3. extra_types
     4. customers
-    
+    5. job_orders    
     """
     if ENV != "test":
         return
@@ -35,3 +38,9 @@ def seed_dev_data():
         print("Seeded service types.")
         seed_extra_types_from_csv()
         print("Seeded extra types.")
+        seed_customers_from_csv()
+        print("Seeded customers.")
+        seed_job_orders_from_csv()
+        print("Seeded job orders.")
+        seed_job_items_from_csv()
+        print("Seeded job items.")

@@ -139,6 +139,7 @@ class PaperSize(str, Enum):
     LONG = "Long"
     A4 = "A4"
     A3 = "A3"
+    NOT_APPLICABLE = "N/A"
 
 
 class JobItemBase(SQLModel):
@@ -153,6 +154,8 @@ class JobItemBase(SQLModel):
     job_status: JobStatus
     payment_status: PaymentStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    extra_type_price: float = Field(default=0.0)
+    discount: float = Field(default=0.0)
 
 
 class JobItem(JobItemBase, table=True):
