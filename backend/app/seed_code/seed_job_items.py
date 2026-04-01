@@ -31,6 +31,8 @@ def seed_job_items_from_csv(file_path: str = CSV_PATH):
                 print(f"Extra type not found: {row['extra_type']}")
                 continue
             job_item = JobItem(
+                jo_number=row["jo_number"],
+                item_id=row["item_id"],
                 job_order_id=jo_number.id,
                 service_type_id=service_type.id,
                 extra_type_id=extra_type.id,
@@ -39,13 +41,9 @@ def seed_job_items_from_csv(file_path: str = CSV_PATH):
                 width=to_float(row["width"]),
                 size_unit=SizeUnit(row["size_unit"]),
                 paper_size=PaperSize(row["paper_size"]),
-                unit_price=to_float(row["unit_price"]),
                 quantity=to_int(row["quantity"]),
-                subtotal=to_float(row["unit_price"]) * to_int(row["quantity"]) + to_float(row["extra_type_price"]) - to_float(row["discount"]),
                 job_status=JobStatus(row["job_status"]),
-                payment_status=PaymentStatus(row["payment_status"]),
                 due_date=datetime.fromisoformat(row["due_date"]),
-                extra_type_price=to_float(row["extra_type_price"]),
                 discount=to_float(row["discount"])
             )
             session.add(job_item)

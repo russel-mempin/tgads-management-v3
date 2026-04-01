@@ -63,6 +63,7 @@ class ServiceTypeBase(SQLModel):
     name: str = Field()
     price: float = Field(default=0.0)
     unit: str = Field()
+    is_area_based: bool = Field(default=True)
 
 
 class ServiceType(ServiceTypeBase, table=True):
@@ -83,10 +84,18 @@ class ExtraType(SQLModel, table=True):
 
 
 # ====================== JOB ORDERS =========================
+class PaymentStatus(str, Enum):
+    UNPAID = "Unpaid"
+    PARTIAL = "Partial"
+    FULLY_PAID = "Fully Paid"
+    CREDIT = "Credit"
+    REFUNDED = "Refunded"
+
+
 class JobOrderBase(SQLModel):
     jo_number: str = Field()
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
+    override_payment_status: PaymentStatus | None = Field(default=None)
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
@@ -108,6 +117,23 @@ class JobOrder(JobOrderBase, table=True):
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    
+    @property
+    def total_due(self) -> float:
+        return sum(item.subtotal for item in self.job_items)
+
+    @property
+    def total_paid(self) -> float:
+        return sum(p.amount for p in self.payments)
+
+    @property
+    def payment_status(self) -> PaymentStatus:
+        if self.total_paid <= 0:
+            return PaymentStatus.UNPAID
+        elif self.total_paid >= self.total_due:
+            return PaymentStatus.FULLY_PAID
+        else:
+            return PaymentStatus.PARTIAL
 
 
 # ====================== JOB ITEMS =========================
@@ -124,15 +150,7 @@ class JobStatus(str, Enum):
     FOR_PICKUP = "For Pickup"
     RELEASED = "Released"
     CANCELLED = "Cancelled"
-
-
-class PaymentStatus(str, Enum):
-    UNPAID = "Unpaid"
-    PARTIAL = "Partial"
-    FULLY_PAID = "Fully Paid"
-    CREDIT = "Credit"
-    REFUNDED = "Refunded"
-
+    
 
 class PaperSize(str, Enum):
     SHORT = "Short"
@@ -143,18 +161,16 @@ class PaperSize(str, Enum):
 
 
 class JobItemBase(SQLModel):
+    jo_number: str = Field()
+    item_id: str = Field(unique=True, index=True)
     description: str = Field()
     height: float = Field(default=0.0)
     width: float = Field(default=0.0)
     size_unit: SizeUnit
     paper_size: PaperSize
-    unit_price: float = Field(default=0.0)
     quantity: int = Field(default=0)
-    subtotal: float = Field(default=0.0)
     job_status: JobStatus
-    payment_status: PaymentStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    extra_type_price: float = Field(default=0.0)
     discount: float = Field(default=0.0)
 
 
@@ -173,6 +189,27 @@ class JobItem(JobItemBase, table=True):
     job_order: "JobOrder" = Relationship(back_populates="job_items")
     service_type: "ServiceType" = Relationship(back_populates="job_items")
     extra_type: "ExtraType" = Relationship(back_populates="job_items")
+    claims: list["ClaimingHistory"] = Relationship(back_populates="job_item")
+    
+    @property
+    def unit_price(self) -> float:
+        if self.service_type is None:
+            return 0.0
+        if self.service_type.is_area_based:
+            return self.height * self.width * self.service_type.price
+        return self.service_type.price  # flat rate
+
+    @property
+    def subtotal(self) -> float:
+        return (self.unit_price * self.quantity) + self.extra_type.price - self.discount
+    
+    @property
+    def total_claimed(self) -> int:
+        return sum(c.pcs_claimed for c in self.claims)
+
+    @property
+    def remaining_on_hand(self) -> int:
+        return self.quantity - self.total_claimed
 
 
 # ====================== PAYMENTS =========================
@@ -211,5 +248,11 @@ class ClaimingHistory(SQLModel, table=True):
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
         )
     )
+    job_item_id: uuid.UUID = Field(
+        sa_column=Column(
+            ForeignKey("job_items.id", ondelete="CASCADE"), nullable=False
+        )
+    )
 
     job_order: "JobOrder" = Relationship(back_populates="claims")
+    job_item: "JobItem" = Relationship(back_populates="claims")

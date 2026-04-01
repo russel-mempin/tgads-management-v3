@@ -8,6 +8,8 @@ from app.seed_code.seed_extra_types import seed_extra_types_from_csv
 from app.seed_code.seed_customers import seed_customers_from_csv
 from app.seed_code.seed_job_orders import seed_job_orders_from_csv
 from app.seed_code.seed_job_items import seed_job_items_from_csv
+from app.seed_code.seed_payments import seed_payments_from_csv
+from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
 
 BASE_DIR = os.path.dirname(__file__)
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -20,7 +22,10 @@ def seed_dev_data():
     2. service_types
     3. extra_types
     4. customers
-    5. job_orders    
+    5. job_orders
+    6. job_items
+    7. payments
+    8. claiming_history
     """
     if ENV != "test":
         return
@@ -44,3 +49,7 @@ def seed_dev_data():
         print("Seeded job orders.")
         seed_job_items_from_csv()
         print("Seeded job items.")
+        seed_payments_from_csv()
+        print("Seeded payments.")
+        seed_claiming_history_from_csv()
+        print("Seeded claiming history.")
