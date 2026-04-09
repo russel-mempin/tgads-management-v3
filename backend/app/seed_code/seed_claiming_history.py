@@ -28,7 +28,7 @@ def seed_claiming_history_from_csv(file_path: str = CSV_PATH):
                 print(f"Pieces claimed is greater than item quantity.")
             claiming_history = ClaimingHistory(
                 date_claimed=datetime.fromisoformat(row["date_claimed"]),
-                name=row["item_id"],
+                name=row["name"],
                 pcs_claimed=to_int(row["pcs_claimed"]),
                 job_order_id=jo_number.id,
                 job_item_id=item_id.id

@@ -134,6 +134,10 @@ class JobOrder(JobOrderBase, table=True):
             return PaymentStatus.FULLY_PAID
         else:
             return PaymentStatus.PARTIAL
+        
+    @property
+    def customer_name(self) -> str:
+        return self.customer.name
 
 
 # ====================== JOB ITEMS =========================
@@ -191,13 +195,40 @@ class JobItem(JobItemBase, table=True):
     extra_type: "ExtraType" = Relationship(back_populates="job_items")
     claims: list["ClaimingHistory"] = Relationship(back_populates="job_item")
     
+    def _area_conversions(self) -> dict[str, float]:
+        area_in2 = 0.0
+
+        if self.size_unit == SizeUnit.INCHES:
+            area_in2 = self.height * self.width
+
+        elif self.size_unit == SizeUnit.FEET:
+            area_in2 = (self.height * 12) * (self.width * 12)
+
+        elif self.size_unit == SizeUnit.CENTIMETER:
+            area_in2 = (self.height * self.width) / 6.4516  # cm² → in²
+
+        return {
+            "sqin": area_in2,
+            "sqft": area_in2 / 144,
+            "sqm": area_in2 / 1550.0031,
+        }
+        
     @property
     def unit_price(self) -> float:
         if self.service_type is None:
             return 0.0
-        if self.service_type.is_area_based:
-            return self.height * self.width * self.service_type.price
-        return self.service_type.price  # flat rate
+
+        if not self.service_type.is_area_based:
+            return self.service_type.price
+
+        areas = self._area_conversions()
+
+        unit = self.service_type.unit  # "sqft", "sqin", etc.
+
+        if unit not in areas:
+            return 0.0
+
+        return areas[unit] * self.service_type.price
 
     @property
     def subtotal(self) -> float:
@@ -210,8 +241,20 @@ class JobItem(JobItemBase, table=True):
     @property
     def remaining_on_hand(self) -> int:
         return self.quantity - self.total_claimed
-
-
+    
+    @property
+    def service_name(self) -> str:
+        return self.service_type.name
+    
+    @property
+    def extra_service_name(self) -> str:
+        return self.extra_type.name
+    
+    @property
+    def extra_service_price(self) -> float:
+        return self.extra_type.price
+    
+    
 # ====================== PAYMENTS =========================
 class PaymentMethod(str, Enum):
     CASH = "Cash"
@@ -219,12 +262,14 @@ class PaymentMethod(str, Enum):
     CHEQUE = "Cheque"
 
 
-class Payment(SQLModel, table=True):
-    __tablename__ = "payments"  # type: ignore
+class PaymentBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     method: PaymentMethod
-    amount: float = Field(default=0.0)
+    amount: float = Field(default=0.0)    
+    
 
+class Payment(PaymentBase, table=True):
+    __tablename__ = "payments"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     job_order_id: uuid.UUID = Field(
         sa_column=Column(
@@ -236,12 +281,14 @@ class Payment(SQLModel, table=True):
 
 
 # ====================== CLAIMING HISTORY =========================
-class ClaimingHistory(SQLModel, table=True):
-    __tablename__ = "claiming_history"  # type: ignore
+class ClaimingHistoryBase(SQLModel):
     date_claimed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     name: str = Field()
     pcs_claimed: int = Field(default=0)
-
+    
+    
+class ClaimingHistory(ClaimingHistoryBase, table=True):
+    __tablename__ = "claiming_history"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     job_order_id: uuid.UUID = Field(
         sa_column=Column(
