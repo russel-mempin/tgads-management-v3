@@ -10,7 +10,11 @@ const router = createRouter({
 			children: [
 				{
 					path: 'job-orders',
-					component: () => import('@/views/admin/job orders/JobOrders.vue'),
+					component: () => import('@/views/admin/job_orders/JobOrders.vue'),
+				},
+				{
+					path: 'job-orders/add',
+					component: () => import('@/views/admin/job_orders/AddJobOrder.vue'),
 				},
 			],
 		},

@@ -20,7 +20,7 @@ const isParentActive = computed(() => route.path === props.to || route.path.star
 	<RouterLink :to="props.to" v-slot="{ href, navigate, isActive }">
 		<a :href="href" @click="navigate" class="flex items-center justify-start gap-3 px-4 py-3 hover:bg-blue-200 rounded-md transition-colors"
 			:class="[
-				(isActive || isParentActive) ? 'bg-blue-300 border border-blue-600 text-blue-700' : '',
+				(isActive || isParentActive) ? 'bg-blue-300 border border-blue-600 text-blue-800' : '',
 			]">
 			<component :is="icon" />
 			<p class="transition-all duration-300 overflow-hidden">

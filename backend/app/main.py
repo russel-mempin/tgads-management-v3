@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
 from app.seed import seed_dev_data
-from app.routes import users, job_orders
+from app.routes import users, job_orders, customers, services
 
 app = FastAPI()
 
@@ -23,6 +23,8 @@ seed_dev_data()
 
 app.include_router(users.router)
 app.include_router(job_orders.router)
+app.include_router(customers.router)
+app.include_router(services.router)
 
 @app.get("/")
 async def root():

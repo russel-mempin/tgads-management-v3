@@ -1,9 +1,3 @@
-# mga irereturn pag nag read sa job orders
-# jo number, customer name, service type, size, deadline, job status, overall payment status,
-# jo number, customer name, overall payment galing sa job_orders table
-# service_type, size, deadline, job_status galing sa job_items
-# payments kasama rin dapat
-# claim history kasama rin
 from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase, PaymentStatus
 from sqlmodel import Field
 import uuid

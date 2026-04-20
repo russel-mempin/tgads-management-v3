@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { RouterLink } from 'vue-router'
 import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
 import { Plus } from '@lucide/vue';
 import { getAllJobOrders } from '@/api/job_orders'
-import type { JobOrders } from '@/types/job_orders'
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import type { JobOrder } from '@/types/job_orders'
+import { formatCurrency, formatDate, mapSeverity } from '@/utils/formatters';
 
-const job_orders = ref<JobOrders[]>([])
+const job_orders = ref<JobOrder[]>([])
 onMounted(async () => {
 	const data = await getAllJobOrders()
 	job_orders.value = data
@@ -17,34 +18,6 @@ const joNumberSearch = ref('');
 const jobStatus = ref('');
 const jobStatusOptions = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
 const expandedRows = ref({});
-
-// Code for determining status' design
-const mapSeverity = (status: string) => {
-	switch (status) {
-		case "For Layout":
-			return "warn";
-		case "Partial":
-			return "warn";
-		case "For Approval":
-			return "info";
-		case "For Pickup":
-			return "info";
-		case "Released":
-			return "success";
-		case "Fully Paid":
-			return "success";
-		case "Cancelled":
-			return "danger";
-		case "Unpaid":
-			return "danger";
-		case "Credit":
-			return "danger";
-		case "Refunded":
-			return "danger";
-		default:
-			return "contrast";
-	}
-};
 </script>
 
 <template>
@@ -53,11 +26,13 @@ const mapSeverity = (status: string) => {
 			<h1 class="text-lg font-semibold">Job Orders</h1>
 			<h2>View and manage all job orders in the system. Filter data to quickly find relevant orders.</h2>
 		</div>
-		<Button label="Add Job Order">
-			<template #icon>
-				<Plus />
-			</template>
-		</Button>
+		<RouterLink to="/admin/job-orders/add">
+			<Button label="Add Job Order">
+				<template #icon>
+					<Plus />
+				</template>
+			</Button>
+		</RouterLink>
 	</section>
 	<section class="my-2 flex gap-2">
 		<InputText class="flex-1" v-model="joNumberSearch" placeholder="Search by customer name or JO Number..." />
@@ -66,17 +41,9 @@ const mapSeverity = (status: string) => {
 		</Button>
 	</section>
 	<section class="flex-1 h-full rounded-md border border-slate-300 overflow-hidden bg-white">
-		<DataTable 
-			scrollable
-			scroll-height="flex"
-			:pt="{ root: 'h-full' }"
-			v-model:expandedRows="expandedRows" 
-			:value="job_orders" 
-			dataKey="id" 
-			tableStyle="min-width: 60rem;" 
-			paginator :rows="5" 
-			:rowsPerPageOptions="[5, 10, 20, 50]"
-		>
+		<DataTable scrollable scroll-height="flex" :pt="{ root: 'h-full' }" v-model:expandedRows="expandedRows"
+			:value="job_orders" dataKey="id" tableStyle="min-width: 60rem;" paginator :rows="5"
+			:rowsPerPageOptions="[5, 10, 20, 50]">
 			<Column expander style="width: 5rem" />
 			<Column field="jo_number" header="JO Number"></Column>
 			<Column field="customer_name" header="Customer"></Column>

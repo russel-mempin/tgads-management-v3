@@ -1,4 +1,4 @@
-export interface JobItems {
+export interface JobItem {
 	jo_number: string
 	item_id: string
 	description: string
@@ -19,7 +19,7 @@ export interface JobItems {
 	extra_service_price: number
 }
 
-export interface Payments {
+export interface Payment {
 	date_received: string
 	method: string
 	amount: number
@@ -31,13 +31,13 @@ export interface ClaimingHistory {
 	pcs_claimed: number
 }
 
-export interface JobOrders {
+export interface JobOrder {
 	id: string
 	jo_number: string
 	date_received: string
 	override_payment_status: boolean
-	job_items: JobItems[]
-	payments: Payments[]
+	job_items: JobItem[]
+	payments: Payment[]
 	claims: ClaimingHistory[]
 	payment_status: string
 	total_due: number

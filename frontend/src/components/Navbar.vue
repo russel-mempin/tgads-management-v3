@@ -37,7 +37,6 @@ const toggleTheme = () => {
 		<!-- Header -->
 		<div class="mx-4 py-4">
 			<div class="flex items-center">
-				<Flag class="text-blue-600" :size="48" />
 				<span>
 					<p class="text-xl text-slate-800 font-semibold montserrat">Team Graphics ADS</p>
 					<p class="text-slate-800 montserrat">Management System</p>

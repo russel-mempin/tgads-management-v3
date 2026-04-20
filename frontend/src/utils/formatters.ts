@@ -11,4 +11,31 @@ export const formatDate = (dateString: string) => {
 		day: 'numeric', // e.g. 28
 		year: 'numeric', // e.g. 2025
 	})
-}
+};
+
+export const mapSeverity = (status: string) => {
+	switch (status) {
+		case "For Layout":
+			return "warn";
+		case "Partial":
+			return "warn";
+		case "For Approval":
+			return "info";
+		case "For Pickup":
+			return "info";
+		case "Released":
+			return "success";
+		case "Fully Paid":
+			return "success";
+		case "Cancelled":
+			return "danger";
+		case "Unpaid":
+			return "danger";
+		case "Credit":
+			return "danger";
+		case "Refunded":
+			return "danger";
+		default:
+			return "contrast";
+	}
+};
