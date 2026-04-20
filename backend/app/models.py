@@ -57,6 +57,11 @@ class Customer(CustomerBase, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
+# ====================== SIZE UNITS (NOT A TABLE BUT USED IN SERVICE TYPES AND JOB ITEMS) =========================
+class SizeUnit(str, Enum):
+    INCHES = "in."
+    FEET = "ft."
+    CENTIMETER = "cm."
 
 # ====================== SERVICE TYPES =========================
 class ServiceTypeBase(SQLModel):
@@ -64,6 +69,7 @@ class ServiceTypeBase(SQLModel):
     price: float = Field(default=0.0)
     unit: str = Field()
     is_area_based: bool = Field(default=True)
+    required_measurement_unit: SizeUnit
 
 
 class ServiceType(ServiceTypeBase, table=True):
@@ -141,12 +147,6 @@ class JobOrder(JobOrderBase, table=True):
 
 
 # ====================== JOB ITEMS =========================
-class SizeUnit(str, Enum):
-    INCHES = "in."
-    FEET = "ft."
-    CENTIMETER = "cm."
-
-
 class JobStatus(str, Enum):
     FOR_LAYOUT = "For Layout"
     FOR_APPROVAL = "For Approval"

@@ -1,11 +1,6 @@
 import http from './http'
 
-export async function getServiceNames() {
-	const res = await http.get('/services/names')
-	return res.data
-}
-
-export async function getServiceInfo(name: string) {
-	const res = await http.get(`/services/${name}`)
+export async function getAllServices() {
+	const res = await http.get('/services/')
 	return res.data
 }

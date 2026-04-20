@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue';
 import { Button, Select, InputText, InputNumber, DatePicker } from 'primevue';
 import { Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
-import { getServiceNames } from '@/api/services';
+import { getAllServices } from '@/api/services';
 import type { Customer } from '@/types/customers';
 import type { JobItem } from '@/types/job_orders';
 import type { ServiceType } from '@/types/services';
@@ -13,7 +13,8 @@ const customerList = ref<string[]>([]);
 const serviceList = ref<ServiceType[]>([]);
 onMounted(async () => {
 	customerList.value = await getCustomerNames()
-	serviceList.value = await getServiceNames()
+	serviceList.value = await getAllServices()
+	console.log(serviceList.value)
 });
 
 const customerName = ref('');
@@ -113,7 +114,7 @@ const items = ref<JobItem[]>([{
 		</div>
 	</section>
 	<section class="mt-4 rounded-md border border-slate-300 overflow-hidden">
-		<JobItemsTable v-model:items="items" :jo_number="jo_number" :service_list="serviceList"/>
+		<JobItemsTable v-model:items="items" :jo_number="jo_number" :service_list="serviceList" />
 	</section>
 	<section class="mt-4">
 		<p class="text-lg font-medium text-slate-700">Payments</p>
