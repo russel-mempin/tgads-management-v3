@@ -13,6 +13,7 @@ def seed_service_types_from_csv(file_path: str = CSV_PATH):
         for row in reader:
             service_type = ServiceType(
 				name=row["name"],
+                abbreviation=row["abbreviation"],
 				price=to_float(row["price"]),
 				unit=row["unit"],
                 required_measurement_unit=SizeUnit(row["required_measurement_unit"]),

@@ -2,8 +2,9 @@ from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
-from enum import Enum
 from pydantic import EmailStr
+from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, PaperSize
+from app.utils.utils import compute_unit_price
 
 
 # ====================== AUDIT LOGS =========================
@@ -19,11 +20,6 @@ class AuditLog(SQLModel, table=True):
 
 
 # ====================== USERS =========================
-class UserRoles(str, Enum):
-    ADMIN = "Admin"
-    USER = "User"
-
-
 class UserBase(SQLModel):
     first_name: str = Field()
     last_name: str = Field()
@@ -58,14 +54,12 @@ class Customer(CustomerBase, table=True):
     )
 
 # ====================== SIZE UNITS (NOT A TABLE BUT USED IN SERVICE TYPES AND JOB ITEMS) =========================
-class SizeUnit(str, Enum):
-    INCHES = "in."
-    FEET = "ft."
-    CENTIMETER = "cm."
+
 
 # ====================== SERVICE TYPES =========================
 class ServiceTypeBase(SQLModel):
     name: str = Field()
+    abbreviation: str = Field()
     price: float = Field(default=0.0)
     unit: str = Field()
     is_area_based: bool = Field(default=True)
@@ -90,14 +84,6 @@ class ExtraType(SQLModel, table=True):
 
 
 # ====================== JOB ORDERS =========================
-class PaymentStatus(str, Enum):
-    UNPAID = "Unpaid"
-    PARTIAL = "Partial"
-    FULLY_PAID = "Fully Paid"
-    CREDIT = "Credit"
-    REFUNDED = "Refunded"
-
-
 class JobOrderBase(SQLModel):
     jo_number: str = Field()
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -147,23 +133,6 @@ class JobOrder(JobOrderBase, table=True):
 
 
 # ====================== JOB ITEMS =========================
-class JobStatus(str, Enum):
-    FOR_LAYOUT = "For Layout"
-    FOR_APPROVAL = "For Approval"
-    FOR_PRINTING = "For Printing"
-    FOR_PICKUP = "For Pickup"
-    RELEASED = "Released"
-    CANCELLED = "Cancelled"
-    
-
-class PaperSize(str, Enum):
-    SHORT = "Short"
-    LONG = "Long"
-    A4 = "A4"
-    A3 = "A3"
-    NOT_APPLICABLE = "N/A"
-
-
 class JobItemBase(SQLModel):
     jo_number: str = Field()
     item_id: str = Field(unique=True, index=True)
@@ -176,6 +145,7 @@ class JobItemBase(SQLModel):
     job_status: JobStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     discount: float = Field(default=0.0)
+    notes: str = Field()
 
 
 class JobItem(JobItemBase, table=True):
@@ -194,46 +164,12 @@ class JobItem(JobItemBase, table=True):
     service_type: "ServiceType" = Relationship(back_populates="job_items")
     extra_type: "ExtraType" = Relationship(back_populates="job_items")
     claims: list["ClaimingHistory"] = Relationship(back_populates="job_item")
-    
-    def _area_conversions(self) -> dict[str, float]:
-        area_in2 = 0.0
 
-        if self.size_unit == SizeUnit.INCHES:
-            area_in2 = self.height * self.width
 
-        elif self.size_unit == SizeUnit.FEET:
-            area_in2 = (self.height * 12) * (self.width * 12)
-
-        elif self.size_unit == SizeUnit.CENTIMETER:
-            area_in2 = (self.height * self.width) / 6.4516  # cm² → in²
-
-        return {
-            "sqin": area_in2,
-            "sqft": area_in2 / 144,
-            "sqm": area_in2 / 1550.0031,
-        }
-        
     @property
     def unit_price(self) -> float:
-        if self.service_type is None:
-            return 0.0
+        return compute_unit_price(self.height, self.width, self.service_type)
 
-        if not self.service_type.is_area_based:
-            return self.service_type.price
-
-        areas = self._area_conversions()
-
-        unit = self.service_type.unit  # "sqft", "sqin", etc.
-
-        if unit not in areas:
-            return 0.0
-
-        return areas[unit] * self.service_type.price
-
-    @property
-    def subtotal(self) -> float:
-        return (self.unit_price * self.quantity) + self.extra_type.price - self.discount
-    
     @property
     def total_claimed(self) -> int:
         return sum(c.pcs_claimed for c in self.claims)
@@ -247,21 +183,20 @@ class JobItem(JobItemBase, table=True):
         return self.service_type.name
     
     @property
-    def extra_service_name(self) -> str:
-        return self.extra_type.name
+    def extra_service_name(self) -> str | None:
+        return self.extra_type.name if self.extra_type else None
     
     @property
     def extra_service_price(self) -> float:
-        return self.extra_type.price
+        return self.extra_type.price if self.extra_type else 0.0
+    
+    @property
+    def subtotal(self) -> float:
+        extra = self.extra_type.price if self.extra_type else 0.0
+        return (self.unit_price * self.quantity) + extra - self.discount
     
     
 # ====================== PAYMENTS =========================
-class PaymentMethod(str, Enum):
-    CASH = "Cash"
-    GCASH = "GCash"
-    CHEQUE = "Cheque"
-
-
 class PaymentBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     method: PaymentMethod

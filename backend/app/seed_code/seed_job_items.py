@@ -44,7 +44,8 @@ def seed_job_items_from_csv(file_path: str = CSV_PATH):
                 quantity=to_int(row["quantity"]),
                 job_status=JobStatus(row["job_status"]),
                 due_date=datetime.fromisoformat(row["due_date"]),
-                discount=to_float(row["discount"])
+                discount=to_float(row["discount"]),
+                notes=row["notes"]
             )
             session.add(job_item)
         session.commit()

@@ -1,20 +1,16 @@
 <script setup lang="ts">
+// AddJobOrder.vue
 import { ref, onMounted, watch } from 'vue';
 import { Button, Select, InputText, InputNumber, DatePicker } from 'primevue';
 import { Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
-import { getAllServices } from '@/api/services';
 import type { Customer } from '@/types/customers';
-import type { JobItem } from '@/types/job_orders';
-import type { ServiceType } from '@/types/services';
-import JobItemsTable from '@/components/JobItemsTable.vue';
+import type { JobItemCreate } from '@/types/job_orders';
+import JobItemsList from '@/components/JobItemsList.vue';
 
 const customerList = ref<string[]>([]);
-const serviceList = ref<ServiceType[]>([]);
 onMounted(async () => {
 	customerList.value = await getCustomerNames()
-	serviceList.value = await getAllServices()
-	console.log(serviceList.value)
 });
 
 const customerName = ref('');
@@ -50,26 +46,38 @@ watch(customerName, async (name) => {
 
 const jo_number = ref(0);
 const date_received = ref(new Date);
-const items = ref<JobItem[]>([{
-	jo_number: '',
-	item_id: '',
-	description: '',
-	height: 0,
-	width: 0,
-	size_unit: '',
-	paper_size: '',
-	quantity: 0,
-	job_status: '',
-	due_date: '',
-	discount: 0,
-	unit_price: 0,
-	subtotal: 0,
-	total_claimed: 0,
-	remaining_on_hand: 0,
-	service_name: '',
-	extra_service_name: '',
-	extra_service_price: 0,
-}]);
+const items = ref<JobItemCreate[]>([]);
+
+const handleSaveClick = () => {
+	const payload = {
+		jo_number: String(jo_number.value),
+		date_received: date_received.value.toISOString(),
+		...(isNewCustomer.value ? {
+			customer_name: customerInfo.value.name,
+			customer_address: customerInfo.value.address,
+			customer_contact_no: customerInfo.value.contact_no,
+			customer_email: customerInfo.value.email,
+		} : {
+			customer_id: customerInfo.value.id,
+		}),
+		job_items: items.value.map(item => ({
+			jo_number: String(jo_number.value),
+			item_id: item.item_id,
+			description: item.description,
+			height: item.height,
+			width: item.width,
+			size_unit: item.size_unit,
+			paper_size: item.paper_size,
+			quantity: item.quantity,
+			job_status: item.job_status,
+			due_date: item.due_date,
+			discount: item.discount,
+			service_type_id: item.service_type_id,
+			extra_type_id: item.extra_type_id ?? null,
+		})),
+	}
+	console.log(payload)
+}
 </script>
 
 <template>
@@ -78,7 +86,7 @@ const items = ref<JobItem[]>([{
 			<h1 class="text-xl font-semibold">Add Job Order</h1>
 			<h2>Inserts job order information into the database upon saving.</h2>
 		</div>
-		<Button label="Save">
+		<Button label="Save" @click="handleSaveClick">
 			<template #icon>
 				<Save />
 			</template>
@@ -106,20 +114,22 @@ const items = ref<JobItem[]>([{
 	<section class="mt-2 grid grid-cols-2 gap-2">
 		<div class="flex flex-col">
 			<label class="mb-1 text-slate-700 font-medium">JO Number</label>
-			<InputNumber v-model="jo_number" placeholder="JO Number" :useGrouping="false" fluid />
+			<InputNumber v-model="jo_number" placeholder="JO Number" :useGrouping="false" fluid
+				:disabled="items.length > 0"
+				v-tooltip.top="{ value: 'Clear all job items to change the JO Number.', disabled: items.length === 0 }" />
 		</div>
 		<div class="flex flex-col">
 			<label class="mb-1 text-slate-700 font-medium">Date Received</label>
 			<DatePicker v-model="date_received" :maxDate="new Date" showTime hourFormat="12" />
 		</div>
 	</section>
-	<section class="mt-4 rounded-md border border-slate-300 overflow-hidden">
-		<JobItemsTable v-model:items="items" :jo_number="jo_number" :service_list="serviceList" />
+	<section class="mt-4 rounded-md border border-slate-300">
+		<JobItemsList v-model:items="items" :jo_number="jo_number" />
 	</section>
-	<section class="mt-4">
+	<!-- <section class="mt-4">
 		<p class="text-lg font-medium text-slate-700">Payments</p>
 	</section>
 	<section class="mt-4">
 		<p class="text-lg font-medium text-slate-700">Claiming History</p>
-	</section>
+	</section> -->
 </template>

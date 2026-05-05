@@ -1,46 +1,68 @@
 export interface JobItem {
-	jo_number: string
-	item_id: string
-	description: string
-	height: number
-	width: number
-	size_unit: string
-	paper_size: string
-	quantity: number
-	job_status: string
-	due_date: string
-	discount: number
-	unit_price: number
-	subtotal: number
-	total_claimed: number
-	remaining_on_hand: number
-	service_name: string
-	extra_service_name: string
-	extra_service_price: number
+  jo_number: string
+  item_id: string
+  description: string
+  height: number
+  width: number
+  size_unit: string
+  paper_size: string
+  quantity: number
+  job_status: string
+  due_date: Date
+  discount: number
+  unit_price: number
+  subtotal: number
+  total_claimed: number
+  remaining_on_hand: number
+  service_name: string
+  extra_service_name: string
+  extra_service_price: number
+  notes: string
+}
+
+export interface JobItemCreate {
+  jo_number: string
+  item_id: string
+  description: string
+  height: number
+  width: number
+  size_unit: string
+  paper_size: string
+  quantity: number
+  job_status: string
+  due_date: Date
+  discount: number
+  service_type_id: string
+  extra_type_id: string | null
+  service_name: string
+  extra_service_name: string
+  extra_service_price: number
+  unit_price: number
+  notes: string
 }
 
 export interface Payment {
-	date_received: string
-	method: string
-	amount: number
+  date_received: string
+  method: string
+  amount: number
 }
 
 export interface ClaimingHistory {
-	date_claimed: string
-	name: string
-	pcs_claimed: number
+  date_claimed: string
+  name: string
+  pcs_claimed: number
 }
 
 export interface JobOrder {
-	id: string
-	jo_number: string
-	date_received: string
-	override_payment_status: boolean
-	job_items: JobItem[]
-	payments: Payment[]
-	claims: ClaimingHistory[]
-	payment_status: string
-	total_due: number
-	total_paid: number
-	customer_name: string
+  id: string
+  jo_number: string
+  date_received: string
+  override_payment_status: boolean
+  job_items: JobItem[]
+  payments: Payment[]
+  claims: ClaimingHistory[]
+  payment_status: string
+  total_due: number
+  total_paid: number
+  customer_name: string
 }

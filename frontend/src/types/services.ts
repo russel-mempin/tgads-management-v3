@@ -1,5 +1,6 @@
 export interface ServiceType {
 	name: string
+	abbreviation: string
 	price: number
 	unit: string
 	is_area_based: boolean

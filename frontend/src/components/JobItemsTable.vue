@@ -1,18 +1,30 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
-import type { JobItem } from '@/types/job_orders';
+// JobItemsTable.vue
+import { onMounted, computed, ref } from 'vue';
+import { getAllServices, getAllExtras } from '@/api/services';
+import type { JobItemCreate } from '@/types/job_orders';
 import type { ServiceType } from '@/types/services';
-import { Button, Select, InputText, DataTable, Column, InputNumber } from 'primevue';
-import { Plus, Trash } from '@lucide/vue'
+import { Button, DataTable, Column, Tag } from 'primevue';
+import { Plus, Trash, SquarePen } from '@lucide/vue'
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import JobItemsForm from './JobItemsForm.vue';
+
+
+const serviceList = ref<ServiceType[]>([]);
+const extraList = ref<{ id: string, name: string, price: number }[]>([]);
+onMounted(async () => {
+	serviceList.value = await getAllServices()
+	extraList.value = await getAllExtras()
+});
 
 const props = defineProps<{
-	items: JobItem[],
+	items: JobItemCreate[],
 	jo_number: number,
-	service_list: ServiceType[]
 }>()
+const isVisible = ref(false);
 
 const emit = defineEmits<{
-	(e: 'update:items', value: JobItem[]): void
+	(e: 'update:items', value: JobItemCreate[]): void
 }>()
 
 const localItems = computed({
@@ -20,43 +32,75 @@ const localItems = computed({
 	set: (value) => emit('update:items', value)
 })
 
-const onServiceChange = (service: ServiceType, row: JobItem) => {
-	row.service_name = service.name
-	row.size_unit = service.required_measurement_unit
+const addItem = (newItem: JobItemCreate) => {
+	localItems.value = [...localItems.value, newItem]
 }
 </script>
 
 <template>
+	<JobItemsForm v-model:isVisible="isVisible" :joNumber="jo_number" :existingItems="localItems" @add-item="addItem" />
 	<DataTable :value="localItems" scrollable>
+		<template #empty>
+			<p class="text-slate-400">Please input the data required above first.</p>
+		</template>
 		<template #header>
 			<div class="flex flex-wrap items-center justify-between gap-2">
 				<span class="text-xl font-medium text-slate-600">Job Items</span>
-				<Button severity="contrast">
-					<Plus />
+				<Button @click="isVisible = true" severity="contrast" :disabled="!props.jo_number">
+					<Plus class="w-4" />
 				</Button>
 			</div>
 		</template>
-		<Column field="item_id" header="Item ID" />
-		<Column header="Type">
+		<Column header="ID" field="item_id" style="min-width: 175px" />
+		<Column header="Type" field="service_name" style="min-width: 175px" />
+		<Column header="Unit" field="size_unit" />
+		<Column header="Height" field="height" />
+		<Column header="Width" field="width" />
+		<Column header="Price">
 			<template #body="{ data }">
-				<Select :modelValue="service_list.find(s => s.name === data.service_name)" :options="service_list"
-					optionLabel="name" placeholder="Service Type" @change="(e) => onServiceChange(e.value, data)" />
+				{{ formatCurrency(data.unit_price) }}
 			</template>
 		</Column>
-		<Column header="Height">
+		<Column header="Paper Size" field="paper_size" style="min-width: 120px" />
+		<Column header="Quantity" field="quantity" />
+
+		<Column header="Extra Type" field="extra_service_name" style="min-width: 150px" />
+		<Column header="Extra Price" style="min-width: 120px">
 			<template #body="{ data }">
-				<InputNumber v-model="data.height" placeholder="Height" />
+				{{ formatCurrency(data.extra_service_price) }}
 			</template>
 		</Column>
-		<Column header="Width">
+		<Column header="Discount" field="discount">
 			<template #body="{ data }">
-				<InputNumber v-model="data.width" placeholder="Width" />
+				{{ formatCurrency(data.discount) }}
 			</template>
 		</Column>
-		<Column header="Unit" field="size_unit"/>
-		<Column header="Unit Price">
+		<Column header="Subtotal">
 			<template #body="{ data }">
-				<p>{{ data.unit_price }}</p>
+				{{ formatCurrency((data.unit_price + data.extra_service_price - data.discount) * data.quantity) }}
+			</template>
+		</Column>
+		<Column header="Description" field="description" style="min-width: 150px" />
+		<Column header="Job Status" field="job_status" style="min-width: 150px">
+			<template #body="{ data }">
+				<Tag :value="data.job_status" />
+			</template>
+		</Column>
+		<Column header="Due" field="due_date" style="min-width: 150px">
+			<template #body="{ data }">
+				{{ formatDate(data.due_date) }}
+			</template>
+		</Column>
+		<Column>
+			<template #body="{ index }">
+				<div class="flex gap-2">
+					<Button severity="warn">
+						<SquarePen class="w-4" />
+					</Button>
+					<Button severity="danger">
+						<Trash class="w-4" />
+					</Button>
+				</div>
 			</template>
 		</Column>
 	</DataTable>
