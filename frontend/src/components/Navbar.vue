@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import NavbarItem from './NavbarItem.vue';
 import { LayoutDashboard, BriefcaseBusiness, BanknoteArrowUp, BanknoteArrowDown, Landmark, BookUser, Sheet, ConciergeBell, UserCog, Activity, Flag, SunMoon,  LogOut } from '@lucide/vue';
 import type { Component } from 'vue'
+
+const authStore = useAuthStore()
 
 type NavItem = {
 	to: string
@@ -23,8 +26,7 @@ const adminItems: NavItem[] = [
 ]
 
 const logout = () => {
-	console.log("Logout")
-	// authStore.logout()
+	authStore.logout()
 }
 
 const toggleTheme = () => {

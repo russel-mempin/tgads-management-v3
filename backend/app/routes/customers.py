@@ -4,9 +4,10 @@ from sqlmodel import Session
 from app.database import get_session
 from app.crud.customer import get_all_customer_names, get_customer_info
 from app.schemas.customer import CustomerPublic
+from app.services.dependencies import get_current_active_user
 
 
-router = APIRouter(prefix="/customers", tags=["customers"])
+router = APIRouter(prefix="/customers", tags=["customers"], dependencies=[Depends(get_current_active_user)])
 
 
 @router.get("/names", response_model=list[str])

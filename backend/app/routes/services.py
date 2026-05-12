@@ -5,9 +5,9 @@ from app.database import get_session
 from app.crud.service import get_all_services, get_all_extras
 from app.schemas.service import ServicePublic
 from app.models import ExtraType
+from app.services.dependencies import get_current_active_user
 
-
-router = APIRouter(prefix="/services", tags=["services"])
+router = APIRouter(prefix="/services", tags=["services"], dependencies=[Depends(get_current_active_user)])
 
 
 @router.get("/", response_model=list[ServicePublic])

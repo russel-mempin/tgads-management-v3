@@ -5,9 +5,10 @@ from sqlmodel import Session
 from app.database import get_session
 from app.crud.job_order import get_all_job_orders, get_price, create_job_order
 from app.schemas.job_order import JobOrderCreate
+from app.services.dependencies import get_current_active_user
 
 
-router = APIRouter(prefix="/job-orders", tags=["job-orders"])
+router = APIRouter(prefix="/job-orders", tags=["job-orders"], dependencies=[Depends(get_current_active_user)])
 
 
 @router.get("/", response_model=list[JobOrderPublic])
