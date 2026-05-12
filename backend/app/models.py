@@ -136,7 +136,7 @@ class JobOrder(JobOrderBase, table=True):
 class JobItemBase(SQLModel):
     jo_number: str = Field()
     item_id: str = Field(unique=True, index=True)
-    description: str = Field()
+    description: str | None = Field(default=None)
     height: float = Field(default=0.0)
     width: float = Field(default=0.0)
     size_unit: SizeUnit
@@ -145,7 +145,7 @@ class JobItemBase(SQLModel):
     job_status: JobStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     discount: float = Field(default=0.0)
-    notes: str = Field()
+    notes: str | None = Field(default=None)
 
 
 class JobItem(JobItemBase, table=True):

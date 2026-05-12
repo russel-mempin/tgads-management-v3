@@ -43,7 +43,7 @@ const updateItem = (updated: JobItemCreate) => {
 	<JobItemsForm v-model:isVisible="isVisible" :joNumber="jo_number" :existingItems="items" :editItem="editingItem"
 		@add-item="addItem" @update-item="updateItem" />
 	<div class="bg-white rounded-md">
-		<div class="px-4 py-3 flex items-center justify-between border-b border-slate-300">
+		<div class="px-4 py-3 flex items-center justify-between border-b border-slate-200">
 			<p class="text-xl font-medium text-slate-600">Job Items</p>
 			<Button @click="isVisible = true" severity="contrast" :disabled="!props.jo_number"
 				v-tooltip.left="{ value: 'Please enter JO Number first.', disabled: !!props.jo_number }">

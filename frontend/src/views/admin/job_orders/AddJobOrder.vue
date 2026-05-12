@@ -1,13 +1,19 @@
 <script setup lang="ts">
 // AddJobOrder.vue
 import { ref, onMounted, watch } from 'vue';
-import { Button, Select, InputText, InputNumber, DatePicker } from 'primevue';
+import { Button, Select, InputText, InputNumber, DatePicker, useToast } from 'primevue';
+import { useRouter } from 'vue-router';
 import { Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
 import type { Customer } from '@/types/customers';
-import type { JobItemCreate } from '@/types/job_orders';
+import type { JobItemCreate, PaymentCreate, ClaimCreate, JobOrderCreate } from '@/types/job_orders';
 import JobItemsList from '@/components/JobItemsList.vue';
+import PaymentsTable from '@/components/PaymentsTable.vue';
+import ClaimsTable from '@/components/ClaimsTable.vue';
+import { createJobOrder } from '@/api/job_orders';
 
+const toast = useToast()
+const router = useRouter()
 const customerList = ref<string[]>([]);
 onMounted(async () => {
 	customerList.value = await getCustomerNames()
@@ -25,7 +31,15 @@ const customerInfo = ref<Customer>({
 
 watch(customerName, async (name) => {
 	if (!name) {
-		customerInfo.value = { id: '', name, contact_no: '', email: '', address: '' };
+		customerInfo.value = {
+			id: '',
+			name: '',
+			contact_no: '',
+			email: '',
+			address: '',
+		};
+
+		return;
 	}
 
 	const exists = customerList.value.some(
@@ -45,21 +59,28 @@ watch(customerName, async (name) => {
 });
 
 const jo_number = ref(0);
-const date_received = ref(new Date);
+const date_received = ref(new Date());
 const items = ref<JobItemCreate[]>([]);
+const payments = ref<PaymentCreate[]>([]);
+const claims = ref<ClaimCreate[]>([]);
 
-const handleSaveClick = () => {
+const buildPayload = () => {
 	const payload = {
 		jo_number: String(jo_number.value),
+
 		date_received: date_received.value.toISOString(),
-		...(isNewCustomer.value ? {
-			customer_name: customerInfo.value.name,
-			customer_address: customerInfo.value.address,
-			customer_contact_no: customerInfo.value.contact_no,
-			customer_email: customerInfo.value.email,
-		} : {
-			customer_id: customerInfo.value.id,
-		}),
+
+		...(isNewCustomer.value
+			? {
+				customer_name: customerInfo.value.name,
+				customer_address: customerInfo.value.address,
+				customer_contact_no: customerInfo.value.contact_no,
+				customer_email: customerInfo.value.email,
+			}
+			: {
+				customer_id: customerInfo.value.id,
+			}),
+
 		job_items: items.value.map(item => ({
 			jo_number: String(jo_number.value),
 			item_id: item.item_id,
@@ -70,13 +91,53 @@ const handleSaveClick = () => {
 			paper_size: item.paper_size,
 			quantity: item.quantity,
 			job_status: item.job_status,
-			due_date: item.due_date,
+			due_date: new Date(item.due_date).toISOString(),
 			discount: item.discount,
+			notes: item.notes,
 			service_type_id: item.service_type_id,
 			extra_type_id: item.extra_type_id ?? null,
 		})),
+		...(payments.value.length ? {
+			payments: payments.value.map(payment => ({
+				date_received: new Date(payment.date_received).toISOString(),
+				method: payment.method,
+				amount: payment.amount,
+			}))
+		} : {}),
+
+		...(claims.value.length ? {
+			claims: claims.value.map(claim => ({
+				date_claimed: new Date(claim.date_claimed).toISOString(),
+				name: claim.name,
+				pcs_claimed: claim.pcs_claimed,
+				job_item_id: claim.job_item_id,
+			}))
+		} : {}),
+	};
+
+	handleSave(payload);
+};
+
+const handleSave = async (payload: JobOrderCreate) => {
+	try {
+		await createJobOrder(payload)
+		toast.add({
+			severity: 'success',
+			summary: 'Order saved',
+			detail: 'Order data has been added to the database',
+			life: 3000,
+		})
+		router.push('/admin/job-orders')
 	}
-	console.log(payload)
+	catch (error: any) {
+		console.error(error.response?.data || error)
+		toast.add({
+			severity: 'error',
+			summary: 'Error',
+			detail: 'Failed to save order data.',
+			life: 3000,
+		})
+	}
 }
 </script>
 
@@ -86,7 +147,7 @@ const handleSaveClick = () => {
 			<h1 class="text-xl font-semibold">Add Job Order</h1>
 			<h2>Inserts job order information into the database upon saving.</h2>
 		</div>
-		<Button label="Save" @click="handleSaveClick">
+		<Button label="Save" @click="buildPayload">
 			<template #icon>
 				<Save />
 			</template>
@@ -126,10 +187,8 @@ const handleSaveClick = () => {
 	<section class="mt-4 rounded-md border border-slate-300">
 		<JobItemsList v-model:items="items" :jo_number="jo_number" />
 	</section>
-	<!-- <section class="mt-4">
-		<p class="text-lg font-medium text-slate-700">Payments</p>
+	<section class="mt-4 grid grid-cols-2 gap-4">
+		<PaymentsTable v-model:payments="payments" :jobItems="items" />
+		<ClaimsTable v-model:claims="claims" :jobItems="items" />
 	</section>
-	<section class="mt-4">
-		<p class="text-lg font-medium text-slate-700">Claiming History</p>
-	</section> -->
 </template>

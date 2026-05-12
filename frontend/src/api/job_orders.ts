@@ -1,4 +1,5 @@
 import http from './http'
+import type { JobOrderCreate } from '@/types/job_orders'
 
 export async function getAllJobOrders() {
 	const res = await http.get('/job-orders/')
@@ -13,5 +14,10 @@ export async function computePrice(height: number, width: number, service_name: 
 			service_name,
     	},
 	})
+	return res.data
+}
+
+export async function createJobOrder(payload: JobOrderCreate) {
+	const res = await http.post('/job-orders/', payload)
 	return res.data
 }
