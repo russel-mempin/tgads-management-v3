@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // JobItemsList.vue
-import type { JobItemCreate } from '@/types/job_orders';
+import type { JobItemCreate, JobItem } from '@/types/job_orders';
 import { Button, Tag } from 'primevue'
 import { Plus } from '@lucide/vue';
 import { formatDate, formatCurrency } from '@/utils/formatters';
@@ -8,8 +8,9 @@ import { ref } from 'vue';
 import JobItemsForm from './JobItemsForm.vue';
 
 const props = defineProps<{
-	items: JobItemCreate[],
+	items: JobItemCreate[] | JobItem[],
 	jo_number: number,
+	readOnly: boolean
 }>()
 
 const isVisible = ref(false);
@@ -19,10 +20,11 @@ const emit = defineEmits<{
 }>()
 
 const addItem = (newItem: JobItemCreate) => {
-	emit('update:items', [...props.items, newItem])
+    emit('update:items', [...(props.items as JobItemCreate[]), newItem])
 }
+
 const deleteItem = (itemId: string) => {
-	emit('update:items', props.items.filter(i => i.item_id !== itemId))
+    emit('update:items', (props.items as JobItemCreate[]).filter(i => i.item_id !== itemId))
 }
 
 const editingItem = ref<JobItemCreate | null>(null)
@@ -33,19 +35,19 @@ const openEdit = (value: JobItemCreate) => {
 }
 
 const updateItem = (updated: JobItemCreate) => {
-	emit('update:items', props.items.map(i =>
-		i.item_id === updated.item_id ? updated : i
-	))
-	editingItem.value = null
+    emit('update:items', (props.items as JobItemCreate[]).map(i =>
+        i.item_id === updated.item_id ? updated : i
+    ))
+    editingItem.value = null
 }
 </script>
 <template>
-	<JobItemsForm v-model:isVisible="isVisible" :joNumber="jo_number" :existingItems="items" :editItem="editingItem"
-		@add-item="addItem" @update-item="updateItem" />
+	<JobItemsForm v-if="!readOnly" v-model:isVisible="isVisible" :joNumber="jo_number"
+		:existingItems="(items as JobItemCreate[])" @add-item="addItem" @update-item="updateItem" />
 	<div class="bg-white rounded-md">
 		<div class="px-4 py-3 flex items-center justify-between border-b border-slate-200">
 			<p class="text-xl font-medium text-slate-600">Job Items</p>
-			<Button @click="isVisible = true" severity="contrast" :disabled="!props.jo_number"
+			<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jo_number"
 				v-tooltip.left="{ value: 'Please enter JO Number first.', disabled: !!props.jo_number }">
 				<Plus class="w-4" />
 			</Button>
@@ -61,8 +63,8 @@ const updateItem = (updated: JobItemCreate) => {
 							<p class="font-medium text-slate-700">{{ value.item_id }}</p>
 							<p class="text-slate-800">{{ value.service_name }}</p>
 						</span>
-						<span class="p-4 grid grid-cols-3 items-center gap-4">
-							<Tag :value="value.job_status" rounded />
+						<span class="p-4 flex items-center gap-4">
+							<Tag class="w-24" :value="value.job_status" rounded />
 							<p class="text-slate-700">Due {{ formatDate(value.due_date.toString()) }}</p>
 							<p class="font-semibold text-lg text-slate-800 text-right">{{
 								formatCurrency((value.unit_price +
@@ -107,8 +109,9 @@ const updateItem = (updated: JobItemCreate) => {
 							<p class="text-slate-800">{{ value.notes ? value.notes : '-' }}</p>
 						</div>
 						<div class="flex gap-4">
-							<Button severity="warn" class="w-20" @click="openEdit(value)">Edit</Button>
-							<Button severity="danger" class="w-20" @click="deleteItem(value.item_id)">Delete</Button>
+							<Button v-if="!readOnly" severity="warn" class="w-20" @click="openEdit(value as JobItemCreate)">Edit</Button>
+							<Button v-if="!readOnly" severity="danger" class="w-20"
+								@click="deleteItem(value.item_id)">Delete</Button>
 						</div>
 					</div>
 				</div>

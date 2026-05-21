@@ -28,6 +28,8 @@ def seed_dev_data():
     8. claiming_history
     """
     if ENV != "test":
+        SQLModel.metadata.create_all(engine)
+        print("Created all tables without data.")
         return
 
     with Session(engine) as session:

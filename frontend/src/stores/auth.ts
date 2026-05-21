@@ -5,6 +5,8 @@ import router  from '@/router/index'
 type User = {
 	role: 'admin' | 'user'
 	token: string
+	first_name: string
+	last_name: string
 }
 
 const STORAGE_KEY = 'auth_user'
@@ -14,13 +16,13 @@ export const useAuthStore = defineStore('auth', () => {
 		JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
 	)
 
-	const loginAsAdmin = (token: string) => {
-		user.value = { role: 'admin', token }
+	const loginAsAdmin = (token: string, first_name: string, last_name: string) => {
+		user.value = { role: 'admin', token, first_name, last_name }
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(user.value))
 	}
 
-	const loginAsUser = (token: string) => {
-		user.value = { role: 'user', token }
+	const loginAsUser = (token: string, first_name: string, last_name: string) => {
+		user.value = { role: 'user', token, first_name, last_name }
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(user.value))
 	}
 

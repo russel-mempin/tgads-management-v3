@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
 import { Plus } from '@lucide/vue';
 import { getAllJobOrders } from '@/api/job_orders'
@@ -8,6 +8,7 @@ import type { JobOrder } from '@/types/job_orders'
 import { formatCurrency, formatDate, mapSeverity } from '@/utils/formatters';
 
 const job_orders = ref<JobOrder[]>([])
+const router = useRouter()
 onMounted(async () => {
 	const data = await getAllJobOrders()
 	job_orders.value = data
@@ -68,16 +69,27 @@ const expandedRows = ref({});
 					{{ formatCurrency(slotProps.data.total_paid) }}
 				</template>
 			</Column>
+			<Column>
+				<template #body="{ data }">
+					<div class="flex justify-self-end gap-2">
+						<Button severity="info" class="w-20"
+							@click="router.push(`/admin/job-orders/view/${data.jo_number}`)">View</Button>
+						<Button severity="warn" class="w-20">Edit</Button>
+						<Button severity="danger" class="w-20">Delete</Button>
+					</div>
+				</template>
+			</Column>
 			<template #expansion="slotProps">
 				<div class="p-4">
 					<h5>Job items of JO Number {{ slotProps.data.jo_number }}</h5>
 					<DataTable :value="slotProps.data.job_items">
 						<Column field="item_id" header="ID"></Column>
-						<Column field="service_name" header="Service"></Column>
 						<Column field="description" header="Description"></Column>
-						<Column field="height" header="Height"></Column>
-						<Column field="width" header="Width"></Column>
-						<Column field="size_unit" header="Unit"></Column>
+						<Column header="Dimensions">
+							<template #body="{ data }">
+								{{ data.height }} × {{ data.width }} {{ data.size_unit }}
+							</template>
+						</Column>
 						<Column field="quantity" header="Qty."></Column>
 						<Column field="due_date" header="Due Date">
 							<template #body="slotProps">
@@ -96,11 +108,6 @@ const expandedRows = ref({});
 							</template>
 						</Column>
 						<Column field="extra_service_name" header="Extra"></Column>
-						<Column field="extra_service_price" header="Price">
-							<template #body="slotProps">
-								{{ formatCurrency(slotProps.data.extra_service_price) }}
-							</template>
-						</Column>
 						<Column field="discount" header="Discount">
 							<template #body="slotProps">
 								{{ formatCurrency(slotProps.data.discount) }}

@@ -6,6 +6,11 @@ export async function getAllJobOrders() {
 	return res.data
 }
 
+export async function getJobOrder(jo_number: string) {
+	const res = await http.get(`/job-orders/${jo_number}`)
+	return res.data
+}
+
 export async function computePrice(height: number, width: number, service_name: string) {
 	const res = await http.get('/job-orders/compute-unit-price', {
 		params: {

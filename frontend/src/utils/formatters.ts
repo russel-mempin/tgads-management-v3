@@ -1,10 +1,13 @@
-export const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-  }).format(value)
+export const formatCurrency = (value: number | undefined) => {
+    if (value === undefined) return '₱0.00'
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+    }).format(value)
+}
 
-export const formatDate = (dateString: string) => {
+export const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', {
     month: 'short',

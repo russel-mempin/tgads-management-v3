@@ -32,6 +32,10 @@ const router = createRouter({
           component: () => import('@/views/admin/job_orders/AddJobOrder.vue'),
         },
         {
+          path: 'job-orders/view/:jo_number',
+          component: () => import('@/views/admin/job_orders/ViewJobOrder.vue'),
+        },
+        {
           path: 'sales',
           component: () => import('@/views/admin/Sales.vue'),
         },

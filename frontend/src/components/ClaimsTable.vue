@@ -3,12 +3,13 @@ import { DataTable, Column, Button } from 'primevue';
 import ClaimForm from './ClaimForm.vue';
 import { Plus } from '@lucide/vue';
 import { ref } from 'vue';
-import type { ClaimCreate, JobItemCreate } from '@/types/job_orders';
-import { formatDate, formatCurrency } from '@/utils/formatters';
+import type { ClaimCreate, ClaimingHistory, JobItemCreate, JobItem } from '@/types/job_orders';
+import { formatDate } from '@/utils/formatters';
 
 const props = defineProps<{
-	claims: ClaimCreate[],
-	jobItems: JobItemCreate[]
+    claims: ClaimCreate[] | ClaimingHistory[],
+    jobItems: JobItemCreate[] | JobItem[],
+    readOnly?: boolean
 }>()
 
 const isVisible = ref(false);
@@ -20,10 +21,10 @@ const emit = defineEmits<{
 }>()
 
 const addItem = (newItem: ClaimCreate) => {
-	emit('update:claims', [...props.claims, newItem])
+	emit('update:claims', [...(props.claims as ClaimCreate[]), newItem])
 }
 const deleteItem = (index: number) => {
-	emit('update:claims', props.claims.filter((_, i) => i !== index))
+	emit('update:claims', (props.claims as ClaimCreate[]).filter((_, i) => i !== index))
 }
 const openEdit = (item: ClaimCreate, index: number) => {
 	editingItem.value = item
@@ -33,7 +34,7 @@ const openEdit = (item: ClaimCreate, index: number) => {
 
 const updateItem = (updated: ClaimCreate) => {
 	if (editingIndex.value === null) return
-	const newClaims = [...props.claims]
+	const newClaims = [...(props.claims as ClaimCreate[])]
 	newClaims[editingIndex.value] = updated
 	emit('update:claims', newClaims)
 	editingItem.value = null
@@ -51,7 +52,7 @@ const updateItem = (updated: ClaimCreate) => {
 			<template #header>
 				<div class="flex flex-wrap items-center justify-between gap-2">
 					<span class="text-xl font-medium text-slate-600">Claiming History</span>
-					<Button @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
+					<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
 						v-tooltip.left="{ value: 'Add job items first.', disabled: !!props.jobItems.length }">
 						<Plus class="w-4" />
 					</Button>
@@ -72,8 +73,8 @@ const updateItem = (updated: ClaimCreate) => {
 			<Column style="width: 1rem">
 				<template #body="{ data, index }">
 					<div class="flex gap-4">
-						<Button class="w-20" label="Edit" severity="warn" @click="openEdit(data, index)" />
-						<Button class="w-20" label="Delete" severity="danger" @click="deleteItem(index)" />
+						<Button v-if="!readOnly" class="w-20" label="Edit" severity="warn" @click="openEdit(data, index)" />
+						<Button v-if="!readOnly" class="w-20" label="Delete" severity="danger" @click="deleteItem(index)" />
 					</div>
 				</template>
 			</Column>

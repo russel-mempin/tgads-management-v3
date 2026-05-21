@@ -185,10 +185,10 @@ const handleSave = async (payload: JobOrderCreate) => {
 		</div>
 	</section>
 	<section class="mt-4 rounded-md border border-slate-300">
-		<JobItemsList v-model:items="items" :jo_number="jo_number" />
+		<JobItemsList v-model:items="items" :jo_number="jo_number" :readOnly="false" />
 	</section>
 	<section class="mt-4 grid grid-cols-2 gap-4">
-		<PaymentsTable v-model:payments="payments" :jobItems="items" />
+		<PaymentsTable v-model:payments="payments" :jobItems="items" :readOnly="false" />
 		<ClaimsTable v-model:claims="claims" :jobItems="items" />
 	</section>
 </template>

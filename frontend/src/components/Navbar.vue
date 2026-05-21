@@ -54,7 +54,7 @@ const toggleTheme = () => {
 		<div class="mx-4 py-4 mt-auto flex items-center justify-between">
 			<div class="flex items-center">
 				<span class="ml-2">
-					<p class="text-lg font-medium text-slate-800 inter">Russel Mempin</p>
+					<p class="text-lg font-medium text-slate-800 inter">{{`${authStore.user?.first_name} ${authStore.user?.last_name}`}}</p>
 				</span>
 			</div>
 			<div class="flex items-center">

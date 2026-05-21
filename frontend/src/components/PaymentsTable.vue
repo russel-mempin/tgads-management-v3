@@ -3,12 +3,13 @@ import { DataTable, Column, Button } from 'primevue';
 import PaymentsForm from './PaymentsForm.vue';
 import { Plus } from '@lucide/vue';
 import { ref } from 'vue';
-import type { PaymentCreate, JobItemCreate } from '@/types/job_orders';
+import type { PaymentCreate, Payment, JobItemCreate, JobItem } from '@/types/job_orders';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 
 const props = defineProps<{
-	payments: PaymentCreate[],
-	jobItems: JobItemCreate[],
+	payments: PaymentCreate[] | Payment[],
+	jobItems: JobItemCreate[] | JobItem[],
+	readOnly: boolean
 }>()
 
 const isVisible = ref(false);
@@ -20,10 +21,10 @@ const emit = defineEmits<{
 }>()
 
 const addItem = (newItem: PaymentCreate) => {
-	emit('update:payments', [...props.payments, newItem])
+	emit('update:payments', [...(props.payments as PaymentCreate[]), newItem])
 }
 const deleteItem = (index: number) => {
-	emit('update:payments', props.payments.filter((_, i) => i !== index))
+	emit('update:payments', (props.payments as PaymentCreate[]).filter((_, i) => i !== index))
 }
 const openEdit = (item: PaymentCreate, index: number) => {
 	editingItem.value = item
@@ -33,7 +34,7 @@ const openEdit = (item: PaymentCreate, index: number) => {
 
 const updateItem = (updated: PaymentCreate) => {
 	if (editingIndex.value === null) return
-	const newPayments = [...props.payments]
+	const newPayments = [...(props.payments as PaymentCreate[])]
 	newPayments[editingIndex.value] = updated
 	emit('update:payments', newPayments)
 	editingItem.value = null
@@ -50,7 +51,7 @@ const updateItem = (updated: PaymentCreate) => {
 			<template #header>
 				<div class="flex flex-wrap items-center justify-between gap-2">
 					<span class="text-xl font-medium text-slate-600">Payments</span>
-					<Button @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
+					<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
 						v-tooltip.left="{ value: 'Add job items first.', disabled: !!props.jobItems.length }">
 						<Plus class="w-4" />
 					</Button>
@@ -70,8 +71,8 @@ const updateItem = (updated: PaymentCreate) => {
 			<Column style="width: 1rem">
 				<template #body="{ data, index }">
 					<div class="flex gap-4">
-						<Button class="w-20" label="Edit" severity="warn" @click="openEdit(data, index)" />
-						<Button class="w-20" label="Delete" severity="danger" @click="deleteItem(index)" />
+						<Button v-if="!readOnly" class="w-20" label="Edit" severity="warn" @click="openEdit(data, index)" />
+						<Button v-if="!readOnly" class="w-20" label="Delete" severity="danger" @click="deleteItem(index)" />
 					</div>
 				</template>
 			</Column>

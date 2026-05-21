@@ -7,10 +7,12 @@ from app.models import (
     ExtraType,
     Payment,
     ClaimingHistory,
+    AuditLog
 )
 from fastapi import HTTPException
 from app.utils.utils import compute_unit_price
 from app.schemas.job_order import JobOrderCreate
+import uuid
 
 
 def get_all_job_orders(
@@ -18,6 +20,14 @@ def get_all_job_orders(
 ) -> list[JobOrder]:
     job_orders = list(db.exec(select(JobOrder).offset(offset).limit(limit)).all())
     return job_orders
+
+def get_job_order(db: Session, jo_number: str) -> JobOrder:
+    job_order = db.exec(
+        select(JobOrder).where(JobOrder.jo_number == jo_number)
+    ).first()
+    if not job_order:
+        raise HTTPException(status_code=404, detail=f"Job order with JO number of {jo_number} not found.")
+    return job_order
 
 
 def get_price(db: Session, height: float, width: float, service_name: str) -> float:
@@ -31,7 +41,7 @@ def get_price(db: Session, height: float, width: float, service_name: str) -> fl
     return compute_unit_price(height, width, service)
 
 
-def create_job_order(db: Session, data: JobOrderCreate):
+def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UUID):
     try:
         if data.customer_id:
             customer = db.exec(
@@ -135,6 +145,13 @@ def create_job_order(db: Session, data: JobOrderCreate):
         db.add(job_order)
         db.commit()
         db.refresh(job_order)
+        
+        audit = AuditLog(
+            action=f"Created job order {job_order.jo_number}",
+            user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
 
         return job_order
     except Exception:

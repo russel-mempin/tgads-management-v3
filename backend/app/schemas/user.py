@@ -15,6 +15,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     role: str
+    first_name: str
+    last_name: str
     
 class TokenData(BaseModel):
     username: str

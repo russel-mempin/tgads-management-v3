@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { ClaimCreate, JobItemCreate } from '@/types/job_orders';
+import type { ClaimCreate, JobItemCreate, JobItem, ClaimingHistory } from '@/types/job_orders';
 import { ref, watch, computed } from 'vue';
 import { Dialog, DatePicker, InputText, Select, InputNumber, Button } from 'primevue';
 
 const props = defineProps<{
 	isVisible: boolean
 	editItem?: ClaimCreate | null
-	jobItems: JobItemCreate[]
-	claims: ClaimCreate[]
+	jobItems: JobItemCreate[] | JobItem[]
+	claims: ClaimCreate[] | ClaimingHistory[]
 }>()
 
 const emit = defineEmits<{
@@ -38,11 +38,11 @@ const maxClaimable = computed(() => {
 	const jobItem = props.jobItems.find(i => i.item_id === item.value.job_item_id)
 	if (!jobItem) return 0
 
-	const alreadyClaimed = props.claims
+	const alreadyClaimed = (props.claims as ClaimCreate[])
 		.filter(c => c.job_item_id === item.value.job_item_id)
-		.filter((_, i) => !props.editItem || props.claims.indexOf(props.editItem) !== i)
+		.filter((_, i) => !props.editItem || (props.claims as ClaimCreate[]).indexOf(props.editItem) !== i)
 		.reduce((sum, c) => sum + c.pcs_claimed, 0)
-		
+
 	return jobItem.quantity - alreadyClaimed
 })
 
@@ -79,7 +79,8 @@ watch(() => props.editItem, (newItem) => {
 		<div class="grid grid-cols-2 gap-4 mb-4">
 			<div class="flex flex-col">
 				<label class="font-semibold mb-1">Item Claimed</label>
-				<Select v-model="item.job_item_id" :options="props.jobItems.map(i => i.item_id)" fluid />
+				<Select v-model="item.job_item_id" :options="(props.jobItems as JobItemCreate[]).map(i => i.item_id)"
+					fluid />
 			</div>
 			<div class="flex flex-col">
 				<label class="font-semibold mb-1">Pcs. Claimed</label>
