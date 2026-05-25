@@ -50,7 +50,6 @@ const onSave = () => {
 	if (props.editItem) {
 		emit('update-item', { ...item.value })
 	} else {
-		console.log("Hi")
 		emit('add-item', { ...item.value })
 	}
 	emit('update:isVisible', false)

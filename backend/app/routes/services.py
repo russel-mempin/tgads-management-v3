@@ -2,10 +2,11 @@ from fastapi import APIRouter, Query, Depends
 from typing import Annotated
 from sqlmodel import Session
 from app.database import get_session
-from app.crud.service import get_all_services, get_all_extras
-from app.schemas.service import ServicePublic
-from app.models import ExtraType
+from app.crud.service import get_all_services, get_all_extras, create_service, archive_service
+from app.schemas.service import ServicePublic, ServiceCreate
+from app.models import ExtraType, User
 from app.services.dependencies import get_current_active_user
+import uuid
 
 router = APIRouter(prefix="/services", tags=["services"], dependencies=[Depends(get_current_active_user)])
 
@@ -17,3 +18,11 @@ def read_all_services(offset: int = 0, limit: Annotated[int, Query(le=100)] = 10
 @router.get("/extras", response_model=list[ExtraType])
 def read_all_extras(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_extras(db, offset=offset, limit=limit)
+
+@router.post("/", response_model=ServicePublic)
+def create(data: ServiceCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_service(db, data, current_user.id)
+
+@router.patch("/{service_id}")
+def archive(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return archive_service(db, service_id, current_user.id)

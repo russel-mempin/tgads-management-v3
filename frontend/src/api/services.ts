@@ -1,3 +1,4 @@
+import type { ServiceCreate } from '@/types/services'
 import http from './http'
 
 export async function getAllServices() {
@@ -8,4 +9,14 @@ export async function getAllServices() {
 export async function getAllExtras() {
 	const res = await http.get('/services/extras')
 	return res.data
+}
+
+export async function createService(payload: ServiceCreate) {
+	const res = await http.post('/services/', payload)
+	return res.data
+}
+
+export async function archiveService(id: string) {
+    const res = await http.patch(`/services/${id}`)
+    return res.data
 }

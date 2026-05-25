@@ -1,16 +1,75 @@
 from sqlmodel import Session, select
-from app.models import ServiceType, ExtraType
+from app.models import ServiceType, ExtraType, AuditLog
+from app.schemas.service import ServiceCreate
+import uuid
+from fastapi import HTTPException
+
 
 def get_all_services(
-	db: Session, offset: int = 0, limit: int = 100
+    db: Session, offset: int = 0, limit: int = 100
 ) -> list[ServiceType]:
-    return list(db.exec(
-		select(ServiceType).offset(offset).limit(limit)
-	).all())
-    
-def get_all_extras(
-	db: Session, offset: int = 0, limit: int = 100
-) -> list[ExtraType]:
-    return list(db.exec(
-		select(ExtraType).offset(offset).limit(limit)
-	).all())
+    return list(db.exec(select(ServiceType).where(ServiceType.is_active == True).offset(offset).limit(limit)).all())
+
+
+def get_all_extras(db: Session, offset: int = 0, limit: int = 100) -> list[ExtraType]:
+    return list(db.exec(select(ExtraType).offset(offset).limit(limit)).all())
+
+
+def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID):
+    try:        
+        existing = db.exec(
+            select(ServiceType).where(
+                (ServiceType.name == data.name)
+                | (ServiceType.abbreviation == data.abbreviation)
+            )
+        ).first()
+        if existing:
+            if existing.name == data.name:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Service type with name '{data.name}' already exists.",
+                )
+            if existing.abbreviation == data.abbreviation:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Service type with abbreviation '{data.abbreviation}' already exists.",
+                )
+        service_type = ServiceType(**data.model_dump())
+        db.add(service_type)
+        db.commit()
+        db.refresh(service_type)
+        
+        audit = AuditLog(
+                action=f"Created service named {service_type.name}",
+                user_id=current_user_id
+            )
+        db.add(audit)
+        db.commit()
+        
+        return service_type
+    except Exception:
+        db.rollback()
+        raise
+
+def archive_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        service = db.exec(select(ServiceType).where(ServiceType.id == service_id)).first()
+        if not service:
+            raise HTTPException(status_code=404, detail="Service type not found")
+        
+        service.is_active = False
+        db.add(service)
+        
+        audit = AuditLog(
+            action=f"Archived service named {service.name}",
+            user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(service)
+        return "Service archived."
+    except HTTPException:
+        raise  # don't rollback for 404s, nothing was changed
+    except Exception:
+        db.rollback()
+        raise

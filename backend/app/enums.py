@@ -4,6 +4,8 @@ class SizeUnit(str, Enum):
     INCHES = "in."
     FEET = "ft."
     CENTIMETER = "cm."
+    NA = "N/A"
+    
     
 class UserRoles(str, Enum):
     ADMIN = "Admin"
