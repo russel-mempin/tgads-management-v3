@@ -13,10 +13,10 @@ const toast = useToast();
 const servicesList = ref<ServiceType[]>([]);
 const fetchServices = async () => {
 	servicesList.value = await getAllServices()
+	console.log("Fetch successful.")
 }
 onMounted(async () => {
 	fetchServices();
-	console.log(servicesList.value);
 });
 const isVisible = ref(false);
 
@@ -35,10 +35,10 @@ const confirmDelete = (id: string) => {
             label: 'Delete',
             severity: 'danger'
         },
-        accept: () => {
+        accept: async () => {
+			await archiveService(id)
+			await fetchServices();
             toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Service deleted', life: 3000 });
-			archiveService(id)
-			fetchServices();
         },
         reject: () => {
             toast.add({ severity: 'error', summary: 'Cancelled', detail: 'You have cancelled', life: 3000 });
