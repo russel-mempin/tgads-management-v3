@@ -1,25 +1,58 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import type { JobOrder, Payment, JobItem, ClaimingHistory } from '@/types/job_orders';
 import { getJobOrder } from '@/api/job_orders';
-import { Button, Tag } from 'primevue';
+import { Button, Tag, useConfirm, ConfirmDialog, useToast } from 'primevue';
 import { Trash, PenBox } from '@lucide/vue';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
+import { Info } from '@lucide/vue';
+import { archiveJobOrder } from '@/api/job_orders';
 
-const route = useRoute()
-
+const route = useRoute();
+const router = useRouter();
+const confirm = useConfirm();
+const toast = useToast();
 const jobOrder = ref<JobOrder>();
 onMounted(async () => {
 	jobOrder.value = await getJobOrder(route.params.jo_number as string)
-	console.log(jobOrder.value);
 });
+
+const confirmDelete = (jo_number: string) => {
+	confirm.require({
+		message: 'Do you want to delete this job order?',
+		header: 'Danger Zone',
+		rejectLabel: 'Cancel',
+		rejectProps: {
+			label: 'Cancel',
+			severity: 'secondary',
+			outlined: true
+		},
+		acceptProps: {
+			label: 'Delete',
+			severity: 'danger'
+		},
+		accept: async () => {
+			await archiveJobOrder(jo_number)
+			toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Job order deleted', life: 3000 });
+			router.push('/admin/job-orders')
+		},
+		reject: () => {
+			toast.add({ severity: 'error', summary: 'Cancelled', detail: 'You have cancelled', life: 3000 });
+		}
+	});
+}
 </script>
 
 <template>
+	<ConfirmDialog>
+		<template #icon>
+			<Info class="w-10 h-10 text-red-500" />
+		</template>
+	</ConfirmDialog>
 	<section class="flex justify-between items-center">
 		<div>
 			<h1 class="text-xl font-semibold">View Job Order</h1>
@@ -31,7 +64,7 @@ onMounted(async () => {
 					<PenBox />
 				</template>
 			</Button>
-			<Button severity="danger" class="w-26" label="Delete">
+			<Button severity="danger" class="w-26" label="Delete" @click="confirmDelete(route.params.jo_number as string)">
 				<template #icon>
 					<Trash />
 				</template>
