@@ -1,27 +1,63 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { RouterLink, useRouter } from 'vue-router'
-import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
+import { Button, InputText, Select, DataTable, Column, Tag, useConfirm, ConfirmDialog, useToast } from 'primevue';
 import { Plus } from '@lucide/vue';
-import { getAllJobOrders } from '@/api/job_orders'
+import { getAllJobOrders, archiveJobOrder } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
 import { formatCurrency, formatDate, mapSeverity } from '@/utils/formatters';
+import { Info } from '@lucide/vue';
 
 const job_orders = ref<JobOrder[]>([])
 const router = useRouter()
+const confirm = useConfirm();
+const toast = useToast();
+const fetchServices = async () => {
+	job_orders.value = await getAllJobOrders()
+	console.log("Fetch successful.")
+}
 onMounted(async () => {
-	const data = await getAllJobOrders()
-	job_orders.value = data
-	console.log(job_orders.value)
-})
+	fetchServices()
+});
 
 const joNumberSearch = ref('');
 const jobStatus = ref('');
 const jobStatusOptions = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
 const expandedRows = ref({});
+
+const confirmDelete = (id: string) => {
+	confirm.require({
+		message: 'Do you want to delete this job order?',
+		header: 'Danger Zone',
+		rejectLabel: 'Cancel',
+		rejectProps: {
+			label: 'Cancel',
+			severity: 'secondary',
+			outlined: true
+		},
+		acceptProps: {
+			label: 'Delete',
+			severity: 'danger'
+		},
+		accept: async () => {
+			console.log(id)
+			await archiveJobOrder(id)
+			await fetchServices();
+			toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Service deleted', life: 3000 });
+		},
+		reject: () => {
+			toast.add({ severity: 'error', summary: 'Cancelled', detail: 'You have cancelled', life: 3000 });
+		}
+	});
+}
 </script>
 
 <template>
+	<ConfirmDialog>
+		<template #icon>
+			<Info class="w-10 h-10 text-red-500" />
+		</template>
+	</ConfirmDialog>
 	<section class="flex justify-between items-center">
 		<div>
 			<h1 class="text-lg font-semibold">Job Orders</h1>
@@ -75,7 +111,7 @@ const expandedRows = ref({});
 						<Button severity="info" class="w-20"
 							@click="router.push(`/admin/job-orders/view/${data.jo_number}`)">View</Button>
 						<Button severity="warn" class="w-20">Edit</Button>
-						<Button severity="danger" class="w-20">Delete</Button>
+						<Button class="w-20" label="Delete" severity="danger" @click="confirmDelete(data.jo_number)" />
 					</div>
 				</template>
 			</Column>

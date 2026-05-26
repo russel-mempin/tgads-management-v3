@@ -87,6 +87,7 @@ class JobOrderBase(SQLModel):
     jo_number: str = Field()
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
+    is_active: bool = Field(default=True)
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore

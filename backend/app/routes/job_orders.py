@@ -3,18 +3,26 @@ from app.schemas.job_order import JobOrderPublic
 from typing import Annotated
 from sqlmodel import Session
 from app.database import get_session
-from app.crud.job_order import get_all_job_orders, get_job_order, get_price, create_job_order
+from app.crud.job_order import get_all_job_orders, get_job_order, get_price, create_job_order, archive_job_order
 from app.schemas.job_order import JobOrderCreate
 from app.services.dependencies import get_current_active_user
 from app.models import User
+from app.enums import UserRoles
+import uuid
 
 
 router = APIRouter(prefix="/job-orders", tags=["job-orders"], dependencies=[Depends(get_current_active_user)])
 
 
 @router.get("/", response_model=list[JobOrderPublic])
-def read_all(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
-    return get_all_job_orders(db, offset=offset, limit=limit)
+def read_all(
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100,
+    include_archived: bool = False,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    return get_all_job_orders(db, offset=offset, limit=limit, include_archived=include_archived and current_user.role == UserRoles.ADMIN)
 
 @router.get("/compute-unit-price", response_model=float)
 def compute_unit_price(
@@ -32,3 +40,7 @@ def read_job_order(jo_number: str, db: Session = Depends(get_session)):
 @router.post("/", response_model=JobOrderPublic)
 def create(data: JobOrderCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_job_order(db, data, current_user.id)
+
+@router.patch("/{jo_number}/archive")
+def archive(jo_number: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return archive_job_order(db, jo_number, current_user.id)

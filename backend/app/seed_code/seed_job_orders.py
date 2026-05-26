@@ -21,6 +21,7 @@ def seed_job_orders_from_csv(file_path: str = CSV_PATH):
                 jo_number=row["jo_number"],
                 date_received=datetime.fromisoformat(row["date_received"]),
                 customer_id=customer.id,
+                is_active=row["is_active"].strip().lower() == "true"
             )
             session.add(job_order)
         session.commit()

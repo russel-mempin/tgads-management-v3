@@ -15,11 +15,11 @@ from app.schemas.job_order import JobOrderCreate
 import uuid
 
 
-def get_all_job_orders(
-    db: Session, offset: int = 0, limit: int = 100
-) -> list[JobOrder]:
-    job_orders = list(db.exec(select(JobOrder).offset(offset).limit(limit)).all())
-    return job_orders
+def get_all_job_orders(db: Session, offset: int = 0, limit: int = 100, include_archived: bool = False) -> list[JobOrder]:
+    query = select(JobOrder)
+    if not include_archived:
+        query = query.where(JobOrder.is_active == True)
+    return list(db.exec(query.offset(offset).limit(limit)).all())
 
 def get_job_order(db: Session, jo_number: str) -> JobOrder:
     job_order = db.exec(
@@ -154,6 +154,30 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.commit()
 
         return job_order
+    except Exception:
+        db.rollback()
+        raise
+
+def archive_job_order(db: Session, jo_number: str, current_user_id: uuid.UUID):
+    try:
+        job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
+        if not job_order:
+            raise HTTPException(status_code=404, detail=f"Job order with number {jo_number} not found")
+        
+        job_order.is_active = False
+        db.add(job_order)
+        
+        audit = AuditLog(
+            action=f"Archived job order {job_order.jo_number}",
+            user_id=current_user_id
+        )
+        db.add(audit)
+        
+        db.commit()
+        db.refresh(job_order)
+        return "Job order archived."
+    except HTTPException:
+        raise
     except Exception:
         db.rollback()
         raise

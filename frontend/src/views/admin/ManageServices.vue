@@ -6,6 +6,7 @@ import { ref, onMounted } from 'vue';
 import type { ServiceType } from '@/types/services';
 import { formatCurrency } from '@/utils/formatters';
 import ServiceForm from '@/components/ServiceForm.vue';
+import { Info } from '@lucide/vue';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -57,7 +58,11 @@ const confirmDelete = (id: string) => {
 </script>
 <template>
 	<ServiceForm v-model:isVisible="isVisible" @saved="fetchServices" :editData="editingData" @update:isVisible="onClose" />
-	<ConfirmDialog />
+	<ConfirmDialog>
+		<template #icon>
+			<Info class="w-10 h-10 text-red-500" />
+		</template>
+	</ConfirmDialog>
 	<section class="flex justify-between items-center">
 		<div>
 			<h1 class="text-lg font-semibold">Manage Services</h1>

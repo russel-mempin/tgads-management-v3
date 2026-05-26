@@ -26,3 +26,8 @@ export async function createJobOrder(payload: JobOrderCreate) {
 	const res = await http.post('/job-orders/', payload)
 	return res.data
 }
+
+export async function archiveJobOrder(jo_number: string) {
+	const res = await http.patch(`/job-orders/${jo_number}/archive`)
+	return res.data
+}
