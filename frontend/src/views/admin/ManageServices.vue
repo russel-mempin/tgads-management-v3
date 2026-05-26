@@ -19,6 +19,15 @@ onMounted(async () => {
 	fetchServices();
 });
 const isVisible = ref(false);
+const editingData = ref<ServiceType | null>(null)
+const openEdit = (data: ServiceType) => {
+    editingData.value = data
+    isVisible.value = true
+}
+const onClose = () => {
+    editingData.value = null
+    isVisible.value = false
+}
 
 const confirmDelete = (id: string) => {
 	confirm.require({
@@ -47,7 +56,7 @@ const confirmDelete = (id: string) => {
 }
 </script>
 <template>
-	<ServiceForm v-model:isVisible="isVisible" @saved="fetchServices" />
+	<ServiceForm v-model:isVisible="isVisible" @saved="fetchServices" :editData="editingData" @update:isVisible="onClose" />
 	<ConfirmDialog />
 	<section class="flex justify-between items-center">
 		<div>
@@ -81,7 +90,7 @@ const confirmDelete = (id: string) => {
 			<Column style="width: 1rem">
 				<template #body="{ data, index }">
 					<div class="flex gap-4">
-						<Button class="w-20" label="Edit" severity="warn" />
+						<Button class="w-20" label="Edit" severity="warn" @click="openEdit(data)" />
 						<Button class="w-20" label="Delete" severity="danger" @click="confirmDelete(data.id)"/>
 					</div>
 				</template>

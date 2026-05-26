@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import type { ServiceCreate } from '@/types/services';
-import { ref } from 'vue';
-import { Button, Dialog, InputText, InputNumber, Select, ToggleSwitch } from 'primevue';
+import type { ServiceCreate, ServiceType } from '@/types/services';
+import { ref, watch } from 'vue';
+import { Button, Dialog, InputText, InputNumber, Select } from 'primevue';
 import { X, Check } from '@lucide/vue';
 import { useToast } from 'primevue';
-import { createService } from '@/api/services';
+import { createService, editService } from '@/api/services';
 
 const toast = useToast()
 
 const props = defineProps<{
 	isVisible: boolean
-	editData?: ServiceCreate | null
+	editData?: ServiceType | null
 }>()
 
 const emit = defineEmits<{
@@ -45,10 +45,18 @@ const resetData = () => {
 	}
 }
 
+watch(() => props.editData, (newData) => {
+    if (newData) {
+        service.value = { ...newData }
+    } else {
+        resetData()
+    }
+})
+
 const onSave = async () => {
     try {
         if (props.editData) {
-            // await updateService(service.value)
+            await editService(props.editData.id, service.value)
         } else {
             await createService(service.value)
         }

@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from app.models import ServiceType, ExtraType, AuditLog
-from app.schemas.service import ServiceCreate
+from app.schemas.service import ServiceCreate, ServiceUpdate
 import uuid
 from fastapi import HTTPException
 
@@ -47,6 +47,33 @@ def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID)
         db.commit()
         
         return service_type
+    except Exception:
+        db.rollback()
+        raise
+    
+def update_service(db: Session, service_id: uuid.UUID, data: ServiceUpdate, current_user_id: uuid.UUID):
+    try:
+        service = db.exec(select(ServiceType).where(ServiceType.id == service_id)).first()
+        if not service:
+            raise HTTPException(status_code=404, detail="Service type not found")
+
+        updated_data = data.model_dump(exclude_unset=True)  # only fields that were sent
+        for key, value in updated_data.items():
+            setattr(service, key, value)
+
+        db.add(service)
+
+        audit = AuditLog(
+            action=f"Updated service {service.name}",
+            user_id=current_user_id
+        )
+        db.add(audit)
+
+        db.commit()
+        db.refresh(service)
+        return service
+    except HTTPException:
+        raise
     except Exception:
         db.rollback()
         raise

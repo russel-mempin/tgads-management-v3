@@ -16,7 +16,12 @@ export async function createService(payload: ServiceCreate) {
 	return res.data
 }
 
+export async function editService(id: string, payload: ServiceCreate) {
+	const res = await http.patch(`/services/${id}`, payload)
+	return res.data
+}
+
 export async function archiveService(id: string) {
-    const res = await http.patch(`/services/${id}`)
+    const res = await http.patch(`/services/${id}/archive`)
     return res.data
 }
