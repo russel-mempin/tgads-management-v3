@@ -220,6 +220,7 @@ class ClaimingHistoryBase(SQLModel):
     date_claimed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     name: str = Field()
     pcs_claimed: int = Field(default=0)
+    item_id: str = Field()
     
     
 class ClaimingHistory(ClaimingHistoryBase, table=True):

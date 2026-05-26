@@ -31,7 +31,8 @@ def seed_claiming_history_from_csv(file_path: str = CSV_PATH):
                 name=row["name"],
                 pcs_claimed=to_int(row["pcs_claimed"]),
                 job_order_id=jo_number.id,
-                job_item_id=item_id.id
+                job_item_id=item_id.id,
+                item_id=row["item_id"]
             )
             session.add(claiming_history)
         session.commit()

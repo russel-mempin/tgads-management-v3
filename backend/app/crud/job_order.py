@@ -139,6 +139,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                     pcs_claimed=claim.pcs_claimed,
                     job_order_id=job_order.id,
                     job_item_id=job_item.id,
+                    item_id=job_item.item_id
                 )
                 job_order.claims.append(claimItem)
                 db.add(claimItem)
