@@ -110,7 +110,7 @@ const buildPayload = () => {
 				date_claimed: new Date(claim.date_claimed).toISOString(),
 				name: claim.name,
 				pcs_claimed: claim.pcs_claimed,
-				job_item_id: claim.job_item_id,
+				claimed_item_id: claim.claimed_item_id,
 			}))
 		} : {}),
 	};
