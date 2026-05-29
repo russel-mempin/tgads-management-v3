@@ -64,6 +64,10 @@ const router = createRouter({
           component: () => import('@/views/admin/ManageServices.vue'),
         },
         {
+          path: 'manage-extras',
+          component: () => import('@/views/admin/ManageExtras.vue'),
+        },
+        {
           path: 'manage-users',
           component: () => import('@/views/admin/ManageUsers.vue'),
         },

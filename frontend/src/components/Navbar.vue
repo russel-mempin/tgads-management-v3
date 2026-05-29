@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
 import NavbarItem from './NavbarItem.vue';
-import { LayoutDashboard, BriefcaseBusiness, BanknoteArrowUp, BanknoteArrowDown, Landmark, BookUser, Sheet, ConciergeBell, UserCog, Activity, Flag, SunMoon,  LogOut } from '@lucide/vue';
+import { LayoutDashboard, BriefcaseBusiness, BanknoteArrowUp, BanknoteArrowDown, Landmark, BookUser, Sheet, ConciergeBell, UserCog, Activity, Layers, SunMoon,  LogOut } from '@lucide/vue';
 import type { Component } from 'vue'
 
 const authStore = useAuthStore()
@@ -21,6 +21,7 @@ const adminItems: NavItem[] = [
 	{ to: '/admin/customers', label: "Customers", icon: BookUser },
 	{ to: '/admin/cash-flow', label: "Cash Flow", icon: Sheet },
 	{ to: '/admin/manage-services', label: "Manage Services", icon: ConciergeBell },
+	{ to: '/admin/manage-extras', label: "Manage Extras", icon: Layers },
 	{ to: '/admin/manage-users', label: "Manage Users", icon: UserCog },
 	{ to: '/admin/audit-logs', label: "Audit Logs", icon: Activity }
 ]

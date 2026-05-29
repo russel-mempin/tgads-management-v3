@@ -78,6 +78,7 @@ class ExtraType(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field()
     price: float = Field(default=0.0)
+    is_active: bool = Field(default=True)
 
     job_items: list["JobItem"] = Relationship(back_populates="extra_type")
 

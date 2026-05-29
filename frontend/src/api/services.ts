@@ -25,3 +25,8 @@ export async function archiveService(id: string) {
     const res = await http.patch(`/services/${id}/archive`)
     return res.data
 }
+
+export async function archiveExtraService(id: string) {
+	const res = await http.patch(`/services/extras/${id}/archive`)
+	return res.data
+}

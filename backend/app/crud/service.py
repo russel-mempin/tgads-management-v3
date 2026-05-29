@@ -12,7 +12,7 @@ def get_all_services(
 
 
 def get_all_extras(db: Session, offset: int = 0, limit: int = 100) -> list[ExtraType]:
-    return list(db.exec(select(ExtraType).offset(offset).limit(limit)).all())
+    return list(db.exec(select(ExtraType).where(ExtraType.is_active == True).offset(offset).limit(limit)).all())
 
 
 def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID):
@@ -95,6 +95,27 @@ def archive_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UU
         db.commit()
         db.refresh(service)
         return "Service archived."
+    except HTTPException:
+        raise  # don't rollback for 404s, nothing was changed
+    except Exception:
+        db.rollback()
+        raise
+    
+def archive_extra(db: Session, extra_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        extra = db.exec(select(ExtraType).where(ExtraType.id == extra_id)).first()
+        if not extra:
+            raise HTTPException(status_code=404, detail="Extra type not found")
+        extra.is_active = False
+        db.add(extra)
+        audit = AuditLog(
+            action=f"Archived extra named {extra.name}",
+            user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(extra)
+        return "Extra archived."
     except HTTPException:
         raise  # don't rollback for 404s, nothing was changed
     except Exception:

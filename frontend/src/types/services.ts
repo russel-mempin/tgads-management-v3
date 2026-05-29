@@ -16,3 +16,9 @@ export interface ServiceCreate {
 	is_area_based: boolean
 	required_measurement_unit: string
 }
+
+export interface ExtraService {
+	id?: string
+	name: string
+	price: number
+}
