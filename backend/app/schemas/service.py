@@ -1,4 +1,4 @@
-from app.models import ServiceTypeBase
+from app.models import ServiceTypeBase, ExtraType
 import uuid
 from sqlmodel import SQLModel
 from app.enums import SizeUnit
@@ -9,6 +9,15 @@ class ServicePublic(ServiceTypeBase):
     
 class ServiceCreate(ServiceTypeBase):
     pass
+
+class ExtraPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    price: float
+
+class ExtraCreate(SQLModel):
+    name: str
+    price: float
 
 class ServiceUpdate(SQLModel):
     name: str | None = None

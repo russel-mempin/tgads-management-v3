@@ -5,6 +5,7 @@ import type { ExtraService } from '@/types/services';
 import { Button, DataTable, Column, useConfirm, useToast, ConfirmDialog } from 'primevue';
 import { Plus, Info } from '@lucide/vue';
 import { formatCurrency } from '@/utils/formatters';
+import ExtraForm from '@/components/ExtraForm.vue';
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -23,7 +24,10 @@ const openEdit = (data: ExtraService) => {
     editingData.value = data
     isVisible.value = true
 }
-
+const onClose = () => {
+    editingData.value = null
+    isVisible.value = false
+}
 const confirmDelete = (id: string) => {
 	confirm.require({
         message: 'Do you want to delete this extra?',
@@ -52,6 +56,7 @@ const confirmDelete = (id: string) => {
 </script>
 
 <template>
+	<ExtraForm v-model:isVisible="isVisible" @saved="fetchExtras" :editData="editingData" @update:isVisible="onClose" />
 	<ConfirmDialog>
 		<template #icon>
 			<Info class="w-10 h-10 text-red-500" />

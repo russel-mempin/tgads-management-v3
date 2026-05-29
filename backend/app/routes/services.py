@@ -2,8 +2,8 @@ from fastapi import APIRouter, Query, Depends
 from typing import Annotated
 from sqlmodel import Session
 from app.database import get_session
-from app.crud.service import get_all_services, get_all_extras, create_service, update_service, archive_service, archive_extra
-from app.schemas.service import ServicePublic, ServiceCreate, ServiceUpdate
+from app.crud.service import get_all_services, get_all_extras, create_service, update_service, archive_service, create_extra, archive_extra
+from app.schemas.service import ServicePublic, ServiceCreate, ServiceUpdate, ExtraCreate, ExtraPublic
 from app.models import ExtraType, User
 from app.services.dependencies import get_current_active_user
 import uuid
@@ -30,6 +30,10 @@ def update(service_id: uuid.UUID, data: ServiceUpdate, db: Session = Depends(get
 @router.patch("/{service_id}/archive")
 def archive(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return archive_service(db, service_id, current_user.id)
+
+@router.post("/extras", response_model=ExtraPublic)
+def create_extra_service(data: ExtraCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_extra(db, data, current_user.id)
 
 @router.patch("/extras/{extra_id}/archive")
 def archive_extra_service(extra_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
