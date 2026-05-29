@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { ExtraService } from '@/types/services';
+import type { ExtraService, ExtraServiceCreate } from '@/types/services';
 import { ref, watch } from 'vue';
-import { Button, Dialog, InputText, InputNumber, Select } from 'primevue';
-import { X, Check } from '@lucide/vue';
+import { Button, Dialog, InputText, InputNumber } from 'primevue';
 import { useToast } from 'primevue';
-import { createExtra } from '@/api/services';
+import { createExtra, editExtra } from '@/api/services';
 
 const toast = useToast()
 
@@ -18,7 +17,7 @@ const emit = defineEmits<{
 	(e: 'saved'): void
 }>()
 
-const extra = ref<ExtraService>({
+const extra = ref<ExtraServiceCreate>({
 	name: '',
 	price: 1,
 });
@@ -41,16 +40,16 @@ watch(() => props.editData, (newData) => {
 const onSave = async () => {
 	try {
 		if (props.editData) {
-			// await editService(props.editData.id, extra.value)
+			await editExtra(props.editData.id, extra.value)
 		} else {
 			await createExtra(extra.value)
 		}
-		toast.add({ severity: 'success', summary: 'Saved', detail: 'Service saved successfully.', life: 3000 })
+		toast.add({ severity: 'success', summary: 'Saved', detail: 'Data saved successfully.', life: 3000 })
 		emit('saved')
 		emit('update:isVisible', false)
 		resetData()
 	} catch (error: any) {
-		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save service.', life: 3000 })
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save changes.', life: 3000 })
 		console.error(error.response?.data || error)
 	}
 }

@@ -17,8 +17,11 @@ export interface ServiceCreate {
 	required_measurement_unit: string
 }
 
-export interface ExtraService {
-	id?: string
-	name: string
-	price: number
+export interface ExtraServiceCreate {
+    name: string
+    price: number
+}
+
+export interface ExtraService extends ExtraServiceCreate {
+    id: string
 }

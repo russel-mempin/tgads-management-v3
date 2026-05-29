@@ -149,6 +149,36 @@ def create_extra(db: Session, data: ExtraCreate, current_user_id: uuid.UUID):
     except Exception:
         db.rollback()
         raise
+    
+def update_extra(
+    db: Session, extra_id: uuid.UUID, data: ExtraCreate, current_user_id: uuid.UUID
+):
+    try:
+        extra = db.exec(
+            select(ExtraType).where(ExtraType.id == extra_id)
+        ).first()
+        if not extra:
+            raise HTTPException(status_code=404, detail="Extra type not found")
+
+        updated_data = data.model_dump(exclude_unset=True)
+        for key, value in updated_data.items():
+            setattr(extra, key, value)
+
+        db.add(extra)
+
+        audit = AuditLog(
+            action=f"Updated extra {extra.name}", user_id=current_user_id
+        )
+        db.add(audit)
+
+        db.commit()
+        db.refresh(extra)
+        return extra
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
 
 
 def archive_extra(db: Session, extra_id: uuid.UUID, current_user_id: uuid.UUID):

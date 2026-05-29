@@ -30,7 +30,7 @@ const onClose = () => {
 }
 const confirmDelete = (id: string) => {
 	confirm.require({
-        message: 'Do you want to delete this extra?',
+        message: 'Do you want to delete this data?',
         header: 'Danger Zone',
         icon: 'pi pi-info-circle',
         rejectLabel: 'Cancel',
@@ -46,7 +46,7 @@ const confirmDelete = (id: string) => {
         accept: async () => {
 			await archiveExtraService(id)
 			await fetchExtras();
-            toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Extra deleted', life: 3000 });
+            toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Data deleted', life: 3000 });
         },
         reject: () => {
             toast.add({ severity: 'error', summary: 'Cancelled', detail: 'You have cancelled', life: 3000 });

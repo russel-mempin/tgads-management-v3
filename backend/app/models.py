@@ -76,7 +76,7 @@ class ServiceType(ServiceTypeBase, table=True):
 class ExtraType(SQLModel, table=True):
     __tablename__ = "extra_types"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field()
+    name: str = Field(unique=True, index=True)
     price: float = Field(default=0.0)
     is_active: bool = Field(default=True)
 

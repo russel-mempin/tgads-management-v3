@@ -1,4 +1,4 @@
-import type { ExtraService, ServiceCreate } from '@/types/services'
+import type { ServiceCreate, ExtraServiceCreate } from '@/types/services'
 import http from './http'
 
 export async function getAllServices() {
@@ -26,8 +26,13 @@ export async function archiveService(id: string) {
     return res.data
 }
 
-export async function createExtra(payload: ExtraService) {
+export async function createExtra(payload: ExtraServiceCreate) {
 	const res = await http.post('/services/extras/', payload)
+	return res.data
+}
+
+export async function editExtra(id: string, payload: ExtraServiceCreate) {
+	const res = await http.put(`/services/extras/${id}`, payload)
 	return res.data
 }
 
