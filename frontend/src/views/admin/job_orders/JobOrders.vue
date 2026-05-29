@@ -108,10 +108,9 @@ const confirmDelete = (id: string) => {
 			<Column>
 				<template #body="{ data }">
 					<div class="flex justify-self-end gap-2">
-						<Button severity="info" class="w-20"
-							@click="router.push(`/admin/job-orders/view/${data.jo_number}`)">View</Button>
-						<Button severity="warn" class="w-20">Edit</Button>
-						<Button class="w-20" label="Delete" severity="danger" @click="confirmDelete(data.jo_number)" />
+						<Button class="w-20" severity="info" label="View" @click="router.push(`/admin/job-orders/view/${data.jo_number}`)" />
+						<Button class="w-20" severity="warn" label="Edit" @click="router.push(`/admin/job-orders/edit/${data.jo_number}`)"/>
+						<Button class="w-20" severity="danger" label="Delete" @click="confirmDelete(data.jo_number)" />
 					</div>
 				</template>
 			</Column>
@@ -181,6 +180,7 @@ const confirmDelete = (id: string) => {
 							</template>
 						</Column>
 						<Column field="name" header="Name"></Column>
+						<Column field="claimed_item_id" header="Item Claimed"></Column>
 						<Column field="pcs_claimed" header="Pcs. claimed"></Column>
 					</DataTable>
 				</div>

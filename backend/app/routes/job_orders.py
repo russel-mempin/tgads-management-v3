@@ -3,7 +3,7 @@ from app.schemas.job_order import JobOrderPublic
 from typing import Annotated
 from sqlmodel import Session
 from app.database import get_session
-from app.crud.job_order import get_all_job_orders, get_job_order, get_price, create_job_order, archive_job_order
+from app.crud.job_order import get_all_job_orders, get_job_order, get_price, create_job_order, archive_job_order, update_job_order
 from app.schemas.job_order import JobOrderCreate
 from app.services.dependencies import get_current_active_user
 from app.models import User
@@ -44,3 +44,7 @@ def create(data: JobOrderCreate, db: Session = Depends(get_session), current_use
 @router.patch("/{jo_number}/archive")
 def archive(jo_number: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return archive_job_order(db, jo_number, current_user.id)
+
+@router.put("/{jo_number}")
+def update(jo_number: str, data: JobOrderCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return update_job_order(db, jo_number, data, current_user.id)

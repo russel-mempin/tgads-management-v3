@@ -64,7 +64,7 @@ const updateItem = (updated: ClaimCreate) => {
 				</template>
 			</Column>
 			<Column header="Name" field="name" />
-			<Column header="Item Claimed" field="item_id" />
+			<Column header="Item Claimed" field="claimed_item_id" />
 			<Column header="Pcs." field="pcs_claimed">
 				<template #body="{ data }">
 					<p>{{ data.pcs_claimed }} pc(s).</p>

@@ -19,7 +19,7 @@ const emit = defineEmits<{
 const item = ref<ClaimCreate>({
 	date_claimed: new Date(),
 	name: '',
-	job_item_id: '',
+	claimed_item_id: '',
 	pcs_claimed: 1,
 })
 
@@ -27,19 +27,19 @@ const resetItem = () => {
 	item.value = {
 		date_claimed: new Date(),
 		name: '',
-		job_item_id: '',
+		claimed_item_id: '',
 		pcs_claimed: 1,
 	}
 }
 
 const maxClaimable = computed(() => {
-	if (!item.value.job_item_id) return 0
+	if (!item.value.claimed_item_id) return 0
 
-	const jobItem = props.jobItems.find(i => i.item_id === item.value.job_item_id)
+	const jobItem = props.jobItems.find(i => i.item_id === item.value.claimed_item_id)
 	if (!jobItem) return 0
 
 	const alreadyClaimed = (props.claims as ClaimCreate[])
-		.filter(c => c.job_item_id === item.value.job_item_id)
+		.filter(c => c.claimed_item_id === item.value.claimed_item_id)
 		.filter((_, i) => !props.editItem || (props.claims as ClaimCreate[]).indexOf(props.editItem) !== i)
 		.reduce((sum, c) => sum + c.pcs_claimed, 0)
 
@@ -78,7 +78,7 @@ watch(() => props.editItem, (newItem) => {
 		<div class="grid grid-cols-2 gap-4 mb-4">
 			<div class="flex flex-col">
 				<label class="font-semibold mb-1">Item Claimed</label>
-				<Select v-model="item.job_item_id" :options="(props.jobItems as JobItemCreate[]).map(i => i.item_id)"
+				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItemCreate[]).map(i => i.item_id)"
 					fluid />
 			</div>
 			<div class="flex flex-col">

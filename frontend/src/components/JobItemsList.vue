@@ -3,7 +3,7 @@
 import type { JobItemCreate, JobItem } from '@/types/job_orders';
 import { Button, Tag } from 'primevue'
 import { Plus } from '@lucide/vue';
-import { formatDate, formatCurrency } from '@/utils/formatters';
+import { formatDate, formatCurrency, formatNullable } from '@/utils/formatters';
 import { ref } from 'vue';
 import JobItemsForm from './JobItemsForm.vue';
 
@@ -102,11 +102,11 @@ const updateItem = (updated: JobItemCreate) => {
 					<div class="p-4 flex gap-4">
 						<div class="flex-auto">
 							<p class="text-xs font-medium text-slate-500">DESCRIPTION</p>
-							<p class="text-slate-800">{{ value.description ? value.description : '-' }}</p>
+							<p class="text-slate-800">{{ formatNullable(value.description) }}</p>
 						</div>
 						<div class="flex-auto">
 							<p class="text-xs font-medium text-slate-500">NOTES</p>
-							<p class="text-slate-800">{{ value.notes ? value.notes : '-' }}</p>
+							<p class="text-slate-800">{{ formatNullable(value.notes) }}</p>
 						</div>
 						<div class="flex gap-4">
 							<Button v-if="!readOnly" severity="warn" class="w-20" @click="openEdit(value as JobItemCreate)">Edit</Button>

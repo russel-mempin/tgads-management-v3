@@ -181,7 +181,7 @@ const handleSave = async (payload: JobOrderCreate) => {
 		</div>
 		<div class="flex flex-col">
 			<label class="mb-1 text-slate-700 font-medium">Date Received</label>
-			<DatePicker v-model="date_received" :maxDate="new Date" showTime hourFormat="12" />
+			<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12" />
 		</div>
 	</section>
 	<section class="mt-4 rounded-md border border-slate-300">

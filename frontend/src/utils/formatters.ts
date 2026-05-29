@@ -45,3 +45,8 @@ export const mapSeverity = (status: string) => {
       return 'contrast'
   }
 }
+
+export const formatNullable = (value: string | null | undefined) => {
+    if (!value || value === 'null') return '-'
+    return value
+}

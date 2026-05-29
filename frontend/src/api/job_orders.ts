@@ -1,5 +1,5 @@
 import http from './http'
-import type { JobOrderCreate } from '@/types/job_orders'
+import type { JobOrder, JobOrderCreate } from '@/types/job_orders'
 
 export async function getAllJobOrders() {
 	const res = await http.get('/job-orders/')
@@ -29,5 +29,10 @@ export async function createJobOrder(payload: JobOrderCreate) {
 
 export async function archiveJobOrder(jo_number: string) {
 	const res = await http.patch(`/job-orders/${jo_number}/archive`)
+	return res.data
+}
+
+export async function editJobOrder(jo_number: string, payload: JobOrderCreate) {
+	const res = await http.put(`/job-orders/${jo_number}`, payload)
 	return res.data
 }

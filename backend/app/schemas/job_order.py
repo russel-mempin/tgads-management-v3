@@ -1,12 +1,11 @@
 from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase, PaymentStatus
 from sqlmodel import Field
 import uuid
-from datetime import datetime, timezone
 from typing import List, Optional
 
 
-
 class JobItemPublic(JobItemBase):
+    id: uuid.UUID
     unit_price: float
     subtotal: float
     total_claimed: int
@@ -14,6 +13,8 @@ class JobItemPublic(JobItemBase):
     service_name: str
     extra_service_name: str | None = None
     extra_service_price: float = 0.0
+    extra_type_id: uuid.UUID | None = None
+    service_type_id: uuid.UUID
     
 class JobItemCreate(JobItemBase):
     service_type_id: uuid.UUID
@@ -27,7 +28,7 @@ class ClaimPublic(ClaimingHistoryBase):
     job_item_id: uuid.UUID
     
 class ClaimCreate(ClaimingHistoryBase):
-    job_item_id: str
+    pass
 
 
 class JobOrderPublic(JobOrderBase):
@@ -39,6 +40,7 @@ class JobOrderPublic(JobOrderBase):
     total_due: float
     total_paid: float
     customer_name: str
+    customer_id: uuid.UUID
     
 class JobOrderCreate(JobOrderBase):
     customer_id: uuid.UUID | None = None

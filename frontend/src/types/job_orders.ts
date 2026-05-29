@@ -75,13 +75,14 @@ export interface ClaimingHistory {
   date_claimed: string
   name: string
   pcs_claimed: number
+  claimed_item_id: string
 }
 
 export interface ClaimCreate {
   date_claimed: Date
   name: string
   pcs_claimed: number
-  job_item_id: string
+  claimed_item_id: string
 }
 
 export interface JobOrder {
