@@ -1,15 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
-from app.seed import seed_dev_data
 from app.routes import users, job_orders, customers, services
+import os
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# Read allowed origins from env, fallback to localhost for dev
+origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,13 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-seed_dev_data()
+if os.getenv("APP_ENV") != "production":
+    from app.seed import seed_dev_data
+    seed_dev_data()
+    
+if os.getenv("APP_ENV") == "production":
+    from app.seed import seed_prod_data
+    seed_prod_data()
 
 app.include_router(users.router)
 app.include_router(job_orders.router)
 app.include_router(customers.router)
 app.include_router(services.router)
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
