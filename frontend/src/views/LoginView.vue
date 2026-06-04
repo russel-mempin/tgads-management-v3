@@ -14,7 +14,6 @@ const password = ref('')
 
 const login = async () => {
 	try {
-		console.log(username.value, password.value)
 		const data = await loginBackend(username.value, password.value)
 		// store token + role
 		if (data.role === 'Admin') {
@@ -22,15 +21,21 @@ const login = async () => {
 		} else {
 			auth.loginAsUser(data.access_token, data.first_name, data.last_name)
 		}
-		console.log(auth.user)
 		// redirect after login
 		if (auth.isAdmin) {
 			router.push('/admin/dashboard')
 		} else {
 			router.push('/user/dashboard')
 		}
-	} catch (error: any) {
+	}
+	catch (error: any) {
 		console.error(error.response?.data || error)
+		toast.add({
+			severity: 'error',
+			summary: 'Login Failed',
+			detail: error.response?.data?.detail ?? 'An error occurred. Please try again.',
+			life: 3000,
+		})
 	}
 }
 </script>

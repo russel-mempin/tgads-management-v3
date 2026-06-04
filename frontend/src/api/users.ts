@@ -1,4 +1,5 @@
 import http from './http'
+import type { UserCreate } from '@/types/users'
 
 export async function loginBackend(username: string, password: string) {
 	const data = new URLSearchParams()
@@ -11,5 +12,20 @@ export async function loginBackend(username: string, password: string) {
 		}
 	})
 
+	return res.data
+}
+
+export async function getAllUsers() {
+	const res = await http.get('/users/')
+	return res.data
+}
+
+export async function archiveUser(id: string) {
+	const res = await http.patch(`/users/${id}/archive`)
+	return res.data
+}
+
+export async function createUser(payload: UserCreate) {
+	const res = await http.post('users/', payload)
 	return res.data
 }

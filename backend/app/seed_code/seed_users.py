@@ -26,6 +26,7 @@ def seed_users_from_csv(file_path: str = CSV_PATH):
                 email=row["email"],
                 role=UserRoles(row["role"]),
                 is_active=row["is_active"].lower() == "true",
+                is_superAdmin=row["is_super"].lower() == "true",
                 hashed_password=get_password_hash(row["password"]),
             )
 

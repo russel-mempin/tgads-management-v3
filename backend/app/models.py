@@ -26,6 +26,7 @@ class UserBase(SQLModel):
     username: str = Field(unique=True, index=True)
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     role: UserRoles
+    is_superAdmin: bool = Field(default=False)
     is_active: bool = Field(default=True)
 
 
