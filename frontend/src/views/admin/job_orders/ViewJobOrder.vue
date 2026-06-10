@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import type { JobOrder, Payment, JobItem, ClaimingHistory } from '@/types/job_orders';
 import { getJobOrder } from '@/api/job_orders';
 import { Button, Tag, useConfirm, ConfirmDialog, useToast } from 'primevue';
-import { Trash, PenBox } from '@lucide/vue';
+import { Trash, PenBox, Mail, Phone } from '@lucide/vue';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
@@ -64,7 +64,8 @@ const confirmDelete = (jo_number: string) => {
 					<PenBox />
 				</template>
 			</Button>
-			<Button severity="danger" class="w-26" label="Delete" @click="confirmDelete(route.params.jo_number as string)">
+			<Button severity="danger" class="w-26" label="Delete"
+				@click="confirmDelete(route.params.jo_number as string)">
 				<template #icon>
 					<Trash />
 				</template>
@@ -81,7 +82,20 @@ const confirmDelete = (jo_number: string) => {
 				<p class="font-semibold text-xl">#{{ jobOrder?.jo_number }}</p>
 				<p class="text-slate-600">Started on {{ formatDate(jobOrder?.date_received) }}</p>
 			</div>
-			<p class="text-slate-800">{{ jobOrder?.customer_name }}</p>
+
+			<div class="mt-3 flex flex-col gap-1">
+				<p class="font-medium text-slate-800">{{ jobOrder?.customer_name }}</p>
+				<div class="flex flex-wrap gap-x-4 gap-y-1">
+					<div class="flex items-center gap-1.5 text-slate-600">
+						<Mail class="size-5 shrink-0" />
+						<span>{{ jobOrder?.customer_email ?? '—' }}</span>
+					</div>
+					<div class="flex items-center gap-1.5 text-slate-600">
+						<Phone class="size-5 shrink-0" />
+						<span>{{ jobOrder?.customer_contact_no ?? '—' }}</span>
+					</div>
+				</div>
+			</div>
 		</section>
 		<section class="mt-4">
 			<div class="grid grid-cols-3 gap-4">

@@ -5,7 +5,7 @@ from app.models import ServiceType, SizeUnit
 from app.utils.utils import to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_types.csv")
+CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_types_list.csv")
 
 def seed_service_types_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
@@ -24,11 +24,9 @@ def seed_service_types_from_csv(file_path: str = CSV_PATH):
             service_type = ServiceType(
                 name=row["name"],
                 abbreviation=row["abbreviation"],
+                is_area_based=row["area_based"].lower() == "true",
                 price=to_float(row["price"]),
                 unit=row["unit"],
-                required_measurement_unit=SizeUnit(
-                    row["required_measurement_unit"]
-                ),
             )
 
             session.add(service_type)

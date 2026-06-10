@@ -3,7 +3,7 @@ from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
 from pydantic import EmailStr
-from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, PaperSize
+from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus
 from app.utils.utils import compute_unit_price
 
 
@@ -40,9 +40,9 @@ class User(UserBase, table=True):
 # ====================== CUSTOMERS =========================
 class CustomerBase(SQLModel):
     name: str = Field()
-    address: str = Field()
-    contact_no: str = Field()
-    email: str = Field()
+    address: str = Field(default="N/A")
+    contact_no: str = Field(default="N/A")
+    email: str = Field(default="N/A")
 
 
 class Customer(CustomerBase, table=True):
@@ -62,7 +62,6 @@ class ServiceTypeBase(SQLModel):
     price: float = Field(default=0.0)
     unit: str = Field()
     is_area_based: bool = Field(default=True)
-    required_measurement_unit: SizeUnit
     is_active: bool = Field(default=True)
 
 
@@ -132,6 +131,14 @@ class JobOrder(JobOrderBase, table=True):
     @property
     def customer_name(self) -> str:
         return self.customer.name
+    
+    @property
+    def customer_email(self) -> str:
+        return self.customer.email
+    
+    @property
+    def customer_contact_no(self) -> str:
+        return self.customer.contact_no
 
 
 # ====================== JOB ITEMS =========================
@@ -142,11 +149,11 @@ class JobItemBase(SQLModel):
     height: float = Field(default=0.0)
     width: float = Field(default=0.0)
     size_unit: SizeUnit
-    paper_size: PaperSize
     quantity: int = Field(default=0)
     job_status: JobStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     discount: float = Field(default=0.0)
+    extra_charge: float = Field(default=0.0)
     notes: str | None = Field(default=None)
 
 
@@ -170,7 +177,7 @@ class JobItem(JobItemBase, table=True):
 
     @property
     def unit_price(self) -> float:
-        return compute_unit_price(self.height, self.width, self.service_type)
+        return compute_unit_price(self.height, self.width, self.service_type, self.size_unit)
 
     @property
     def total_claimed(self) -> int:

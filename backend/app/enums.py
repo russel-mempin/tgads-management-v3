@@ -4,6 +4,7 @@ class SizeUnit(str, Enum):
     INCHES = "in."
     FEET = "ft."
     CENTIMETER = "cm."
+    MILLIMETER = "mm."
     NA = "N/A"
     
     

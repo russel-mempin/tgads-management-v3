@@ -40,6 +40,8 @@ class JobOrderPublic(JobOrderBase):
     total_due: float
     total_paid: float
     customer_name: str
+    customer_email: str | None = None
+    customer_contact_no: str | None = None
     customer_id: uuid.UUID
     
 class JobOrderCreate(JobOrderBase):

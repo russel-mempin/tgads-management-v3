@@ -97,6 +97,8 @@ export interface JobOrder {
   total_due: number
   total_paid: number
   customer_name: string
+  customer_email: string
+  customer_contact_no: string
 }
 
 export interface JobOrderCreate {

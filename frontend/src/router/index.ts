@@ -15,6 +15,11 @@ const router = createRouter({
       ],
     },
     {
+      path: '/job-orders/print/:jo_number',
+      component: () => import('@/views/admin/job_orders/PrintJobOrder.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
       meta: { requiresAdmin: true },
@@ -81,15 +86,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-	const auth = useAuthStore()
+  const auth = useAuthStore()
 
-	if (to.meta.requiresAdmin && (!auth.isLoggedIn || !auth.isAdmin)) {
-		return '/'
-	}
+  if (to.meta.requiresAdmin && (!auth.isLoggedIn || !auth.isAdmin)) {
+    return '/'
+  }
 
-	if (to.meta.requiresAuth && !auth.isLoggedIn) {
-		return '/'
-	}
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return '/'
+  }
 })
 
 export default router

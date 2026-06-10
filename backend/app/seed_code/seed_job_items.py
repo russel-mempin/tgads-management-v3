@@ -1,9 +1,10 @@
 import csv, os
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import JobOrder, JobItem, ServiceType, ExtraType, SizeUnit, JobStatus, PaymentStatus, PaperSize
+from app.models import JobOrder, JobItem, ServiceType, ExtraType
 from app.utils.utils import to_float, to_int
 from datetime import datetime
+from app.enums import SizeUnit, JobStatus, PaperSize
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
