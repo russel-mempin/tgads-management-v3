@@ -20,8 +20,7 @@ const item = ref<JobItemCreate>({
     description: '',
     height: 0,
     width: 0,
-    size_unit: '',
-    paper_size: 'N/A',
+    size_unit: 'ft.',
     quantity: 1,
     job_status: 'For Layout',
     due_date: new Date(),
@@ -36,8 +35,8 @@ const item = ref<JobItemCreate>({
 })
 const serviceList = ref<ServiceType[]>([]);
 const extraList = ref<{ id: string, name: string, price: number }[]>([]);
-const paperSizes = ref(['N/A', 'Short', 'Long', 'A4', 'A3'])
 const jobStatuses = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled'])
+const unitSizes = ref(['ft.', 'in.', 'cm.', 'mm.', 'meter', 'N/A'])
 const previewItemId = computed(() => {
     if (!item.value.service_name) return 'Select a service type first'
     const abbreviation = serviceList.value.find(s => s.name === item.value.service_name)?.abbreviation ?? 'NULL'
@@ -101,8 +100,7 @@ const resetItem = () => {
         description: '',
         height: 0,
         width: 0,
-        size_unit: '',
-        paper_size: '',
+        size_unit: 'ft.',
         quantity: 1,
         job_status: '',
         due_date: new Date(),
@@ -161,13 +159,9 @@ const onSave = () => {
                 <InputNumber v-model="item.width" fluid />
             </div>
             <div class="flex flex-col">
-                <label class="font-semibold mb-1">Unit Size</label>
-                <InputText v-model="item.size_unit" fluid autocomplete="off" disabled />
+                <label class="font-semibold mb-1">Unit</label>
+                <Select v-model="item.size_unit" :options="unitSizes" fluid autocomplete="off" />
             </div>
-        </div>
-        <div class="flex flex-col mb-4">
-            <label class="font-semibold mb-1">Paper Size</label>
-            <Select v-model="item.paper_size" :options="paperSizes" fluid />
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="flex flex-col">

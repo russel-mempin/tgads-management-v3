@@ -85,7 +85,7 @@ class ExtraType(SQLModel, table=True):
 
 # ====================== JOB ORDERS =========================
 class JobOrderBase(SQLModel):
-    jo_number: str = Field()
+    jo_number: str = Field(unique=True, index=True)
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)

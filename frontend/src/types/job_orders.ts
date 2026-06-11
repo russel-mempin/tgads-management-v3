@@ -5,7 +5,6 @@ export interface JobItem {
   height: number
   width: number
   size_unit: string
-  paper_size: string
   quantity: number
   job_status: string
   due_date: Date
@@ -27,7 +26,6 @@ export interface JobItemCreate {
   height: number
   width: number
   size_unit: string
-  paper_size: string
   quantity: number
   job_status: string
   due_date: Date
@@ -49,7 +47,6 @@ export interface JobItemPayload {
   height: number
   width: number
   size_unit: string
-  paper_size: string
   quantity: number
   job_status: string
   due_date: string

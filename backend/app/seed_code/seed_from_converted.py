@@ -6,21 +6,36 @@ from datetime import datetime
 from app.enums import SizeUnit, JobStatus
 from app.utils.utils import to_float, to_int
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "seed_data", "feb2026.csv")
+
+CSV_FILES = [
+	os.path.join(BASE_DIR, "seed_data", "january2026.csv"),
+	os.path.join(BASE_DIR, "seed_data", "february2026.csv"),
+	os.path.join(BASE_DIR, "seed_data", "march2026.csv"),
+]
 
 UNIT_MAP = {
 	"in": SizeUnit.INCHES,
+	"in.": SizeUnit.INCHES,
 	"ft": SizeUnit.FEET,
+	"ft.": SizeUnit.FEET,
 	"cm": SizeUnit.CENTIMETER,
-    "mm": SizeUnit.MILLIMETER,
+	"cm.": SizeUnit.CENTIMETER,
+	"mm": SizeUnit.MILLIMETER,
+	"mm.": SizeUnit.MILLIMETER,
 	"n/a": SizeUnit.NA,
 }
-def seed_job_orders_from_converted_excel(file_path: str = CSV_PATH):
+
+def seed_job_orders_from_converted_excel():
+    service_instance_counter = {}    
+    for file_path in CSV_FILES:
+        print(f"Seeding {file_path}...")
+        _seed_file(file_path, service_instance_counter)
+
+def _seed_file(file_path: str, service_instance_counter: dict):
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
-        service_instance_counter = {}
-
         last_date = datetime.now()  # fallback if first row is empty
 
         for row in reader:
@@ -70,9 +85,9 @@ def seed_job_orders_from_converted_excel(file_path: str = CSV_PATH):
                 f"{joborder.jo_number}-{service_type.abbreviation}-{instance_num}"
             )
             
-            size_unit = UNIT_MAP.get(row["Unit"].strip().lower())
+            size_unit = UNIT_MAP.get(row["Unit"].strip().lower(), SizeUnit.NA)  # default to NA if empty
 
-            if not size_unit:
+            if size_unit is None:
                 print(f"Unknown unit: {row['Unit']}. Skipping row.")
                 continue
 
