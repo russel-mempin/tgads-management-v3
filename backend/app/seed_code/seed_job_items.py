@@ -4,7 +4,7 @@ from app.database import engine
 from app.models import JobOrder, JobItem, ServiceType, ExtraType
 from app.utils.utils import to_float, to_int
 from datetime import datetime
-from app.enums import SizeUnit, JobStatus, PaperSize
+from app.enums import SizeUnit, JobStatus
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
@@ -41,7 +41,6 @@ def seed_job_items_from_csv(file_path: str = CSV_PATH):
                 height=to_float(row["height"]),
                 width=to_float(row["width"]),
                 size_unit=SizeUnit(row["size_unit"]),
-                paper_size=PaperSize(row["paper_size"]),
                 quantity=to_int(row["quantity"]),
                 job_status=JobStatus(row["job_status"]),
                 due_date=datetime.fromisoformat(row["due_date"]),

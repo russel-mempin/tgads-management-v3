@@ -26,15 +26,20 @@ class JobStatus(str, Enum):
     FOR_PICKUP = "For Pickup"
     RELEASED = "Released"
     CANCELLED = "Cancelled"
-
-class PaperSize(str, Enum):
-    SHORT = "Short"
-    LONG = "Long"
-    A4 = "A4"
-    A3 = "A3"
-    NOT_APPLICABLE = "N/A"
+    
     
 class PaymentMethod(str, Enum):
     CASH = "Cash"
     GCASH = "GCash"
     CHEQUE = "Cheque"
+    
+class ExpenseCategory(str, Enum):
+    FOOD = "Food"
+    MAINTENANCE = "Maintenance"
+    UTILITIES = "Utilities"
+    TRANSPORTATION = "Transportation"
+    SUPPLIES = "Supplies"
+    PAYROLL = "Payroll"
+    BENEFITS = "Benefits"
+    PRODUCTION = "Production"
+    MISCELLANEOUS = "Miscellaneous"

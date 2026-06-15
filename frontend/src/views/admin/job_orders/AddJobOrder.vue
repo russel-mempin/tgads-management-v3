@@ -88,7 +88,6 @@ const buildPayload = () => {
 			height: item.height,
 			width: item.width,
 			size_unit: item.size_unit,
-			paper_size: item.paper_size,
 			quantity: item.quantity,
 			job_status: item.job_status,
 			due_date: new Date(item.due_date).toISOString(),

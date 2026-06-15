@@ -120,7 +120,7 @@ const filteredJobOrders = computed(() => {
 						<Column header="Dimensions">
 							<template #body="{ data }">
 								{{ (data.height && data.width) ? `${data.height} × ${data.width} ${data.size_unit}` :
-									(data.paper_size ?? '—') }}
+								'—' }}
 							</template>
 						</Column>
 						<Column field="quantity" header="Qty."></Column>

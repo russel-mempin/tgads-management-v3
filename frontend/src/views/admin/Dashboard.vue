@@ -22,10 +22,6 @@ const max = Math.max(...services.map(s => s.count))
 			<h2>Monitor your business performance at a glance. Filter by month and year to review sales, revenue,
 				service demand, and operational trends.</h2>
 		</div>
-		<div>
-			<p class="text-xs montserrat font-semibold text-gray-500 mb-1">VIEWING PERIOD</p>
-			<DatePicker v-model="dateFilter" showIcon view="month" dateFormat="MM yy" size="small" />
-		</div>
 	</section>
 	<section class="mt-4">
 		<div class="flex items-center gap-3 mb-4">

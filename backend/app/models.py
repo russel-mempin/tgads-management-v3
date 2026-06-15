@@ -3,7 +3,7 @@ from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
 from pydantic import EmailStr
-from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus
+from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, ExpenseCategory
 from app.utils.utils import compute_unit_price
 
 
@@ -248,3 +248,36 @@ class ClaimingHistory(ClaimingHistoryBase, table=True):
 
     job_order: "JobOrder" = Relationship(back_populates="claims")
     job_item: "JobItem" = Relationship(back_populates="claims")
+
+
+
+# ====================== EXPENSES =========================
+class ExpenseBase(SQLModel):
+    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    category: ExpenseCategory
+    amount: float = Field()
+    description: str = Field()
+    
+class Expense(ExpenseBase, table=True):
+    __tablename__ = "expenses"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    
+
+# ====================== MISC SALES =========================
+class MiscSaleBase(SQLModel):
+    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    description: str = Field()
+    amount: float = Field()
+    
+class MiscSale(MiscSaleBase, table=True):
+    __tablename__ = "misc_sales" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    
+    
+# ====================== CASH ANCHOR =========================
+class CashAnchor(SQLModel, table=True):
+    __tablename__ = "cash_anchor" # type: ignore
+    id: int = Field(default=1, primary_key=True)
+    year: int = Field()
+    month: int = Field()
+    beginning_balance: float = Field()

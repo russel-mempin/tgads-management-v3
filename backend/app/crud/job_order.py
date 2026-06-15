@@ -12,6 +12,7 @@ from app.models import (
 from fastapi import HTTPException
 from app.utils.utils import compute_unit_price
 from app.schemas.job_order import JobOrderCreate
+from app.enums import SizeUnit
 import uuid
 
 
@@ -34,7 +35,7 @@ def get_job_order(db: Session, jo_number: str) -> JobOrder:
     return job_order
 
 
-def get_price(db: Session, height: float, width: float, service_name: str) -> float:
+def get_price(db: Session, height: float, width: float, service_name: str, size_unit: SizeUnit) -> float:
     service = db.exec(
         select(ServiceType).where(ServiceType.name == service_name)
     ).first()
@@ -42,7 +43,7 @@ def get_price(db: Session, height: float, width: float, service_name: str) -> fl
     if service is None:
         raise HTTPException(status_code=404, detail="Service type not found")
 
-    return compute_unit_price(height, width, service)
+    return compute_unit_price(height, width, service, size_unit)
 
 
 def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UUID):
@@ -108,7 +109,6 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 height=item.height,
                 width=item.width,
                 size_unit=item.size_unit,
-                paper_size=item.paper_size,
                 quantity=item.quantity,
                 job_status=item.job_status,
                 due_date=item.due_date,
@@ -274,7 +274,6 @@ def update_job_order(db: Session, jo_number: str, data: JobOrderCreate, current_
                 height=item.height,
                 width=item.width,
                 size_unit=item.size_unit,
-                paper_size=item.paper_size,
                 quantity=item.quantity,
                 job_status=item.job_status,
                 due_date=item.due_date,

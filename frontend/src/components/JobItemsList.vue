@@ -86,10 +86,6 @@ const updateItem = (updated: JobItemCreate) => {
 							<p class="font-medium text-slate-800">{{ value.quantity }}</p>
 						</div>
 						<div class="flex-auto">
-							<p class="text-xs font-medium text-slate-500">PAPER SIZE</p>
-							<p class="text-slate-800">{{ value.paper_size }}</p>
-						</div>
-						<div class="flex-auto">
 							<p class="text-xs font-medium text-slate-500">EXTRA</p>
 							<p class="text-slate-800">{{ value.extra_service_name }} / {{
 								formatCurrency(value.extra_service_price) }}</p>

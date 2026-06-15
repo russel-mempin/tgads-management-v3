@@ -61,7 +61,6 @@ const addItem = (newItem: JobItemCreate) => {
 				{{ formatCurrency(data.unit_price) }}
 			</template>
 		</Column>
-		<Column header="Paper Size" field="paper_size" style="min-width: 120px" />
 		<Column header="Quantity" field="quantity" />
 
 		<Column header="Extra Type" field="extra_service_name" style="min-width: 150px" />
