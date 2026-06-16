@@ -20,6 +20,7 @@ class PaymentStatus(str, Enum):
     REFUNDED = "Refunded"
     
 class JobStatus(str, Enum):
+    PENDING = "Pending"
     FOR_LAYOUT = "For Layout"
     FOR_APPROVAL = "For Approval"
     FOR_PRINTING = "For Printing"

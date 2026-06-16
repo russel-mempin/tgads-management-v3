@@ -56,7 +56,7 @@ def _seed_file(file_path: str, service_instance_counter: dict):
             ).first()
             if not joborder:
                 joborder = JobOrder(
-                    jo_number=row["JO No."],
+                    jo_number=to_int(row["JO No."]),
                     customer_id=customer.id,
                     date_received=datetime.strptime(row["Date"], "%m/%d/%y") if row["Date"].strip() else last_date,
                 )
@@ -92,21 +92,38 @@ def _seed_file(file_path: str, service_instance_counter: dict):
                 print(f"Unknown unit: {row['Unit']}. Skipping row.")
                 continue
 
-            jobitem = JobItem(
-                jo_number=joborder.jo_number,
-                item_id=assembled_item_id,
-                job_order_id=joborder.id,
-                service_type_id=service_type.id,
-                extra_type_id=extra_type.id if extra_type else None,
-                description=row["Description"],
-                size_unit=size_unit,
-                job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus.RELEASED,
-                height=to_float(row["Height"]),
-                width=to_float(row["Width"]),
-                quantity=to_int(row["Qty"]),
-                discount=to_float(row["Discount"]),
-                extra_charge=to_float(row["Extra Charge"])
-            )
+            if file_path == "/home/Russel/Projects/tgads-management-v3/backend/app/seed_data/june2026.csv":
+                jobitem = JobItem(
+                    jo_number=joborder.jo_number,
+                    item_id=assembled_item_id,
+                    job_order_id=joborder.id,
+                    service_type_id=service_type.id,
+                    extra_type_id=extra_type.id if extra_type else None,
+                    description=row["Description"],
+                    size_unit=size_unit,
+                    job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus.PENDING,
+                    height=to_float(row["Height"]),
+                    width=to_float(row["Width"]),
+                    quantity=to_int(row["Qty"]),
+                    discount=to_float(row["Discount"]),
+                    extra_charge=to_float(row["Extra Charge"])
+                )
+            else: 
+                jobitem = JobItem(
+                    jo_number=joborder.jo_number,
+                    item_id=assembled_item_id,
+                    job_order_id=joborder.id,
+                    service_type_id=service_type.id,
+                    extra_type_id=extra_type.id if extra_type else None,
+                    description=row["Description"],
+                    size_unit=size_unit,
+                    job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus.RELEASED,
+                    height=to_float(row["Height"]),
+                    width=to_float(row["Width"]),
+                    quantity=to_int(row["Qty"]),
+                    discount=to_float(row["Discount"]),
+                    extra_charge=to_float(row["Extra Charge"])
+                )
             session.add(jobitem)
 
         session.commit()

@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 from app.models import (
     JobOrder,
     JobItem,
@@ -10,7 +10,7 @@ from app.models import (
     AuditLog,
 )
 from fastapi import HTTPException
-from app.utils.utils import compute_unit_price
+from app.utils.utils import compute_unit_price, sync_job_order_status
 from app.schemas.job_order import JobOrderCreate
 from app.enums import SizeUnit
 import uuid
@@ -22,10 +22,16 @@ def get_all_job_orders(
     query = select(JobOrder)
     if not include_archived:
         query = query.where(JobOrder.is_active == True)
-    return list(db.exec(query.offset(offset).limit(limit)).all())
+    return list(
+        db.exec(
+            query.order_by(col(JobOrder.jo_number).desc())
+            .offset(offset)
+            .limit(limit)
+        ).all()
+    )
 
 
-def get_job_order(db: Session, jo_number: str) -> JobOrder:
+def get_job_order(db: Session, jo_number: int) -> JobOrder:
     job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
     if not job_order:
         raise HTTPException(
@@ -150,6 +156,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.add(job_order)
         db.commit()
         db.refresh(job_order)
+        sync_job_order_status(db, job_order)
 
         audit = AuditLog(
             action=f"Created job order {job_order.jo_number}", user_id=current_user_id
@@ -163,7 +170,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         raise
 
 
-def archive_job_order(db: Session, jo_number: str, current_user_id: uuid.UUID):
+def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
     try:
         job_order = db.exec(
             select(JobOrder).where(JobOrder.jo_number == jo_number)
@@ -191,7 +198,7 @@ def archive_job_order(db: Session, jo_number: str, current_user_id: uuid.UUID):
         raise
 
 
-def update_job_order(db: Session, jo_number: str, data: JobOrderCreate, current_user_id: uuid.UUID):
+def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_user_id: uuid.UUID):
     try:
         job_order = db.exec(
             select(JobOrder).where(JobOrder.jo_number == jo_number)
@@ -319,6 +326,7 @@ def update_job_order(db: Session, jo_number: str, data: JobOrderCreate, current_
                 
         db.commit()
         db.refresh(job_order)
+        sync_job_order_status(db, job_order)
 
         audit = AuditLog(
             action=f"Updated job order {job_order.jo_number}", user_id=current_user_id

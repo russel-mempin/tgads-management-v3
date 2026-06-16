@@ -6,17 +6,18 @@ export async function getAllJobOrders() {
 	return res.data
 }
 
-export async function getJobOrder(jo_number: string) {
+export async function getJobOrder(jo_number: number) {
 	const res = await http.get(`/job-orders/${jo_number}`)
 	return res.data
 }
 
-export async function computePrice(height: number, width: number, service_name: string) {
+export async function computePrice(height: number, width: number, service_name: string, size_unit: string) {
 	const res = await http.get('/job-orders/compute-unit-price', {
 		params: {
 			height,
 			width,
 			service_name,
+			size_unit,
     	},
 	})
 	return res.data
@@ -27,12 +28,12 @@ export async function createJobOrder(payload: JobOrderCreate) {
 	return res.data
 }
 
-export async function archiveJobOrder(jo_number: string) {
+export async function archiveJobOrder(jo_number: number) {
 	const res = await http.patch(`/job-orders/${jo_number}/archive`)
 	return res.data
 }
 
-export async function editJobOrder(jo_number: string, payload: JobOrderCreate) {
+export async function editJobOrder(jo_number: number, payload: JobOrderCreate) {
 	const res = await http.put(`/job-orders/${jo_number}`, payload)
 	return res.data
 }

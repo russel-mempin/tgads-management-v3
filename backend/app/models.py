@@ -85,10 +85,12 @@ class ExtraType(SQLModel, table=True):
 
 # ====================== JOB ORDERS =========================
 class JobOrderBase(SQLModel):
-    jo_number: str = Field(unique=True, index=True)
+    jo_number: int = Field(unique=True, index=True)
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
+    payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID)
+    overall_job_status: JobStatus = Field(default=JobStatus.PENDING)
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
@@ -120,13 +122,30 @@ class JobOrder(JobOrderBase, table=True):
         return sum(p.amount for p in self.payments)
 
     @property
-    def payment_status(self) -> PaymentStatus:
+    def computed_payment_status(self) -> PaymentStatus:
+        if self.override_payment_status:
+            return self.override_payment_status
         if self.total_paid <= 0:
             return PaymentStatus.UNPAID
         elif self.total_paid >= self.total_due:
             return PaymentStatus.FULLY_PAID
         else:
             return PaymentStatus.PARTIAL
+        
+    @property
+    def computed_overall_job_status(self) -> JobStatus:
+        if not self.job_items:
+            return JobStatus.FOR_LAYOUT
+
+        priorities = {
+            JobStatus.CANCELLED: 0,
+            JobStatus.RELEASED: 1,
+            JobStatus.FOR_PICKUP: 2,
+            JobStatus.FOR_PRINTING: 3,
+            JobStatus.FOR_APPROVAL: 4,
+            JobStatus.FOR_LAYOUT: 5,
+        }
+        return max(self.job_items, key=lambda item: priorities.get(item.job_status, -1)).job_status
         
     @property
     def customer_name(self) -> str:
@@ -143,7 +162,7 @@ class JobOrder(JobOrderBase, table=True):
 
 # ====================== JOB ITEMS =========================
 class JobItemBase(SQLModel):
-    jo_number: str = Field()
+    jo_number: int = Field()
     item_id: str = Field(unique=True, index=True)
     description: str | None = Field(default=None)
     height: float = Field(default=0.0)
@@ -201,8 +220,8 @@ class JobItem(JobItemBase, table=True):
     
     @property
     def subtotal(self) -> float:
-        extra = self.extra_type.price if self.extra_type else 0.0
-        return (self.unit_price * self.quantity) + extra - self.discount
+        extra_type_price = self.extra_type.price if self.extra_type else 0.0
+        return ((self.unit_price + self.extra_charge) * self.quantity) + extra_type_price - self.discount
     
     
 # ====================== PAYMENTS =========================

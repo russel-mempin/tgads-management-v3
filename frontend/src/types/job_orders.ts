@@ -1,5 +1,5 @@
 export interface JobItem {
-  jo_number: string
+  jo_number: number
   item_id: string
   description: string
   height: number
@@ -20,7 +20,7 @@ export interface JobItem {
 }
 
 export interface JobItemCreate {
-  jo_number: string
+  jo_number: number
   item_id: string
   description: string
   height: number
@@ -41,7 +41,7 @@ export interface JobItemCreate {
 }
 
 export interface JobItemPayload {
-  jo_number: string
+  jo_number: number
   item_id: string
   description: string
   height: number
@@ -84,7 +84,7 @@ export interface ClaimCreate {
 
 export interface JobOrder {
   id: string
-  jo_number: string
+  jo_number: number
   date_received: string
   override_payment_status: boolean
   job_items: JobItem[]
@@ -99,7 +99,7 @@ export interface JobOrder {
 }
 
 export interface JobOrderCreate {
-  jo_number: string
+  jo_number: number
   date_received: string
   override_payment_status?: string
   customer_id?: string

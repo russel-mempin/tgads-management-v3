@@ -59,7 +59,8 @@ const STATUS_PRIORITY: Record<string, number> = {
   'For Pickup': 2,
   'For Printing': 3,
   'For Approval': 4,
-  'For Layout': 5, // highest priority = needs most attention
+  'For Layout': 5,
+  'Pending': 6,
 }
 
 export const getOverallJobStatus = (jobItems: JobItem[]): string => {
@@ -69,5 +70,5 @@ export const getOverallJobStatus = (jobItems: JobItem[]): string => {
     const prevPriority = STATUS_PRIORITY[prev] ?? -1
     const currPriority = STATUS_PRIORITY[curr.job_status] ?? -1
     return currPriority > prevPriority ? curr.job_status : prev
-  }, '' as string)  // <-- change this line
+  }, '' as string)
 }
