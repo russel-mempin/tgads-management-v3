@@ -1,4 +1,5 @@
 from sqlmodel import Session, select, col
+from sqlalchemy import or_, cast, String, func
 from app.models import (
     JobOrder,
     JobItem,
@@ -12,23 +13,77 @@ from app.models import (
 from fastapi import HTTPException
 from app.utils.utils import compute_unit_price
 from app.schemas.job_order import JobOrderCreate
-from app.enums import SizeUnit
+from app.enums import SizeUnit, PaymentStatus, JobStatus
 import uuid
 
 
 def get_all_job_orders(
-    db: Session, offset: int = 0, limit: int = 100, include_archived: bool = False
+    db: Session,
+    offset: int = 0,
+    limit: int = 100,
+    include_archived: bool = False,
+    payment_status: PaymentStatus | None = None,
+    job_status: JobStatus | None = None,
+    search: str | None = None,
 ) -> list[JobOrder]:
-    query = select(JobOrder)
+    query = select(JobOrder).join(
+        Customer, col(JobOrder.customer_id) == col(Customer.id)
+    )
+
     if not include_archived:
         query = query.where(JobOrder.is_active == True)
+
+    if payment_status:
+        query = query.where(JobOrder.payment_status == payment_status)
+
+    if job_status:
+        query = query.where(JobOrder.overall_job_status == job_status)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                col(Customer.name).ilike(search_term),
+                cast(JobOrder.jo_number, String).ilike(search_term),
+            )
+        )
+
     return list(
         db.exec(
-            query.order_by(col(JobOrder.jo_number).desc())
-            .offset(offset)
-            .limit(limit)
+            query.order_by(col(JobOrder.jo_number).desc()).offset(offset).limit(limit)
         ).all()
     )
+
+
+def get_job_order_count(
+    db: Session,
+    include_archived: bool = False,
+    payment_status: PaymentStatus | None = None,
+    job_status: JobStatus | None = None,
+    search: str | None = None,
+) -> int:
+    query = (
+        select(func.count())
+        .select_from(JobOrder)
+        .join(Customer, col(JobOrder.customer_id) == col(Customer.id))
+    )
+
+    if not include_archived:
+        query = query.where(JobOrder.is_active == True)
+    if payment_status:
+        query = query.where(JobOrder.payment_status == payment_status)
+    if job_status:
+        query = query.where(JobOrder.overall_job_status == job_status)
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                col(Customer.name).ilike(search_term),
+                cast(JobOrder.jo_number, String).ilike(search_term),
+            )
+        )
+
+    return db.exec(query).one()
 
 
 def get_job_order(db: Session, jo_number: int) -> JobOrder:
@@ -41,7 +96,9 @@ def get_job_order(db: Session, jo_number: int) -> JobOrder:
     return job_order
 
 
-def get_price(db: Session, height: float, width: float, service_name: str, size_unit: SizeUnit) -> float:
+def get_price(
+    db: Session, height: float, width: float, service_name: str, size_unit: SizeUnit
+) -> float:
     service = db.exec(
         select(ServiceType).where(ServiceType.name == service_name)
     ).first()
@@ -197,7 +254,9 @@ def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
         raise
 
 
-def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_user_id: uuid.UUID):
+def update_job_order(
+    db: Session, jo_number: int, data: JobOrderCreate, current_user_id: uuid.UUID
+):
     try:
         job_order = db.exec(
             select(JobOrder).where(JobOrder.jo_number == jo_number)
@@ -208,7 +267,7 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
         # Update basic job order fields
         job_order.date_received = data.date_received
         job_order.override_payment_status = data.override_payment_status
-        
+
         # If updated customer is new, there's name and other info. If old, only ID.
         if data.customer_id:
             customer = db.exec(
@@ -223,7 +282,7 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
                     data.customer_name,
                     data.customer_address,
                     data.customer_contact_no,
-                    data.customer_email
+                    data.customer_email,
                 ]
             ):
                 raise HTTPException(
@@ -242,7 +301,7 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
             )
             db.add(customer)
             db.flush()
-        
+
         db.add(job_order)
         db.flush()
 
@@ -311,7 +370,7 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
                     claimed_item_id=job_item.item_id,
                 )
                 db.add(claim_item)
-                
+
         # 4. Insert payments
         if data.payments:
             for payment in data.payments:
@@ -319,10 +378,10 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
                     date_received=payment.date_received,
                     method=payment.method,
                     amount=payment.amount,
-                    job_order_id=job_order.id
+                    job_order_id=job_order.id,
                 )
                 db.add(paymentItem)
-                
+
         db.commit()
         db.refresh(job_order)
 

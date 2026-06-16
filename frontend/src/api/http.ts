@@ -7,6 +7,7 @@ const http = axios.create({
 })
 
 http.interceptors.request.use((config) => {
+  console.log('INTERCEPTOR HIT:', config.baseURL, config.url)
   const auth = useAuthStore()
   const token = auth.user?.token
 

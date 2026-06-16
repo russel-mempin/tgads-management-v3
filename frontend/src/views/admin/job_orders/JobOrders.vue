@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router'
 import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
 import { Plus } from '@lucide/vue';
-import { getAllJobOrders } from '@/api/job_orders'
+import { getAllJobOrders, getJobOrderCount } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
-import { formatCurrency, formatDate, mapSeverity, getOverallJobStatus } from '@/utils/formatters';
+import { formatCurrency, formatDate, mapSeverity } from '@/utils/formatters';
 
 const job_orders = ref<JobOrder[]>([])
 const router = useRouter()
-const fetchServices = async () => {
-	job_orders.value = await getAllJobOrders()
-	console.log("Fetch successful.")
-}
-onMounted(async () => {
-	fetchServices()
-});
+const totalRecords = ref(0)
+const loading = ref(false)
+const rows = ref(20)
+const currentOffset = ref(0)
 
 const joNumberSearch = ref('');
 const jobStatus = ref('');
@@ -24,25 +21,52 @@ const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', '
 const jobStatusOptions = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
 const expandedRows = ref({});
 
+const fetchServices = async () => {
+	loading.value = true
+	const filterParams = {
+		offset: currentOffset.value,
+		limit: rows.value,
+		payment_status: paymentStatus.value || undefined,
+		job_status: jobStatus.value || undefined,
+		search: joNumberSearch.value || undefined,
+	}
+	const [data, count] = await Promise.all([
+		getAllJobOrders(filterParams),
+		getJobOrderCount(filterParams)
+	])
+	job_orders.value = data
+	totalRecords.value = count
+	loading.value = false
+}
+
+const onPage = (event: any) => {
+	currentOffset.value = event.first
+	rows.value = event.rows
+	fetchServices()
+}
+
+let debounceTimer: ReturnType<typeof setTimeout>
+watch([joNumberSearch, jobStatus, paymentStatus], () => {
+	clearTimeout(debounceTimer)
+	debounceTimer = setTimeout(() => {
+		currentOffset.value = 0
+		fetchServices()
+	}, 300)
+})
+
+onMounted(() => fetchServices())
+
+const clearFilters = () => {
+	joNumberSearch.value = ''
+	jobStatus.value = ''
+	paymentStatus.value = ''
+	currentOffset.value = 0
+	fetchServices()
+}
+
 const printJobOrder = (jo_number: string) => {
 	window.open(`/job-orders/print/${jo_number}`, '_blank')
 }
-
-const filteredJobOrders = computed(() => {
-	return job_orders.value.filter(jo => {
-		const matchesSearch = joNumberSearch.value === '' ||
-			jo.customer_name.toLowerCase().includes(joNumberSearch.value.toLowerCase()) ||
-			jo.jo_number.toString().includes(joNumberSearch.value)
-
-		const matchesJobStatus = jobStatus.value === '' ||
-			jo.overall_job_status === jobStatus.value
-
-		const matchesPaymentStatus = paymentStatus.value === '' ||
-			jo.payment_status === paymentStatus.value
-
-		return matchesSearch && matchesJobStatus && matchesPaymentStatus
-	})
-})
 </script>
 
 <template>
@@ -61,13 +85,14 @@ const filteredJobOrders = computed(() => {
 	</section>
 	<section class="my-2 flex gap-2">
 		<InputText class="flex-1" v-model="joNumberSearch" placeholder="Search by customer name or JO Number..." />
-		<Select class="w-50" v-model="jobStatus" :options="jobStatusOptions" placeholder="Job Status" />
-		<Select class="w-50" v-model="paymentStatus" :options="paymentStatusOptions" placeholder="Payment Status" />
-		<Button label="Clear Filters" variant="text" @click="joNumberSearch = ''; jobStatus = ''; paymentStatus = ''" />
+		<Select class="w-50" v-model="jobStatus" :options="jobStatusOptions" placeholder="Job Status" showClear />
+		<Select class="w-50" v-model="paymentStatus" :options="paymentStatusOptions" placeholder="Payment Status" showClear />
+		<Button label="Clear Filters" variant="text" @click="clearFilters" />
 	</section>
 	<section class="flex-1 h-full rounded-md border border-slate-300 overflow-hidden bg-white">
 		<DataTable scrollable scroll-height="flex" :pt="{ root: 'h-full' }" v-model:expandedRows="expandedRows"
-			:value="filteredJobOrders" dataKey="id" tableStyle="min-width: 60rem;" paginator :rows="20"
+			:lazy="true" :rows="rows" :totalRecords="totalRecords" :loading="loading" :first="currentOffset"
+			@page="onPage" :value="job_orders" dataKey="id" tableStyle="min-width: 60rem;" paginator
 			:rowsPerPageOptions="[5, 10, 20, 50]">
 			<Column expander style="width: 5rem" />
 			<Column field="jo_number" header="JO Number"></Column>
