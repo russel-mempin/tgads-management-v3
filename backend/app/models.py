@@ -90,8 +90,9 @@ class JobOrderBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
-    payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID)
-    overall_job_status: JobStatus = Field(default=JobStatus.PENDING)
+    payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
+    overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
+
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
@@ -113,7 +114,7 @@ class JobOrder(JobOrderBase, table=True):
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    
+
     @property
     def total_due(self) -> float:
         return sum(item.subtotal for item in self.job_items)
@@ -128,11 +129,13 @@ class JobOrder(JobOrderBase, table=True):
             return self.override_payment_status
         if self.total_paid <= 0:
             return PaymentStatus.UNPAID
-        elif self.total_paid >= self.total_due:
+        elif self.total_paid == self.total_due:
             return PaymentStatus.FULLY_PAID
+        elif self.total_paid > self.total_due:
+            return PaymentStatus.OVERCHARGED
         else:
             return PaymentStatus.PARTIAL
-        
+
     @property
     def computed_overall_job_status(self) -> JobStatus:
         if not self.job_items:
@@ -147,20 +150,24 @@ class JobOrder(JobOrderBase, table=True):
             JobStatus.FOR_LAYOUT: 5,
         }
         return max(self.job_items, key=lambda item: priorities.get(item.job_status, -1)).job_status
-        
+
+    def sync_computed_fields(self):
+        self.payment_status = self.computed_payment_status
+        self.overall_job_status = self.computed_overall_job_status
+
     @property
     def customer_name(self) -> str:
         return self.customer.name
-    
+
     @property
     def customer_email(self) -> str:
         return self.customer.email
-    
+
     @property
     def customer_contact_no(self) -> str:
         return self.customer.contact_no
-
-
+    
+    
 # ====================== JOB ITEMS =========================
 class JobItemBase(SQLModel):
     jo_number: int = Field()

@@ -6,10 +6,13 @@ from app.enums import SizeUnit
 if TYPE_CHECKING:
     from app.models import ServiceType, JobOrder
 
-def to_float(v: str) -> float:
+def to_float(value: str) -> float:
+    if not value:
+        return 0.0
+    cleaned = value.replace("₱", "").replace(",", "").strip()
     try:
-        return float(v)
-    except (TypeError, ValueError):
+        return float(cleaned)
+    except ValueError:
         return 0.0
     
 def to_int(v: str) -> int:
@@ -49,9 +52,3 @@ def compute_unit_price(height: float, width: float, service_type: ServiceType, s
 		return 0.0
 
 	return areas[unit_key] * service_type.price
-
-
-def sync_job_order_status(db: Session, job_order: JobOrder) -> None:
-    job_order.payment_status = job_order.computed_payment_status
-    job_order.overall_job_status = job_order.computed_overall_job_status
-    db.add(job_order)

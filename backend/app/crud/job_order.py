@@ -10,7 +10,7 @@ from app.models import (
     AuditLog,
 )
 from fastapi import HTTPException
-from app.utils.utils import compute_unit_price, sync_job_order_status
+from app.utils.utils import compute_unit_price
 from app.schemas.job_order import JobOrderCreate
 from app.enums import SizeUnit
 import uuid
@@ -156,7 +156,6 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.add(job_order)
         db.commit()
         db.refresh(job_order)
-        sync_job_order_status(db, job_order)
 
         audit = AuditLog(
             action=f"Created job order {job_order.jo_number}", user_id=current_user_id
@@ -326,7 +325,6 @@ def update_job_order(db: Session, jo_number: int, data: JobOrderCreate, current_
                 
         db.commit()
         db.refresh(job_order)
-        sync_job_order_status(db, job_order)
 
         audit = AuditLog(
             action=f"Updated job order {job_order.jo_number}", user_id=current_user_id

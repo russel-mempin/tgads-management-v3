@@ -87,6 +87,7 @@ export interface JobOrder {
   jo_number: number
   date_received: string
   override_payment_status: boolean
+  overall_job_status: string
   job_items: JobItem[]
   payments: Payment[]
   claims: ClaimingHistory[]

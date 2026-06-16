@@ -18,6 +18,7 @@ class PaymentStatus(str, Enum):
     FULLY_PAID = "Fully Paid"
     CREDIT = "Credit"
     REFUNDED = "Refunded"
+    OVERCHARGED = "Overcharged"
     
 class JobStatus(str, Enum):
     PENDING = "Pending"

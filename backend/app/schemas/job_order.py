@@ -1,4 +1,5 @@
-from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase, PaymentStatus
+from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase
+from app.enums import JobStatus, PaymentStatus
 from sqlmodel import Field
 import uuid
 from typing import List, Optional
@@ -36,7 +37,6 @@ class JobOrderPublic(JobOrderBase):
     job_items: list[JobItemPublic] = Field(default_factory=list)
     payments: list[PaymentPublic] = Field(default_factory=list)
     claims: list[ClaimPublic] = Field(default_factory=list)
-    payment_status: PaymentStatus
     total_due: float
     total_paid: float
     customer_name: str

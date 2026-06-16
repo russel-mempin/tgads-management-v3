@@ -32,10 +32,10 @@ const filteredJobOrders = computed(() => {
 	return job_orders.value.filter(jo => {
 		const matchesSearch = joNumberSearch.value === '' ||
 			jo.customer_name.toLowerCase().includes(joNumberSearch.value.toLowerCase()) ||
-			jo.jo_number.toLowerCase().includes(joNumberSearch.value.toLowerCase())
+			jo.jo_number.toString().includes(joNumberSearch.value)
 
 		const matchesJobStatus = jobStatus.value === '' ||
-			getOverallJobStatus(jo.job_items) === jobStatus.value
+			jo.overall_job_status === jobStatus.value
 
 		const matchesPaymentStatus = paymentStatus.value === '' ||
 			jo.payment_status === paymentStatus.value
@@ -83,10 +83,9 @@ const filteredJobOrders = computed(() => {
 					</Tag>
 				</template>
 			</Column>
-			<Column field="job_status" header="Overall Job Status">
+			<Column field="overall_job_status" header="Overall Job Status">
 				<template #body="{ data }">
-					<Tag :value="getOverallJobStatus(data.job_items)"
-						:severity="mapSeverity(getOverallJobStatus(data.job_items))" />
+					<Tag :value="data.overall_job_status" :severity="mapSeverity(data.overall_job_status)" />
 				</template>
 			</Column>
 			<Column header="Balance">
@@ -120,7 +119,7 @@ const filteredJobOrders = computed(() => {
 						<Column header="Dimensions">
 							<template #body="{ data }">
 								{{ (data.height && data.width) ? `${data.height} × ${data.width} ${data.size_unit}` :
-								'—' }}
+									'—' }}
 							</template>
 						</Column>
 						<Column field="unit_price" header="Unit Price">

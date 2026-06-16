@@ -35,6 +35,7 @@ def _seed_file(file_path: str, service_instance_counter: dict):
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
         last_date = datetime.now()  # fallback if first row is empty
+        touched_job_orders = set()
 
         for row in reader:
             if row["Date"].strip():
@@ -60,6 +61,8 @@ def _seed_file(file_path: str, service_instance_counter: dict):
                 session.add(joborder)
                 session.commit()
                 session.flush()
+
+            touched_job_orders.add(joborder.id)
 
             service_type = session.exec(
                 select(ServiceType).where(ServiceType.name == row["Service"])
@@ -88,39 +91,31 @@ def _seed_file(file_path: str, service_instance_counter: dict):
             if size_unit is None:
                 print(f"Unknown unit: {row['Unit']}. Skipping row.")
                 continue
-
-            if file_path == "/home/Russel/Projects/tgads-management-v3/backend/app/seed_data/june2026.csv":
-                jobitem = JobItem(
-                    jo_number=joborder.jo_number,
-                    item_id=assembled_item_id,
-                    job_order_id=joborder.id,
-                    service_type_id=service_type.id,
-                    extra_type_id=extra_type.id if extra_type else None,
-                    description=row["Description"],
-                    size_unit=size_unit,
-                    job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus.PENDING,
-                    height=to_float(row["Height"]),
-                    width=to_float(row["Width"]),
-                    quantity=to_int(row["Qty"]),
-                    discount=to_float(row["Discount"]),
-                    extra_charge=to_float(row["Extra Charge"])
-                )
-            else: 
-                jobitem = JobItem(
-                    jo_number=joborder.jo_number,
-                    item_id=assembled_item_id,
-                    job_order_id=joborder.id,
-                    service_type_id=service_type.id,
-                    extra_type_id=extra_type.id if extra_type else None,
-                    description=row["Description"],
-                    size_unit=size_unit,
-                    job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus.RELEASED,
-                    height=to_float(row["Height"]),
-                    width=to_float(row["Width"]),
-                    quantity=to_int(row["Qty"]),
-                    discount=to_float(row["Discount"]),
-                    extra_charge=to_float(row["Extra Charge"])
-                )
+            
+            jobitem = JobItem(
+                jo_number=joborder.jo_number,
+                item_id=assembled_item_id,
+                job_order_id=joborder.id,
+                service_type_id=service_type.id,
+                extra_type_id=extra_type.id if extra_type else None,
+                description=row["Description"],
+                size_unit=size_unit,
+                job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus(row["Job Status"]),
+                height=to_float(row["Height"]),
+                width=to_float(row["Width"]),
+                quantity=to_int(row["Qty"]),
+                discount=to_float(row["Discount"]),
+                extra_charge=to_float(row["Extra Charge"])
+            )
+            
             session.add(jobitem)
+
+        session.commit()
+        
+        for jo_id in touched_job_orders:
+            job_order = session.get(JobOrder, jo_id)
+            if job_order:
+                job_order.sync_computed_fields()
+                session.add(job_order)
 
         session.commit()
