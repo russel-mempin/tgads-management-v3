@@ -5,6 +5,7 @@ import uuid
 from pydantic import EmailStr
 from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, ExpenseCategory
 from app.utils.utils import compute_unit_price
+from decimal import Decimal, ROUND_HALF_UP
 
 
 # ====================== AUDIT LOGS =========================
@@ -196,7 +197,8 @@ class JobItem(JobItemBase, table=True):
 
     @property
     def unit_price(self) -> float:
-        return compute_unit_price(self.height, self.width, self.service_type, self.size_unit)
+        price = compute_unit_price(self.height, self.width, self.service_type, self.size_unit)
+        return float(Decimal(str(price)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
     @property
     def total_claimed(self) -> int:

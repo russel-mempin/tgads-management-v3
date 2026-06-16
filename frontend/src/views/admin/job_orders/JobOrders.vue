@@ -123,6 +123,11 @@ const filteredJobOrders = computed(() => {
 								'—' }}
 							</template>
 						</Column>
+						<Column field="unit_price" header="Unit Price">
+							<template #body="slotProps">
+								{{ formatCurrency(slotProps.data.unit_price) }}
+							</template>
+						</Column>
 						<Column field="quantity" header="Qty."></Column>
 						<Column field="due_date" header="Due Date">
 							<template #body="slotProps">
@@ -135,15 +140,15 @@ const filteredJobOrders = computed(() => {
 									:severity="mapSeverity(slotProps.data.job_status)"></Tag>
 							</template>
 						</Column>
-						<Column field="unit_price" header="Unit Price">
-							<template #body="slotProps">
-								{{ formatCurrency(slotProps.data.unit_price) }}
-							</template>
-						</Column>
 						<Column field="extra_service_name" header="Extra Service"></Column>
 						<Column field="discount" header="Discount">
 							<template #body="slotProps">
 								{{ formatCurrency(slotProps.data.discount) }}
+							</template>
+						</Column>
+						<Column field="extra_charge" header="Extra Charge">
+							<template #body="slotProps">
+								{{ formatCurrency(slotProps.data.extra_charge) }}
 							</template>
 						</Column>
 						<Column field="subtotal" header="Subtotal">

@@ -10,9 +10,6 @@ from app.utils.utils import to_float, to_int
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 CSV_FILES = [
-	os.path.join(BASE_DIR, "seed_data", "january2026.csv"),
-	os.path.join(BASE_DIR, "seed_data", "february2026.csv"),
-	os.path.join(BASE_DIR, "seed_data", "march2026.csv"),
 	os.path.join(BASE_DIR, "seed_data", "june2026.csv"),
 ]
 
