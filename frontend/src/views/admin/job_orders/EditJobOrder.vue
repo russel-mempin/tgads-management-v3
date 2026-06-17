@@ -31,7 +31,7 @@ const payments = ref<PaymentCreate[]>([]);
 const claims = ref<ClaimCreate[]>([]);
 onMounted(async () => {
 	const [orderData, names] = await Promise.all([
-		getJobOrder(route.params.jo_number as string),
+		getJobOrder(Number(route.params.jo_number)),
 		getCustomerNames()
 	])
 	customerList.value = names
@@ -78,7 +78,7 @@ watch(customerName, async (name) => {
 
 const buildPayload = () => {
 	return {
-		jo_number: String(jo_number.value),
+		jo_number: jo_number.value,
 		date_received: date_received.value.toISOString(),
 		...(isNewCustomer.value ? {
 			customer_name: customerInfo.value.name,
@@ -89,7 +89,7 @@ const buildPayload = () => {
 			customer_id: customerInfo.value.id,
 		}),
 		job_items: items.value.map(item => ({
-			jo_number: String(jo_number.value),
+			jo_number: jo_number.value,
 			item_id: item.item_id,
 			description: item.description,
 			height: item.height,
@@ -124,7 +124,7 @@ const buildPayload = () => {
 const handleSave = async () => {
 	try {
 		const payload = buildPayload()
-		await editJobOrder(route.params.jo_number as string, payload)
+		await editJobOrder(Number(route.params.jo_number), payload)
 		toast.add({ severity: 'success', summary: 'Saved', detail: 'Job order updated successfully.', life: 3000 })
 		router.push('/admin/job-orders')
 	} catch (error: any) {

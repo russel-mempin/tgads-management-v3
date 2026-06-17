@@ -66,7 +66,7 @@ const claims = ref<ClaimCreate[]>([]);
 
 const buildPayload = () => {
 	const payload = {
-		jo_number: String(jo_number.value),
+		jo_number: jo_number.value,
 
 		date_received: date_received.value.toISOString(),
 
@@ -82,7 +82,7 @@ const buildPayload = () => {
 			}),
 
 		job_items: items.value.map(item => ({
-			jo_number: String(jo_number.value),
+			jo_number: jo_number.value,
 			item_id: item.item_id,
 			description: item.description,
 			height: item.height,

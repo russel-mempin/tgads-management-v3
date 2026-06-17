@@ -9,7 +9,7 @@ const route = useRoute()
 const jobOrder = ref<JobOrder>()
 
 onMounted(async () => {
-	jobOrder.value = await getJobOrder(route.params.jo_number as string)
+	jobOrder.value = await getJobOrder(Number(route.params.jo_number))
 	await nextTick()
 	window.print()
 })

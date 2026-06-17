@@ -17,8 +17,8 @@ const currentOffset = ref(0)
 const joNumberSearch = ref('');
 const jobStatus = ref('');
 const paymentStatus = ref('');
-const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', 'Refunded']);
-const jobStatusOptions = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
+const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', 'Refunded', 'Overcharged']);
+const jobStatusOptions = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
 const expandedRows = ref({});
 
 const fetchServices = async () => {

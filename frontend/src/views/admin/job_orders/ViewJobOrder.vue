@@ -18,10 +18,10 @@ const confirm = useConfirm();
 const toast = useToast();
 const jobOrder = ref<JobOrder>();
 onMounted(async () => {
-	jobOrder.value = await getJobOrder(route.params.jo_number as string)
+	jobOrder.value = await getJobOrder(Number(route.params.jo_number))
 });
 
-const confirmDelete = (jo_number: string) => {
+const confirmDelete = (jo_number: number) => {
 	confirm.require({
 		message: 'Do you want to delete this job order?',
 		header: 'Danger Zone',
@@ -65,7 +65,7 @@ const confirmDelete = (jo_number: string) => {
 				</template>
 			</Button>
 			<Button severity="danger" class="w-26" label="Delete"
-				@click="confirmDelete(route.params.jo_number as string)">
+				@click="confirmDelete(Number(route.params.jo_number))">
 				<template #icon>
 					<Trash />
 				</template>

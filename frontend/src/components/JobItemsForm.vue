@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 const item = ref<JobItemCreate>({
-    jo_number: '',
+    jo_number: props.joNumber,
     item_id: '',
     description: '',
     height: 0,
@@ -74,7 +74,7 @@ watch(
     }),
     async ({ height, width, service_name }) => {
         if (height > 0 && width > 0 && service_name) {
-            item.value.unit_price = await computePrice(height, width, service_name)
+            item.value.unit_price = await computePrice(height, width, service_name, item.value.size_unit)
         }
     }
 )
@@ -95,7 +95,7 @@ const emit = defineEmits<{
 
 const resetItem = () => {
     item.value = {
-        jo_number: '',
+        jo_number: props.joNumber,
         item_id: '',
         description: '',
         height: 0,
