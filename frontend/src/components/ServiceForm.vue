@@ -24,14 +24,12 @@ const service = ref<ServiceCreate>({
 	price: 1,
 	unit: 'sqft',
 	is_area_based: true,
-	required_measurement_unit: 'in.'
 });
 
 const units = ref(['sqft', 'sqin', 'sqm']);
-const sizeUnits = ref(['in.', 'ft.', 'cm.']);
 const onAbbreviationInput = (e: Event) => {
-    const input = e.target as HTMLInputElement
-    service.value.abbreviation = input.value.toUpperCase().replace(/\s/g, '')
+	const input = e.target as HTMLInputElement
+	service.value.abbreviation = input.value.toUpperCase().replace(/\s/g, '')
 }
 
 const resetData = () => {
@@ -41,33 +39,32 @@ const resetData = () => {
 		price: 1,
 		unit: 'sqft',
 		is_area_based: true,
-		required_measurement_unit: 'in.'
 	}
 }
 
 watch(() => props.editData, (newData) => {
-    if (newData) {
-        service.value = { ...newData }
-    } else {
-        resetData()
-    }
+	if (newData) {
+		service.value = { ...newData }
+	} else {
+		resetData()
+	}
 })
 
 const onSave = async () => {
-    try {
-        if (props.editData) {
-            await editService(props.editData.id, service.value)
-        } else {
-            await createService(service.value)
-        }
-        toast.add({ severity: 'success', summary: 'Saved', detail: 'Service saved successfully.', life: 3000 })
-        emit('saved')
+	try {
+		if (props.editData) {
+			await editService(props.editData.id, service.value)
+		} else {
+			await createService(service.value)
+		}
+		toast.add({ severity: 'success', summary: 'Saved', detail: 'Service saved successfully.', life: 3000 })
+		emit('saved')
 		emit('update:isVisible', false)
-        resetData()
-    } catch (error: any) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save service.', life: 3000 })
-        console.error(error.response?.data || error)
-    }
+		resetData()
+	} catch (error: any) {
+		toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save service.', life: 3000 })
+		console.error(error.response?.data || error)
+	}
 }
 </script>
 <template>
@@ -91,22 +88,16 @@ const onSave = async () => {
 				<Select v-model="service.unit" :options="units" />
 			</div>
 		</div>
-		<div class="grid grid-cols-2 gap-4">
-			<div class="flex flex-col mb-4">
-				<label class="font-semibold mb-1">Is Area Based</label>
-				<div class="pill-toggle" :class="service.is_area_based ? 'on' : 'off'"
-					@click="service.is_area_based = !service.is_area_based">
-					<div class="pill-icon" :class="{ active: !service.is_area_based }">
-						<X :size="16" />
-					</div>
-					<div class="pill-icon" :class="{ active: service.is_area_based }">
-						<Check :size="16" />
-					</div>
+		<div class="flex flex-col mb-4">
+			<label class="font-semibold mb-1">Is Area Based</label>
+			<div class="pill-toggle" :class="service.is_area_based ? 'on' : 'off'"
+				@click="service.is_area_based = !service.is_area_based">
+				<div class="pill-icon" :class="{ active: !service.is_area_based }">
+					<X :size="16" />
 				</div>
-			</div>
-			<div class="flex flex-col mb-4">
-				<label class="font-semibold mb-1">Measurement Unit</label>
-				<Select v-model="service.required_measurement_unit" :options="sizeUnits" />
+				<div class="pill-icon" :class="{ active: service.is_area_based }">
+					<Check :size="16" />
+				</div>
 			</div>
 		</div>
 		<div class="flex justify-end gap-2">
@@ -118,24 +109,25 @@ const onSave = async () => {
 
 <style scoped>
 .pill-toggle {
-    display: flex;
-    align-items: center;
-    border: 2px solid;
-    border-radius: 10px;
-    padding: 4px;
-    cursor: pointer;
-    width: 100%;
-    transition: border-color 0.2s;
+	display: flex;
+	align-items: center;
+	border: 2px solid;
+	border-radius: 10px;
+	padding: 4px;
+	cursor: pointer;
+	width: 100%;
+	transition: border-color 0.2s;
 }
+
 .pill-icon {
-    flex: 1;
-    height: 32px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    transition: background 0.2s, color 0.2s;
+	flex: 1;
+	height: 32px;
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--color-text-secondary);
+	transition: background 0.2s, color 0.2s;
 }
 
 .pill-toggle.on {

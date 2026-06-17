@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session, SQLModel, select
 from app.database import engine
+from app.models import JobOrder
 from app.seed_code.seed_users import seed_users_from_csv
 from app.seed_code.seed_service_types import seed_service_types_from_csv
 from app.seed_code.seed_extra_types import seed_extra_types_from_csv
@@ -33,6 +34,10 @@ def seed_dev_data():
         return
 
     with Session(engine) as session:
+        existing = session.exec(select(JobOrder)).first()
+        if existing:
+            print("Data already exists, skipping initial seed.")
+            return
         print("Entered dev environment.")
         SQLModel.metadata.drop_all(engine)
         print("Dropped all tables.")
@@ -56,6 +61,10 @@ def seed_dev_data():
         
 def seed_prod_data():
     with Session(engine) as session:
+        existing = session.exec(select(JobOrder)).first()
+        if existing:
+            print("Data already exists, skipping initial seed.")
+            return
         print("Entered prod environment.")
         SQLModel.metadata.create_all(engine)
         print("Created tables.")

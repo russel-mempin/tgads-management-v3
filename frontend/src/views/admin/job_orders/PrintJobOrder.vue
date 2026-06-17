@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { JobOrder } from '@/types/job_orders'
 import { getJobOrder } from '@/api/job_orders'
@@ -12,6 +12,28 @@ onMounted(async () => {
 	jobOrder.value = await getJobOrder(Number(route.params.jo_number))
 	await nextTick()
 	window.print()
+})
+
+const MIN_JOB_ITEM_ROWS = 5
+const MIN_PAYMENT_ROWS = 3
+const MIN_CLAIM_ROWS = 3
+
+const paddedJobItems = computed(() => {
+	const items = jobOrder.value?.job_items ?? []
+	const blanksNeeded = Math.max(0, MIN_JOB_ITEM_ROWS - items.length)
+	return [...items, ...Array(blanksNeeded).fill(null)]
+})
+
+const paddedPayments = computed(() => {
+	const payments = jobOrder.value?.payments ?? []
+	const blanksNeeded = Math.max(0, MIN_PAYMENT_ROWS - payments.length)
+	return [...payments, ...Array(blanksNeeded).fill(null)]
+})
+
+const paddedClaims = computed(() => {
+	const claims = jobOrder.value?.claims ?? []
+	const blanksNeeded = Math.max(0, MIN_CLAIM_ROWS - claims.length)
+	return [...claims, ...Array(blanksNeeded).fill(null)]
 })
 </script>
 
@@ -49,6 +71,10 @@ onMounted(async () => {
 				<div class="meta-label">Payment Status</div>
 				<div class="meta-value">{{ jobOrder?.payment_status }}</div>
 			</div>
+			<div class="meta-field">
+				<div class="meta-label">Print Date / Time</div>
+				<div class="meta-value">{{ formatDate(new Date()) }}</div>
+			</div>
 		</div>
 
 		<!-- SECTION 1: CUSTOMER INFO -->
@@ -58,19 +84,31 @@ onMounted(async () => {
 				<div class="section-title">Customer Information</div>
 				<div class="section-rule"></div>
 			</div>
-			<div class="outer-border">
-				<div class="field-row" style="grid-template-columns: 1fr;">
-					<div class="field">
-						<div class="field-label">Full Name / Company Name</div>
-						<div class="field-value">{{ jobOrder?.customer_name }}</div>
+			<div class="flex flex-col gap-4">
+				<div class="outer-border">
+					<div class="field-row" style="grid-template-columns: 1fr;">
+						<div class="field">
+							<div class="field-label">Full Name / Company Name</div>
+							<div class="field-value">{{ jobOrder?.customer_name }}</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="outer-border">
-				<div class="field-row" style="grid-template-columns: 1fr;">
-					<div class="field">
-						<div class="field-label">Address</div>
-						<div class="field-value">{{ jobOrder?.customer_name }}</div>
+				<div class="grid grid-cols-2 gap-4">
+					<div class="outer-border">
+						<div class="field-row" style="grid-template-columns: 1fr;">
+							<div class="field">
+								<div class="field-label">Contact No</div>
+								<div class="field-value">{{ jobOrder?.customer_contact_no }}</div>
+							</div>
+						</div>
+					</div>
+					<div class="outer-border">
+						<div class="field-row" style="grid-template-columns: 1fr;">
+							<div class="field">
+								<div class="field-label">Email Address</div>
+								<div class="field-value">{{ jobOrder?.customer_email }}</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -86,6 +124,7 @@ onMounted(async () => {
 			<table class="job-table">
 				<thead>
 					<tr>
+						<th class="col-item_id">Item ID</th>
 						<th class="col-service">Service / Description</th>
 						<th class="col-qty">Qty</th>
 						<th class="col-pcs">Dimensions</th>
@@ -94,13 +133,14 @@ onMounted(async () => {
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="item in jobOrder?.job_items" :key="item.item_id">
-						<td>{{ item.service_name }} – {{ item.description }}</td>
-						<td>{{ item.quantity }}</td>
-						<td>{{ `${item.width} × ${item.height} ${item.size_unit}` }}</td>
-						<td>{{ formatCurrency(item.subtotal) }}</td>
+					<tr v-for="(item, index) in paddedJobItems" :key="item?.item_id ?? `blank-${index}`">
+						<td>{{ item?.item_id ?? '' }}</td>
+						<td>{{ item ? `${item.service_name} – ${item.description}` : '' }}</td>
+						<td>{{ item?.quantity ?? '' }}</td>
+						<td>{{ item ? `${item.width} × ${item.height} ${item.size_unit}` : '' }}</td>
+						<td>{{ item ? formatCurrency(item.subtotal) : '' }}</td>
 						<td>
-							<div class="checkbox-row">
+							<div class="checkbox-row" v-if="item">
 								<span class="cb" style="background:#0f0f0f;"></span>
 							</div>
 						</td>
@@ -109,68 +149,63 @@ onMounted(async () => {
 			</table>
 		</div>
 
-		<!-- SECTION 3 & 4: PAYMENT + CLAIMING HISTORY -->
-		<div class="bottom-grid">
-
-			<!-- PAYMENT -->
-			<div class="section">
-				<div class="section-header">
-					<div class="section-num">3</div>
-					<div class="section-title">Payment Information</div>
-					<div class="section-rule"></div>
-				</div>
-				<table class="pay-table" style="margin-top: 3mm;">
-					<thead>
-						<tr>
-							<th class="col-amount">Amount (₱)</th>
-							<th class="col-date">Date Received</th>
-							<th class="col-method">Method</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="payment in jobOrder?.payments" :key="payment.date_received">
-							<td>{{ formatCurrency(payment.amount) }}</td>
-							<td>{{ formatDate(payment.date_received) }}</td>
-							<td>{{ payment.method }}</td>
-						</tr>
-					</tbody>
-				</table>
+		<!-- PAYMENT -->
+		<div class="section">
+			<div class="section-header">
+				<div class="section-num">3</div>
+				<div class="section-title">Payment Information</div>
+				<div class="section-rule"></div>
 			</div>
+			<table class="pay-table" style="margin-top: 3mm;">
+				<thead>
+					<tr>
+						<th class="col-amount">Amount (₱)</th>
+						<th class="col-date">Date Received</th>
+						<th class="col-method">Method</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(payment, index) in paddedPayments" :key="payment?.date_received ?? `blank-${index}`">
+						<td>{{ payment ? formatCurrency(payment.amount) : '' }}</td>
+						<td>{{ payment ? formatDate(payment.date_received) : '' }}</td>
+						<td>{{ payment?.method ?? '' }}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 
-			<!-- CLAIMING HISTORY -->
-			<div class="section">
-				<div class="section-header">
-					<div class="section-num">4</div>
-					<div class="section-title">Claiming History</div>
-					<div class="section-rule"></div>
-				</div>
-				<table class="claim-table">
-					<thead>
-						<tr>
-							<th style="width:24%">Date</th>
-							<th style="width:26%">Name</th>
-							<th style="width:28%">Item Claimed</th>
-							<th style="width:22%">Pcs.</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="claim in jobOrder?.claims" :key="claim.date_claimed">
-							<td>{{ formatDate(claim.date_claimed) }}</td>
-							<td>{{ claim.name }}</td>
-							<td>{{ claim.claimed_item_id }}</td>
-							<td>{{ claim.pcs_claimed }}</td>
-						</tr>
-					</tbody>
-				</table>
+		<!-- CLAIMING HISTORY -->
+		<div class="section">
+			<div class="section-header">
+				<div class="section-num">4</div>
+				<div class="section-title">Claiming History</div>
+				<div class="section-rule"></div>
 			</div>
-
+			<table class="claim-table">
+				<thead>
+					<tr>
+						<th style="width:24%">Date</th>
+						<th style="width:26%">Name</th>
+						<th style="width:28%">Item Claimed</th>
+						<th style="width:22%">Pcs.</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(claim, index) in paddedClaims" :key="claim?.date_claimed ?? `blank-${index}`">
+						<td>{{ claim ? formatDate(claim.date_claimed) : '' }}</td>
+						<td>{{ claim?.name ?? '' }}</td>
+						<td>{{ claim?.claimed_item_id ?? '' }}</td>
+						<td>{{ claim?.pcs_claimed ?? '' }}</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 
 		<!-- FOOTER -->
 		<div class="form-footer">
-			<div class="footer-note">COPY: WHITE — OFFICE &nbsp;|&nbsp; YELLOW — CUSTOMER &nbsp;|&nbsp; PINK —
-				PRODUCTION</div>
-			<div class="footer-copy">Form Rev. 02</div>
+			<div class="footer-note uppercase">Handwritten entries are temporary — update the system once available.
+			</div>
+			<div class="footer-copy">Form Rev. 01</div>
 		</div>
 
 	</div>
@@ -206,7 +241,8 @@ body {
 
 .page {
 	width: 210mm;
-	min-height: 297mm;
+	height: 297mm;
+	overflow: hidden;
 	background: var(--paper);
 	box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
 	padding: 14mm;
@@ -306,7 +342,7 @@ body {
 
 .meta-bar {
 	display: grid;
-	grid-template-columns: 1.4fr 1fr 1fr;
+	grid-template-columns: 1fr 1.2fr 1fr 1.2fr;
 	gap: 4mm;
 	margin-bottom: 5mm;
 	background: #0f0f0f;
@@ -342,7 +378,7 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	margin-bottom: 3mm;
+	margin-bottom: 1mm;
 }
 
 .section-num {
@@ -360,9 +396,9 @@ body {
 
 .section-title {
 	font-size: 13px;
-	letter-spacing: 3px;
 	color: #0f0f0f;
 	font-weight: 700;
+	font-family: Montserrat;
 }
 
 .section-rule {
@@ -446,8 +482,12 @@ body {
 	border-right: none;
 }
 
+.col_item_id {
+	width: 35%;
+}
+
 .col-service {
-	width: 42%;
+	width: 35%;
 }
 
 .col-qty {
@@ -455,15 +495,15 @@ body {
 }
 
 .col-pcs {
-	width: 11%;
+	width: 5%;
 }
 
 .col-price {
-	width: 18%;
+	width: 10%;
 }
 
 .col-done {
-	width: 19%;
+	width: 5%;
 }
 
 .checkbox-row {
@@ -606,7 +646,7 @@ body {
 }
 
 .footer-note {
-	font-size: 7px;
+	font-size: 12px;
 	color: #c8c8c8;
 	letter-spacing: 1px;
 	font-family: monospace;
@@ -645,6 +685,11 @@ body {
 }
 
 @media print {
+	* {
+		print-color-adjust: exact;
+		-webkit-print-color-adjust: exact;
+	}
+
 	body {
 		background: none;
 		padding: 0;
@@ -653,7 +698,7 @@ body {
 	.page {
 		box-shadow: none;
 		width: 210mm;
-		min-height: 297mm;
+		height: 297mm;
 		margin: 0;
 	}
 
@@ -662,6 +707,7 @@ body {
 	}
 
 	@page {
+		size: 210mm 297mm;
 		margin: 0;
 	}
 }

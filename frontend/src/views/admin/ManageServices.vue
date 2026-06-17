@@ -14,7 +14,6 @@ const toast = useToast();
 const servicesList = ref<ServiceType[]>([]);
 const fetchServices = async () => {
 	servicesList.value = await getAllServices()
-	console.log("Fetch successful.")
 }
 onMounted(async () => {
 	fetchServices();
@@ -76,7 +75,7 @@ const confirmDelete = (id: string) => {
 	</section>
 	<section class="mt-4 flex-1 h-full rounded-md border border-slate-300 overflow-hidden bg-white">
 		<DataTable scrollable scroll-height="flex" :pt="{ root: 'h-full' }" :value="servicesList" dataKey="id"
-			tableStyle="min-width: 60rem;" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
+			tableStyle="min-width: 60rem;" paginator :rows="50" :rowsPerPageOptions="[5, 10, 20, 50]">
 			<Column field="name" header="Name"></Column>
 			<Column field="abbreviation" header="Abbreviation"></Column>
 			<Column field="price" header="Price">
@@ -91,7 +90,6 @@ const confirmDelete = (id: string) => {
 						:severity="data.is_area_based ? 'success' : 'secondary'" />
 				</template>
 			</Column>
-			<Column field="required_measurement_unit" header="Measurement Unit"></Column>
 			<Column style="width: 1rem">
 				<template #body="{ data, index }">
 					<div class="flex gap-4">

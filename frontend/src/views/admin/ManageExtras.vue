@@ -75,7 +75,7 @@ const confirmDelete = (id: string) => {
 	</section>
 	<section class="mt-4 flex-1 h-full rounded-md border border-slate-300 overflow-hidden bg-white">
 		<DataTable scrollable scroll-height="flex" :pt="{ root: 'h-full' }" :value="extrasList" dataKey="id"
-			tableStyle="min-width: 60rem;" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
+			tableStyle="min-width: 60rem;" paginator :rows="50" :rowsPerPageOptions="[5, 10, 20, 50]">
 			<Column field="name" header="Name"></Column>
 			<Column field="price" header="Price">
 				<template #body="{ data }">

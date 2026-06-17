@@ -8,10 +8,10 @@ export const formatCurrency = (value: number | undefined) => {
   }).format(value)
 }
 
-export const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
+export const formatDate = (date: string | Date | undefined) => {
+  if (!date) return ''
+  const parsedDate = typeof date === 'string' ? new Date(date) : date
+  return parsedDate.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -60,7 +60,7 @@ const STATUS_PRIORITY: Record<string, number> = {
   'For Printing': 3,
   'For Approval': 4,
   'For Layout': 5,
-  'Pending': 6,
+  Pending: 6,
 }
 
 export const getOverallJobStatus = (jobItems: JobItem[]): string => {
