@@ -27,7 +27,7 @@ const item = ref<JobItemCreate>({
     discount: 0,
     service_type_id: '',
     extra_type_id: null,
-    service_name: 'Regular Tarpaulin',
+    service_name: '',
     extra_service_name: 'N/A',
     extra_service_price: 0,
     unit_price: 0,
@@ -55,9 +55,9 @@ onMounted(async () => {
 });
 
 const onServiceChange = (service: ServiceType) => {
+    console.log(service)
     item.value.service_type_id = service.id
     item.value.service_name = service.name
-    item.value.size_unit = service.required_measurement_unit
 }
 
 const onExtraChange = (extra: { id: string, name: string, price: number }) => {
