@@ -10,7 +10,8 @@ from app.crud.job_order import (
     create_job_order,
     archive_job_order,
     update_job_order,
-    get_job_order_count
+    get_job_order_count,
+    get_job_order_kpis
 )
 from app.schemas.job_order import JobOrderCreate
 from app.services.dependencies import get_current_active_user
@@ -62,6 +63,12 @@ def read_job_order_count(
         job_status=job_status,
         search=search,
     )
+
+@router.get("/kpis")
+def read_kpis(
+    db: Session = Depends(get_session),
+):
+    return get_job_order_kpis(db)
 
 @router.get("/compute-unit-price", response_model=float)
 def compute_unit_price(

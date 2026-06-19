@@ -15,6 +15,7 @@ from app.utils.utils import compute_unit_price
 from app.schemas.job_order import JobOrderCreate
 from app.enums import SizeUnit, PaymentStatus, JobStatus
 import uuid
+from datetime import datetime, timedelta, timezone
 
 
 def get_all_job_orders(
@@ -210,6 +211,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 )
                 job_order.claims.append(claimItem)
                 db.add(claimItem)
+        job_order.sync_computed_fields()
         db.add(job_order)
         db.commit()
         db.refresh(job_order)
@@ -381,7 +383,12 @@ def update_job_order(
                     job_order_id=job_order.id,
                 )
                 db.add(paymentItem)
-
+        db.flush()
+        fresh_payments = db.exec(
+            select(Payment).where(Payment.job_order_id == job_order.id)
+        ).all()
+        db.refresh(job_order)
+        job_order.sync_computed_fields()
         db.commit()
         db.refresh(job_order)
 
@@ -397,3 +404,48 @@ def update_job_order(
     except Exception:
         db.rollback()
         raise
+
+
+def get_job_order_kpis(db: Session) -> dict:
+    # Outstanding balance — sum of (total_due - total_paid) for unpaid/partial orders
+    job_orders = db.exec(
+        select(JobOrder).where(
+            JobOrder.is_active == True,
+            col(JobOrder.payment_status).in_(
+                [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
+            ),
+        )
+    ).all()
+    outstanding_balance = sum(jo.total_due - jo.total_paid for jo in job_orders)
+
+    # Count of unpaid orders
+    unpaid_count = db.exec(
+        select(func.count())
+        .select_from(JobOrder)
+        .where(
+            JobOrder.is_active == True, JobOrder.payment_status == PaymentStatus.UNPAID
+        )
+    ).one()
+
+    # Count of overdue jobs — job items past due_date and not released/cancelled
+    now = datetime.now(timezone.utc)
+    overdue_count = db.exec(
+    select(func.count()).select_from(JobItem).where(
+        JobItem.due_date < now,
+        col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED])
+        )
+    ).one()
+
+    # Payments this week
+    week_start = now - timedelta(days=now.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    payments_this_week = db.exec(
+        select(func.sum(Payment.amount)).where(Payment.date_received >= week_start)
+    ).one()
+
+    return {
+        "outstanding_balance": outstanding_balance,
+        "unpaid_count": unpaid_count,
+        "overdue_count": overdue_count,
+        "payments_this_week": payments_this_week or 0.0,
+    }

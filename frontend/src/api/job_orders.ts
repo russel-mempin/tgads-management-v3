@@ -52,3 +52,8 @@ export async function editJobOrder(jo_number: number, payload: JobOrderCreate) {
 	const res = await http.put(`/job-orders/${jo_number}`, payload)
 	return res.data
 }
+
+export async function getJobOrderKpis() {
+	const res = await http.get('/job-orders/kpis')
+	return res.data
+}

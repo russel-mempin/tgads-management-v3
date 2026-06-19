@@ -20,30 +20,34 @@ const emit = defineEmits<{
 }>()
 
 const addItem = (newItem: JobItemCreate) => {
-    emit('update:items', [...(props.items as JobItemCreate[]), newItem])
+	emit('update:items', [...(props.items as JobItemCreate[]), newItem])
 }
 
 const deleteItem = (itemId: string) => {
-    emit('update:items', (props.items as JobItemCreate[]).filter(i => i.item_id !== itemId))
+	emit('update:items', (props.items as JobItemCreate[]).filter(i => i.item_id !== itemId))
 }
 
 const editingItem = ref<JobItemCreate | null>(null)
 
 const openEdit = (value: JobItemCreate) => {
-	editingItem.value = value
+	editingItem.value = {
+		...value,
+		due_date: new Date(value.due_date),
+	}
 	isVisible.value = true
 }
 
 const updateItem = (updated: JobItemCreate) => {
-    emit('update:items', (props.items as JobItemCreate[]).map(i =>
-        i.item_id === updated.item_id ? updated : i
-    ))
-    editingItem.value = null
+	emit('update:items', (props.items as JobItemCreate[]).map(i =>
+		i.item_id === updated.item_id ? updated : i
+	))
+	editingItem.value = null
 }
 </script>
 <template>
 	<JobItemsForm v-if="!readOnly" v-model:isVisible="isVisible" :joNumber="jo_number"
-		:existingItems="(items as JobItemCreate[])" @add-item="addItem" @update-item="updateItem" />
+		:existingItems="(items as JobItemCreate[])" :editItem="editingItem" @add-item="addItem"
+		@update-item="updateItem" />
 	<div class="bg-white rounded-md">
 		<div class="px-4 py-3 flex items-center justify-between border-b border-slate-200">
 			<p class="text-xl font-medium text-slate-600">Job Items</p>
@@ -105,7 +109,8 @@ const updateItem = (updated: JobItemCreate) => {
 							<p class="text-slate-800">{{ formatNullable(value.notes) }}</p>
 						</div>
 						<div class="flex gap-4">
-							<Button v-if="!readOnly" severity="warn" class="w-20" @click="openEdit(value as JobItemCreate)">Edit</Button>
+							<Button v-if="!readOnly" severity="warn" class="w-20"
+								@click="openEdit(value as JobItemCreate)">Edit</Button>
 							<Button v-if="!readOnly" severity="danger" class="w-20"
 								@click="deleteItem(value.item_id)">Delete</Button>
 						</div>

@@ -2,10 +2,10 @@
 import { ref, onMounted, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router'
 import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
-import { Plus } from '@lucide/vue';
-import { getAllJobOrders, getJobOrderCount } from '@/api/job_orders'
+import { Plus, PhilippinePeso, Clock, TrendingUp } from '@lucide/vue';
+import { getAllJobOrders, getJobOrderCount, getJobOrderKpis } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
-import { formatCurrency, formatDate, mapSeverity } from '@/utils/formatters';
+import { formatCurrency, formatDate, mapSeverity, mapCustomColor } from '@/utils/formatters';
 
 const job_orders = ref<JobOrder[]>([])
 const router = useRouter()
@@ -19,7 +19,13 @@ const jobStatus = ref('');
 const paymentStatus = ref('');
 const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', 'Refunded', 'Overcharged']);
 const jobStatusOptions = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
-const expandedRows = ref({});
+const expandedRows = ref<Record<string, boolean>>({})
+const kpis = ref({
+	outstanding_balance: 0,
+	unpaid_count: 0,
+	overdue_count: 0,
+	payments_this_week: 0,
+})
 
 const fetchServices = async () => {
 	loading.value = true
@@ -54,7 +60,10 @@ watch([joNumberSearch, jobStatus, paymentStatus], () => {
 	}, 300)
 })
 
-onMounted(() => fetchServices())
+onMounted(async () => {
+	fetchServices()
+	kpis.value = await getJobOrderKpis()
+})
 
 const clearFilters = () => {
 	joNumberSearch.value = ''
@@ -67,12 +76,22 @@ const clearFilters = () => {
 const printJobOrder = (jo_number: string) => {
 	window.open(`/job-orders/print/${jo_number}`, '_blank')
 }
+
+const onRowClick = (event: { data: JobOrder }) => {
+	const isExpanded = expandedRows.value[event.data.id]
+	if (isExpanded) {
+		delete expandedRows.value[event.data.id]
+	} else {
+		expandedRows.value[event.data.id] = true
+	}
+}
 </script>
 
 <template>
+	<!-- Page Title -->
 	<section class="flex justify-between items-center">
 		<div>
-			<h1 class="text-lg font-semibold">Job Orders</h1>
+			<h1 class="text-xl font-semibold">Job Orders</h1>
 			<h2>View and manage all job orders in the system. Filter data to quickly find relevant orders.</h2>
 		</div>
 		<RouterLink to="/admin/job-orders/add">
@@ -83,17 +102,59 @@ const printJobOrder = (jo_number: string) => {
 			</Button>
 		</RouterLink>
 	</section>
-	<section class="my-2 flex gap-2">
+	<!-- Summary Bar -->
+	<section class="my-6 grid grid-cols-4 gap-6">
+		<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
+			<div class="bg-orange-100 flex items-center justify-center w-12 h-12 rounded-full text-orange-700">
+				<PhilippinePeso />
+			</div>
+			<div class="ml-4">
+				<p class="uppercase font-semibold text-sm text-gray-600">Outstanding Balance</p>
+				<p class="font-bold text-3xl text-orange-700">{{ formatCurrency(kpis.outstanding_balance) }}</p>
+			</div>
+		</div>
+		<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
+			<div class="bg-red-100 flex items-center justify-center w-12 h-12 rounded-full text-red-700">
+				<Clock />
+			</div>
+			<div class="ml-4">
+				<p class="uppercase font-semibold text-sm text-gray-600">Unpaid Orders</p>
+				<p class="font-bold text-3xl text-red-700">{{ kpis.unpaid_count }}</p>
+			</div>
+		</div>
+		<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
+			<div class="bg-red-100 flex items-center justify-center w-12 h-12 rounded-full text-red-700">
+				<Clock />
+			</div>
+			<div class="ml-4">
+				<p class="uppercase font-semibold text-sm text-gray-600">Overdue Items</p>
+				<p class="font-bold text-3xl text-red-700">{{ kpis.overdue_count }}</p>
+			</div>
+		</div>
+		<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
+			<div class="bg-green-100 flex items-center justify-center w-12 h-12 rounded-full text-green-700">
+				<TrendingUp />
+			</div>
+			<div class="ml-4">
+				<p class="uppercase font-semibold text-sm text-gray-600">Collected This Week</p>
+				<p class="font-bold text-3xl text-green-700">{{ formatCurrency(kpis.payments_this_week) }}</p>
+			</div>
+		</div>
+	</section>
+	<!-- Filters -->
+	<section class="mb-4 flex gap-2">
 		<InputText class="flex-1" v-model="joNumberSearch" placeholder="Search by customer name or JO Number..." />
 		<Select class="w-50" v-model="jobStatus" :options="jobStatusOptions" placeholder="Job Status" showClear />
-		<Select class="w-50" v-model="paymentStatus" :options="paymentStatusOptions" placeholder="Payment Status" showClear />
-		<Button label="Clear Filters" variant="text" @click="clearFilters" />
+		<Select class="w-50" v-model="paymentStatus" :options="paymentStatusOptions" placeholder="Payment Status"
+			showClear />
+		<Button :pt="{ label: '!font-semibold', }" label="Clear Filters" variant="text" @click="clearFilters" />
 	</section>
+	<!-- Table-->
 	<section class="flex-1 h-full rounded-md border border-slate-300 overflow-hidden bg-white">
-		<DataTable scrollable scroll-height="flex" :pt="{ root: 'h-full' }" v-model:expandedRows="expandedRows"
-			:lazy="true" :rows="rows" :totalRecords="totalRecords" :loading="loading" :first="currentOffset"
-			@page="onPage" :value="job_orders" dataKey="id" tableStyle="min-width: 60rem;" paginator
-			:rowsPerPageOptions="[5, 10, 20, 50]">
+		<DataTable class="main-job-orders-table" scrollable scroll-height="flex" :pt="{ root: 'h-full' }"
+			v-model:expandedRows="expandedRows" :lazy="true" :rows="rows" :totalRecords="totalRecords"
+			:loading="loading" :first="currentOffset" @page="onPage" :value="job_orders" dataKey="id"
+			tableStyle="min-width: 60rem;" paginator :rowsPerPageOptions="[5, 10, 20, 50]" @row-click="onRowClick">
 			<Column expander style="width: 5rem" />
 			<Column field="jo_number" header="JO Number"></Column>
 			<Column field="customer_name" header="Customer"></Column>
@@ -104,13 +165,16 @@ const printJobOrder = (jo_number: string) => {
 			</Column>
 			<Column field="payment_status" header="Payment Status">
 				<template #body="slotProps">
-					<Tag :value="slotProps.data.payment_status" :severity="mapSeverity(slotProps.data.payment_status)">
-					</Tag>
+					<Tag :value="slotProps.data.payment_status"
+						:severity="mapCustomColor(slotProps.data.payment_status) ? undefined : mapSeverity(slotProps.data.payment_status)"
+						:class="mapCustomColor(slotProps.data.payment_status)" />
 				</template>
 			</Column>
 			<Column field="overall_job_status" header="Overall Job Status">
 				<template #body="{ data }">
-					<Tag :value="data.overall_job_status" :severity="mapSeverity(data.overall_job_status)" />
+					<Tag :value="data.overall_job_status"
+						:severity="mapCustomColor(data.overall_job_status) ? undefined : mapSeverity(data.overall_job_status)"
+						:class="mapCustomColor(data.overall_job_status)" />
 				</template>
 			</Column>
 			<Column header="Balance">
@@ -121,10 +185,10 @@ const printJobOrder = (jo_number: string) => {
 			<Column>
 				<template #body="{ data }">
 					<div class="flex justify-self-end gap-2">
-						<Button class="w-18 h-10" severity="info" label="View"
-							@click="router.push(`/admin/job-orders/view/${data.jo_number}`)" />
-						<Button class="w-18 h-10" severity="secondary" label="Print"
-							@click="printJobOrder(data.jo_number)" />
+						<Button class="w-18 h-10" variant="outlined" label="View"
+							@click.stop="router.push(`/admin/job-orders/view/${data.jo_number}`)" />
+						<Button class="w-18 h-10" variant="text" :pt="{ label: '!text-gray-500', }" label="Print"
+							@click.stop="printJobOrder(data.jo_number)" />
 					</div>
 				</template>
 			</Column>
@@ -139,40 +203,37 @@ const printJobOrder = (jo_number: string) => {
 						Job Items — #{{ slotProps.data.jo_number }}
 					</h5>
 					<DataTable :value="slotProps.data.job_items">
-						<Column field="item_id" header="ID"></Column>
-						<Column field="description" header="Description"></Column>
+						<Column header="Item">
+							<template #body="{ data }">
+								<span>{{ data.service_name }}</span>
+								<span>{{ data.description ? ` - ${data.description}` : '' }}</span>
+								<span>{{ data.extra_service_name ? ` w/ ${data.extra_service_name}` : '' }}</span>
+							</template>
+						</Column>
 						<Column header="Dimensions">
 							<template #body="{ data }">
 								{{ (data.height && data.width) ? `${data.height} × ${data.width} ${data.size_unit}` :
 									'—' }}
 							</template>
 						</Column>
-						<Column field="unit_price" header="Unit Price">
-							<template #body="slotProps">
-								{{ formatCurrency(slotProps.data.unit_price) }}
-							</template>
-						</Column>
 						<Column field="quantity" header="Qty."></Column>
 						<Column field="due_date" header="Due Date">
 							<template #body="slotProps">
-								{{ formatDate(slotProps.data.due_date) }}
+								<div class="flex items-center gap-2">
+									{{ formatDate(slotProps.data.due_date) }}
+									<span
+										v-if="new Date(slotProps.data.due_date) < new Date() && slotProps.data.job_status !== 'Released' && slotProps.data.job_status !== 'Cancelled' && slotProps.data.job_status !== 'For Pickup' && slotProps.data.job_status !== 'For Approval'"
+										class="text-xs font-medium text-red-500">
+										Overdue
+									</span>
+								</div>
 							</template>
 						</Column>
 						<Column field="job_status" header="Status">
 							<template #body="slotProps">
 								<Tag :value="slotProps.data.job_status"
-									:severity="mapSeverity(slotProps.data.job_status)"></Tag>
-							</template>
-						</Column>
-						<Column field="extra_service_name" header="Extra Service"></Column>
-						<Column field="discount" header="Discount">
-							<template #body="slotProps">
-								{{ formatCurrency(slotProps.data.discount) }}
-							</template>
-						</Column>
-						<Column field="extra_charge" header="Extra Charge">
-							<template #body="slotProps">
-								{{ formatCurrency(slotProps.data.extra_charge) }}
+									:severity="mapCustomColor(slotProps.data.job_status) ? undefined : mapSeverity(slotProps.data.job_status)"
+									:class="mapCustomColor(slotProps.data.job_status)" />
 							</template>
 						</Column>
 						<Column field="subtotal" header="Subtotal">
@@ -213,5 +274,10 @@ const printJobOrder = (jo_number: string) => {
 <style scoped>
 :deep(.p-datatable-row-expansion > td) {
 	padding: 0 !important;
+}
+
+:deep(.main-job-orders-table > .p-datatable-table-container > table > .p-datatable-tbody > tr:hover) {
+	background-color: #f1f5f9;
+	cursor: pointer;
 }
 </style>

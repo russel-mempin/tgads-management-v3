@@ -14,8 +14,7 @@ export const formatDate = (date: string | Date | undefined) => {
   return parsedDate.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
     hour12: true,
   })
@@ -23,10 +22,6 @@ export const formatDate = (date: string | Date | undefined) => {
 
 export const mapSeverity = (status: string) => {
   switch (status) {
-    case 'For Layout':
-      return 'warn'
-    case 'Partial':
-      return 'warn'
     case 'For Approval':
       return 'info'
     case 'For Pickup':
@@ -45,6 +40,17 @@ export const mapSeverity = (status: string) => {
       return 'danger'
     default:
       return 'contrast'
+  }
+}
+
+export const mapCustomColor = (status: string): string | null => {
+  switch (status) {
+    case 'Overcharged':
+      return '!bg-purple-500 !text-white'
+    case 'Pending':
+      return '!bg-orange-600 !text-white'
+    default:
+      return null
   }
 }
 

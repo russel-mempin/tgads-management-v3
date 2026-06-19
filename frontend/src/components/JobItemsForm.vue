@@ -35,7 +35,7 @@ const item = ref<JobItemCreate>({
 })
 const serviceList = ref<ServiceType[]>([]);
 const extraList = ref<{ id: string, name: string, price: number }[]>([]);
-const jobStatuses = ref(['For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled'])
+const jobStatuses = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled'])
 const unitSizes = ref(['ft.', 'in.', 'cm.', 'mm.', 'meter', 'N/A'])
 const previewItemId = computed(() => {
     if (!item.value.service_name) return 'Select a service type first'

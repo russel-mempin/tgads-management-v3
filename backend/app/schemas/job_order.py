@@ -1,8 +1,9 @@
 from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase
 from app.enums import JobStatus, PaymentStatus
-from sqlmodel import Field
+from sqlmodel import Field, SQLModel
 import uuid
 from typing import List, Optional
+from datetime import datetime
 
 
 class JobItemPublic(JobItemBase):
@@ -44,7 +45,10 @@ class JobOrderPublic(JobOrderBase):
     customer_contact_no: str | None = None
     customer_id: uuid.UUID
     
-class JobOrderCreate(JobOrderBase):
+class JobOrderCreate(SQLModel):
+    jo_number: int
+    date_received: datetime
+    override_payment_status: PaymentStatus | None = None
     customer_id: uuid.UUID | None = None
     customer_name: str | None = None
     customer_address: str | None = None

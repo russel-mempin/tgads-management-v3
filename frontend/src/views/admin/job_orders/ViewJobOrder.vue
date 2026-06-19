@@ -59,7 +59,7 @@ const confirmDelete = (jo_number: number) => {
 			<h2>See full information about a Job Order.</h2>
 		</div>
 		<div class="flex gap-4">
-			<Button severity="warn" class="w-26" label="Edit">
+			<Button @click="router.push(`/admin/job-orders/edit/${route.params.jo_number}`)" severity="warn" class="w-26" label="Edit">
 				<template #icon>
 					<PenBox />
 				</template>
