@@ -3,7 +3,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { Button, Select, InputText, InputNumber, DatePicker, useToast } from 'primevue';
 import { useRouter } from 'vue-router';
-import { Save } from '@lucide/vue';
+import { ArrowLeft, Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
 import type { Customer } from '@/types/customers';
 import type { JobItemCreate, PaymentCreate, ClaimCreate, JobOrderCreate } from '@/types/job_orders';
@@ -144,42 +144,74 @@ const handleSave = async (payload: JobOrderCreate) => {
 	<section class="flex justify-between items-center">
 		<div>
 			<h1 class="text-xl font-semibold">Add Job Order</h1>
-			<h2>Inserts job order information into the database upon saving.</h2>
+			<h2 class="text-gray-800">Fill in the details below to create a new job order.</h2>
 		</div>
-		<Button label="Save" @click="buildPayload">
-			<template #icon>
-				<Save />
-			</template>
-		</Button>
-	</section>
-	<section class="mt-4 flex flex-col">
-		<label class="mb-1 text-slate-700 font-medium">Customer Name</label>
-		<Select v-model="customerName" fluid editable :options="customerList" placeholder="Select or input a customer"
-			class="w-full md:w-56" />
-		<div class="mt-2 grid grid-cols-3 gap-2">
-			<div class="flex flex-col">
-				<label class="mb-1 text-slate-700 font-medium">Address</label>
-				<InputText v-model="customerInfo.address" placeholder="Address" :disabled="!isNewCustomer" />
-			</div>
-			<div class="flex flex-col">
-				<label class="mb-1 text-slate-700 font-medium">Contact No.</label>
-				<InputText v-model="customerInfo.contact_no" placeholder="Contact No." :disabled="!isNewCustomer" />
-			</div>
-			<div class="flex flex-col">
-				<label class="mb-1 text-slate-700 font-medium">Email</label>
-				<InputText v-model="customerInfo.email" placeholder="Email" :disabled="!isNewCustomer" />
-			</div>
+		<div class="flex gap-4">
+			<Button class="w-48" variant="outlined" label="Back" iconPos="left"
+				@click="router.push('/admin/job-orders/')" :pt="{ label: { class: 'flex-1 text-center' } }">
+				<template #icon>
+					<ArrowLeft />
+				</template>
+			</Button>
+			<Button class="w-48" label="Save Job Order" iconPos="left" @click="buildPayload"
+				:pt="{ label: { class: 'flex-1 text-center' } }">
+				<template #icon>
+					<Save />
+				</template>
+			</Button>
 		</div>
 	</section>
-	<section class="mt-2 grid grid-cols-2 gap-2">
+	<section class="my-4 flex items-center">
+		<p class="text-gray-500 font-medium">Fields marked with</p>
+		<p class="text-red-500 font-medium">&nbsp;*&nbsp;</p>
+		<p class="text-gray-500 font-medium">are required.</p>
+	</section>
+	<!-- Customer Name Search -->
+	<section>
+		<div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
+			<div>
+				<label class="mb-1 text-slate-700 font-medium">Customer Name</label>
+				<span class="text-sm text-red-500"> * </span>
+				<Select v-model="customerName" fluid editable :options="customerList"
+					placeholder="Select or input a customer" class="w-full md:w-56" />
+				<p class="text-sm font-medium text-gray-500 mt-1">Start typing to search saved customers, or enter a new
+					name to
+					add one.</p>
+			</div>
+			<div class="mt-4 grid grid-cols-3 gap-6">
+				<div class="flex flex-col">
+					<label class="mb-1 text-slate-700 font-medium">Address</label>
+					<InputText v-model="customerInfo.address" placeholder="House/Unit No., Street, City"
+						:disabled="!isNewCustomer" />
+				</div>
+				<div class="flex flex-col">
+					<label class="mb-1 text-slate-700 font-medium">Contact No.</label>
+					<InputText v-model="customerInfo.contact_no" placeholder="09XX XXX XXXX"
+						:disabled="!isNewCustomer" />
+				</div>
+				<div class="flex flex-col">
+					<label class="mb-1 text-slate-700 font-medium">Email</label>
+					<InputText v-model="customerInfo.email" placeholder="name@email.com" :disabled="!isNewCustomer" />
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- Job Order Metadata -->
+	<section class="mt-4 grid grid-cols-2 gap-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
 		<div class="flex flex-col">
-			<label class="mb-1 text-slate-700 font-medium">JO Number</label>
+			<div class="flex">
+				<label class="mb-1 text-slate-700 font-medium">Job Order No.</label>
+				<span class="text-sm text-red-500">&nbsp;*</span>
+			</div>
 			<InputNumber v-model="jo_number" placeholder="JO Number" :useGrouping="false" fluid
 				:disabled="items.length > 0"
 				v-tooltip.top="{ value: 'Clear all job items to change the JO Number.', disabled: items.length === 0 }" />
 		</div>
 		<div class="flex flex-col">
-			<label class="mb-1 text-slate-700 font-medium">Date Received</label>
+			<div class="flex">
+				<label class="mb-1 text-slate-700 font-medium">Date Received</label>
+				<span class="text-sm text-red-500">&nbsp;*</span>
+			</div>
 			<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12" />
 		</div>
 	</section>

@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar.vue'
     <div id="appBody" class="flex h-screen overflow-hidden">
         <Navbar />
         <div class="w-4/5 flex-1 flex flex-col">
-            <main class="flex-1 flex flex-col p-8 min-h-0">
+            <main class="flex-1 flex flex-col p-12 min-h-0">
                 <div class="flex flex-col h-full overflow-hidden">
                     <RouterView />
                 </div>

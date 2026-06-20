@@ -92,7 +92,7 @@ const onRowClick = (event: { data: JobOrder }) => {
 	<section class="flex justify-between items-center">
 		<div>
 			<h1 class="text-xl font-semibold">Job Orders</h1>
-			<h2>View and manage all job orders in the system. Filter data to quickly find relevant orders.</h2>
+			<h2 clsas="text-gray-800">View and manage all job orders in the system. Filter data to quickly find relevant orders.</h2>
 		</div>
 		<RouterLink to="/admin/job-orders/add">
 			<Button label="Add Job Order">
@@ -142,7 +142,7 @@ const onRowClick = (event: { data: JobOrder }) => {
 		</div>
 	</section>
 	<!-- Filters -->
-	<section class="mb-4 flex gap-2">
+	<section class="mb-4 flex gap-6">
 		<InputText class="flex-1" v-model="joNumberSearch" placeholder="Search by customer name or JO Number..." />
 		<Select class="w-50" v-model="jobStatus" :options="jobStatusOptions" placeholder="Job Status" showClear />
 		<Select class="w-50" v-model="paymentStatus" :options="paymentStatusOptions" placeholder="Payment Status"
