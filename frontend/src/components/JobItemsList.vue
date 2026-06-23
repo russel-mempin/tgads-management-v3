@@ -48,16 +48,29 @@ const updateItem = (updated: JobItemCreate) => {
 	<JobItemsForm v-if="!readOnly" v-model:isVisible="isVisible" :joNumber="jo_number"
 		:existingItems="(items as JobItemCreate[])" :editItem="editingItem" @add-item="addItem"
 		@update-item="updateItem" />
-	<div class="bg-white rounded-md">
-		<div class="px-4 py-3 flex items-center justify-between border-b border-slate-200">
+	<div class="bg-white rounded-2xl border border-gray-200 shadow-xs">
+		<div class="px-6 py-3 flex items-center justify-between border-b border-slate-200">
 			<p class="text-xl font-medium text-slate-600">Job Items</p>
-			<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jo_number"
+			<Button variant="outlined" label="Add Item" iconPos="left" v-if="!readOnly" @click="isVisible = true"
+				severity="contrast" :disabled="!props.jo_number"
 				v-tooltip.left="{ value: 'Please enter JO Number first.', disabled: !!props.jo_number }">
-				<Plus class="w-4" />
+				<template #icon>
+					<Plus class="w-4" />
+				</template>
 			</Button>
 		</div>
-		<p v-if="!props.items.length" class="text-center p-4 text-slate-400">Input data by clicking the + icon on the
-			upper right.</p>
+		<div v-if="!props.items.length" class="flex flex-col items-center gap-4 p-4">
+			<p class="text-center text-slate-400">No items yet — add the first one to start
+				this job.
+			</p>
+			<Button label="Add Item" iconPos="left" v-if="!readOnly" @click="isVisible = true"
+				severity="primary" :disabled="!props.jo_number"
+				v-tooltip.left="{ value: 'Please enter JO Number first.', disabled: !!props.jo_number }">
+				<template #icon>
+					<Plus class="w-4" />
+				</template>
+			</Button>
+		</div>
 		<div class="overflow-y-auto max-h-121">
 			<div v-for="value in props.items" class="p-4">
 				<div class="border border-slate-300 rounded-md">

@@ -15,12 +15,10 @@ class JobItemPublic(JobItemBase):
     service_name: str
     extra_service_name: str | None = None
     extra_service_price: float = 0.0
-    extra_type_id: uuid.UUID | None = None
-    service_type_id: uuid.UUID
     
 class JobItemCreate(JobItemBase):
-    service_type_id: uuid.UUID
-    extra_type_id: uuid.UUID | None = None
+    service_name: str
+    extra_service_name: str | None = None
     
 class PaymentPublic(PaymentBase):
     pass
@@ -43,13 +41,11 @@ class JobOrderPublic(JobOrderBase):
     customer_name: str
     customer_email: str | None = None
     customer_contact_no: str | None = None
-    customer_id: uuid.UUID
     
 class JobOrderCreate(SQLModel):
     jo_number: int
     date_received: datetime
     override_payment_status: PaymentStatus | None = None
-    customer_id: uuid.UUID | None = None
     customer_name: str | None = None
     customer_address: str | None = None
     customer_contact_no: str | None = None

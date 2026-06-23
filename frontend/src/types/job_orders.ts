@@ -1,4 +1,4 @@
-export interface JobItem {
+interface JobItemCore {
   jo_number: number
   item_id: string
   description: string
@@ -9,55 +9,26 @@ export interface JobItem {
   job_status: string
   due_date: Date
   discount: number
-  unit_price: number
+  extra_charge: number
+  notes: string
+  service_name: string
+  extra_service_name: string
+}
+
+export interface JobItemFromDB extends JobItemCore {
   subtotal: number
   total_claimed: number
   remaining_on_hand: number
-  service_name: string
-  extra_service_name: string
-  extra_service_price: number
-  notes: string
 }
 
-export interface JobItemCreate {
-  jo_number: number
-  item_id: string
-  description: string
-  height: number
-  width: number
-  size_unit: string
-  quantity: number
-  job_status: string
-  due_date: Date
-  discount: number
-  notes: string
-  service_type_id: string
-  extra_type_id: string | null
-  // display only
-  service_name: string
-  extra_service_name: string
-  extra_service_price: number
+export interface JobItemPayload extends JobItemCore {
+  // Display only (Not saved in database)
   unit_price: number
-}
-
-export interface JobItemPayload {
-  jo_number: number
-  item_id: string
-  description: string
-  height: number
-  width: number
-  size_unit: string
-  quantity: number
-  job_status: string
-  due_date: string
-  discount: number
-  notes: string
-  service_type_id: string
-  extra_type_id: string | null
+  extra_service_price: number
 }
 
 export interface Payment {
-  date_received: string
+  date_received: Date
   method: string
   amount: number
 }
@@ -69,7 +40,7 @@ export interface PaymentCreate {
 }
 
 export interface ClaimingHistory {
-  date_claimed: string
+  date_claimed: Date
   name: string
   pcs_claimed: number
   claimed_item_id: string
@@ -85,10 +56,10 @@ export interface ClaimCreate {
 export interface JobOrder {
   id: string
   jo_number: number
-  date_received: string
+  date_received: Date
   override_payment_status: boolean
   overall_job_status: string
-  job_items: JobItem[]
+  job_items: JobItemFromDB[]
   payments: Payment[]
   claims: ClaimingHistory[]
   payment_status: string
@@ -101,14 +72,14 @@ export interface JobOrder {
 
 export interface JobOrderCreate {
   jo_number: number
-  date_received: string
+  date_received: Date
   override_payment_status?: string
   customer_id?: string
   customer_name?: string
   customer_address?: string
   customer_contact_no?: string
   customer_email?: string
-  job_items: JobItemPayload[]
+  job_items: JobItemCore[]
   payments?: Payment[]
   claims?: ClaimingHistory[]
 }

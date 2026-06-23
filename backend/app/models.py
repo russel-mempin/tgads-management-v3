@@ -40,7 +40,7 @@ class User(UserBase, table=True):
 
 # ====================== CUSTOMERS =========================
 class CustomerBase(SQLModel):
-    name: str = Field()
+    name: str = Field(unique=True, index=True)
     address: str = Field(default="N/A")
     contact_no: str = Field(default="N/A")
     email: str = Field(default="N/A")

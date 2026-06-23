@@ -29,9 +29,26 @@ def seed_dev_data():
     8. claiming_history
     """
     if ENV != "test":
+        print("Entered dev environment.")
+        SQLModel.metadata.drop_all(engine)
+        print("Dropped all tables.")
         SQLModel.metadata.create_all(engine)
-        print("Created all tables without data.")
-        return
+        print("Created all tables")
+
+        seed_users_from_csv()
+        print("Seeded users.")
+        seed_service_types_from_csv()
+        print("Seeded service types.")
+        seed_extra_types_from_csv()
+        print("Seeded extra types.")
+        seed_customers_from_csv()
+        print("Seeded customers.")
+        seed_job_orders_from_converted_excel()
+        print("Seeded job orders.")
+        seed_payments_from_csv()
+        print("Seeded payments.")
+        seed_claiming_history_from_csv()
+        print("Seeded claiming history.")
 
     with Session(engine) as session:
         existing = session.exec(select(JobOrder)).first()

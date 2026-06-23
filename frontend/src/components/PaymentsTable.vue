@@ -43,13 +43,13 @@ const updateItem = (updated: PaymentCreate) => {
 </script>
 <template>
 	<PaymentsForm v-model:isVisible="isVisible" :editItem="editingItem" @add-item="addItem" @update-item="updateItem" />
-	<div class="rounded-md overflow-hidden">
+	<div class="rounded-2xl overflow-hidden">
 		<DataTable :value="payments">
 			<template #empty>
 				<p class="text-center text-slate-400">Input data by clicking the + icon on the upper right.</p>
 			</template>
 			<template #header>
-				<div class="flex flex-wrap items-center justify-between gap-2">
+				<div class="px-2 flex flex-wrap items-center justify-between gap-2">
 					<span class="text-xl font-medium text-slate-600">Payments</span>
 					<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
 						v-tooltip.left="{ value: 'Add job items first.', disabled: !!props.jobItems.length }">
@@ -79,3 +79,12 @@ const updateItem = (updated: PaymentCreate) => {
 		</DataTable>
 	</div>
 </template>
+<style scoped>
+:deep(.p-datatable-tbody > tr > td) {
+  padding: 12px 24px;
+}
+
+:deep(.p-datatable-thead > tr > th) {
+  padding: 12px 24px;
+}
+</style>

@@ -5,16 +5,16 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { ServiceType } from '@/types/services'
 import { computePrice } from '@/api/job_orders';
 import { getAllServices, getAllExtras } from '@/api/services';
-import type { JobItemCreate } from '@/types/job_orders';
+import type { JobItemPayload } from '@/types/job_orders';
 
 const props = defineProps<{
     isVisible: boolean
     joNumber: number
-    existingItems: JobItemCreate[]
-    editItem?: JobItemCreate | null
+    existingItems: JobItemPayload[]
+    editItem?: JobItemPayload | null
 }>()
 
-const item = ref<JobItemCreate>({
+const item = ref<JobItemPayload>({
     jo_number: props.joNumber,
     item_id: '',
     description: '',
@@ -25,9 +25,8 @@ const item = ref<JobItemCreate>({
     job_status: 'For Layout',
     due_date: new Date(),
     discount: 0,
-    service_type_id: '',
-    extra_type_id: null,
-    service_name: '',
+    extra_charge: 0,
+    service_name: 'Tarpaulin Regular',
     extra_service_name: 'N/A',
     extra_service_price: 0,
     unit_price: 0,
@@ -37,6 +36,8 @@ const serviceList = ref<ServiceType[]>([]);
 const extraList = ref<{ id: string, name: string, price: number }[]>([]);
 const jobStatuses = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled'])
 const unitSizes = ref(['ft.', 'in.', 'cm.', 'mm.', 'meter', 'N/A'])
+const selectedIsAreaBased = ref(true);
+
 const previewItemId = computed(() => {
     if (!item.value.service_name) return 'Select a service type first'
     const abbreviation = serviceList.value.find(s => s.name === item.value.service_name)?.abbreviation ?? 'NULL'
@@ -45,7 +46,7 @@ const previewItemId = computed(() => {
         return props.editItem.item_id
     }
 
-    const count = props.existingItems.filter((i: JobItemCreate) => i.service_name === item.value.service_name).length + 1
+    const count = props.existingItems.filter((i: JobItemPayload) => i.service_name === item.value.service_name).length + 1
     return `${props.joNumber}-${abbreviation}-${count}`
 })
 
@@ -56,12 +57,11 @@ onMounted(async () => {
 
 const onServiceChange = (service: ServiceType) => {
     console.log(service)
-    item.value.service_type_id = service.id
     item.value.service_name = service.name
+    selectedIsAreaBased.value = service.is_area_based
 }
 
 const onExtraChange = (extra: { id: string, name: string, price: number }) => {
-    item.value.extra_type_id = extra.id
     item.value.extra_service_name = extra.name
     item.value.extra_service_price = extra.price
 }
@@ -89,8 +89,8 @@ watch(() => props.editItem, (newItem) => {
 
 const emit = defineEmits<{
     (e: 'update:isVisible', value: boolean): void
-    (e: 'add-item', value: JobItemCreate): void
-    (e: 'update-item', value: JobItemCreate): void
+    (e: 'add-item', value: JobItemPayload): void
+    (e: 'update-item', value: JobItemPayload): void
 }>()
 
 const resetItem = () => {
@@ -105,9 +105,8 @@ const resetItem = () => {
         job_status: '',
         due_date: new Date(),
         discount: 0,
-        service_type_id: '',
-        extra_type_id: null,
-        service_name: '',
+        extra_charge: 0,
+        service_name: 'Tarpaulin Regular',
         extra_service_name: '',
         extra_service_price: 0,
         unit_price: 0,
@@ -131,41 +130,65 @@ const onSave = () => {
     <Dialog :visible="isVisible" @update:visible="emit('update:isVisible', $event)" modal
         :header="editItem ? 'Edit Job Item' : 'Add Job Item'" :style="{ width: '40rem' }">
         <div class="flex flex-col mb-4">
-            <label class="font-semibold mb-1">Item ID</label>
+            <div class="flex items-center gap-2 mb-1">
+                <label class="font-semibold">Item ID</label>
+                <span
+                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-500">Auto-generated</span>
+            </div>
             <InputText :modelValue="previewItemId" fluid autocomplete="off" disabled />
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="flex flex-col">
-                <label class="font-semibold mb-1">Service Type</label>
+                <label class="font-semibold mb-1">Service Type <span class="text-red-500">*</span></label>
                 <Select :modelValue="serviceList.find((s: ServiceType) => s.name === item.service_name)"
-                    :options="serviceList" optionLabel="name" placeholder="Service Type"
-                    @change="(e) => onServiceChange(e.value)" fluid />
+                    :options="serviceList" optionLabel="name" placeholder="Service Type" filter
+                    filterMatchMode="contains" @change="(e) => onServiceChange(e.value)" fluid :pt="{
+                        option: ({ context }) => ({
+                            class: context.selected
+                                ? '!bg-blue-600 !text-white !font-semibold'
+                                : context.focused
+                                    ? '!bg-blue-50 !text-blue-700 !font-semibold'
+                                    : ''
+                        })
+                    }" />
             </div>
             <div class="flex flex-col">
-                <label class="font-semibold mb-1">Extra Type</label>
+                <label class="font-semibold mb-1">Extra Type <span class="text-red-500">*</span></label>
                 <Select
                     :modelValue="extraList.find((s: { name: string, price: number }) => s.name === item.extra_service_name)"
-                    :options="extraList" optionLabel="name" placeholder="Extra Type"
-                    @change="(e) => onExtraChange(e.value)" />
+                    :options="extraList" optionLabel="name" placeholder="Extra Type" filter filterMatchMode="contains"
+                    fluid @change="(e) => onExtraChange(e.value)" :pt="{
+                        option: ({ context }) => ({
+                            class: context.selected
+                                ? '!bg-blue-600 !text-white !font-semibold'
+                                : context.focused
+                                    ? '!bg-blue-50 !text-blue-700 !font-semibold'
+                                    : ''
+                        })
+                    }" />
             </div>
         </div>
-        <div class="grid grid-cols-3 gap-4 mb-4">
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Height</label>
-                <InputNumber v-model="item.height" fluid />
+        <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0"
+            enter-to-class="opacity-100" leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100" leave-to-class="opacity-0">
+            <div v-if="selectedIsAreaBased" class="grid grid-cols-3 gap-4 mb-4">
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-1">Height <span class="text-red-500">*</span></label>
+                    <InputNumber v-model="item.height" fluid />
+                </div>
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-1">Width <span class="text-red-500">*</span></label>
+                    <InputNumber v-model="item.width" fluid />
+                </div>
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-1">Unit <span class="text-red-500">*</span></label>
+                    <Select v-model="item.size_unit" :options="unitSizes" fluid autocomplete="off" />
+                </div>
             </div>
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Width</label>
-                <InputNumber v-model="item.width" fluid />
-            </div>
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Unit</label>
-                <Select v-model="item.size_unit" :options="unitSizes" fluid autocomplete="off" />
-            </div>
-        </div>
+        </Transition>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="flex flex-col">
-                <label class="font-semibold mb-1">Quantity</label>
+                <label class="font-semibold mb-1">Quantity <span class="text-red-500">*</span></label>
                 <InputNumber v-model="item.quantity" :min=1 fluid />
             </div>
             <div class="flex flex-col">
@@ -188,6 +211,16 @@ const onSave = () => {
                     mode="currency" currency="PHP" fluid disabled />
             </div>
         </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="flex flex-col">
+                <label class="font-semibold mb-1">Job Status</label>
+                <Select v-model="item.job_status" :options="jobStatuses" />
+            </div>
+            <div class="flex flex-col">
+                <label class="font-semibold mb-1">Due Date <span class="text-red-500">*</span></label>
+                <DatePicker v-model="item.due_date" showTime hourFormat="12" />
+            </div>
+        </div>
         <div class="flex flex-col mb-4">
             <label class="font-semibold mb-1">Description</label>
             <InputText v-model="item.description" fluid autocomplete="off" />
@@ -195,16 +228,6 @@ const onSave = () => {
         <div class="flex flex-col mb-4">
             <label class="font-semibold mb-1">Notes</label>
             <InputText v-model="item.notes" fluid autocomplete="off" />
-        </div>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Job Status</label>
-                <Select v-model="item.job_status" :options="jobStatuses" />
-            </div>
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Due Date</label>
-                <DatePicker v-model="item.due_date" showTime hourFormat="12" />
-            </div>
         </div>
         <div class="flex justify-end gap-2">
             <Button label="Cancel" severity="secondary" @click="emit('update:isVisible', false)" />

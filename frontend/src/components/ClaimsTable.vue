@@ -44,13 +44,13 @@ const updateItem = (updated: ClaimCreate) => {
 <template>
 	<ClaimForm v-model:isVisible="isVisible" :editItem="editingItem" :jobItems="props.jobItems" :claims="props.claims"
 		@add-item="addItem" @update-item="updateItem" />
-	<div class="rounded-md overflow-hidden">
-		<DataTable :value="claims">
+	<div class="rounded-2xl overflow-hidden">
+		<DataTable :value="claims" :pt="{ bodyCell: { class: 'px-8' }, headerCell: { class: 'mx-10 py-3' } }">
 			<template #empty>
 				<p class="text-center text-slate-400">Input data by clicking the + icon on the upper right.</p>
 			</template>
 			<template #header>
-				<div class="flex flex-wrap items-center justify-between gap-2">
+				<div class="px-2 flex flex-wrap items-center justify-between gap-2">
 					<span class="text-xl font-medium text-slate-600">Claiming History</span>
 					<Button v-if="!readOnly" @click="isVisible = true" severity="contrast" :disabled="!props.jobItems.length"
 						v-tooltip.left="{ value: 'Add job items first.', disabled: !!props.jobItems.length }">
@@ -81,3 +81,13 @@ const updateItem = (updated: ClaimCreate) => {
 		</DataTable>
 	</div>
 </template>
+
+<style scoped>
+:deep(.p-datatable-tbody > tr > td) {
+  padding: 12px 24px;
+}
+
+:deep(.p-datatable-thead > tr > th) {
+  padding: 12px 24px;
+}
+</style>

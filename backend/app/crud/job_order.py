@@ -112,26 +112,23 @@ def get_price(
 
 def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UUID):
     try:
-        if data.customer_id:
-            customer = db.exec(
-                select(Customer).where(Customer.id == data.customer_id)
-            ).first()
-            if not customer:
-                raise HTTPException(status_code=404, detail="Customer not found")
-        else:
-            if not all(
-                [
-                    data.customer_name,
-                    data.customer_address,
-                    data.customer_contact_no,
-                    data.customer_email,
-                ]
-            ):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Name, address, email, and contact number are required for new customers. You can also put N/A if not applicable for walk-in customers.",
-                )
-
+        jo_number_unique = db.exec(
+            select(JobOrder).where(JobOrder.jo_number == data.jo_number)
+        ).first()
+        if jo_number_unique:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Job with JO Number {data.jo_number} already exists.",
+            )
+        if not data.customer_name:
+            raise HTTPException(
+                status_code=400,
+                detail="Customer name is required.",
+            )
+        customer = db.exec(
+            select(Customer).where(Customer.name == data.customer_name)
+        ).first()
+        if not customer:
             assert data.customer_name
             assert data.customer_address
             assert data.customer_contact_no
@@ -155,14 +152,14 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
 
         for item in data.job_items:
             service_type = db.exec(
-                select(ServiceType).where(ServiceType.id == item.service_type_id)
+                select(ServiceType).where(ServiceType.name == item.service_name)
             ).first()
             if not service_type:
                 raise HTTPException(status_code=404, detail="Service type not found")
             extra_type = None
-            if item.extra_type_id:
+            if item.extra_service_name:
                 extra_type = db.exec(
-                    select(ExtraType).where(ExtraType.id == item.extra_type_id)
+                    select(ExtraType).where(ExtraType.name == item.extra_service_name)
                 ).first()
                 if not extra_type:
                     raise HTTPException(status_code=404, detail="Extra type not found")
@@ -266,31 +263,17 @@ def update_job_order(
         if not job_order:
             raise HTTPException(status_code=404, detail="Job order not found")
 
-        # Update basic job order fields
+        # Update basic fields
         job_order.date_received = data.date_received
         job_order.override_payment_status = data.override_payment_status
 
-        # If updated customer is new, there's name and other info. If old, only ID.
-        if data.customer_id:
-            customer = db.exec(
-                select(Customer).where(Customer.id == data.customer_id)
-            ).first()
-            if not customer:
-                raise HTTPException(status_code=404, detail="Customer not found")
-            job_order.customer_id = customer.id
-        else:
-            if not all(
-                [
-                    data.customer_name,
-                    data.customer_address,
-                    data.customer_contact_no,
-                    data.customer_email,
-                ]
-            ):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Name, address, email, and contact number are required for new customers. You can also put N/A if not applicable for walk-in customers.",
-                )
+        # Customer lookup by name (same as create)
+        if not data.customer_name:
+            raise HTTPException(status_code=400, detail="Customer name is required.")
+        customer = db.exec(
+            select(Customer).where(Customer.name == data.customer_name)
+        ).first()
+        if not customer:
             assert data.customer_name
             assert data.customer_address
             assert data.customer_contact_no
@@ -303,7 +286,7 @@ def update_job_order(
             )
             db.add(customer)
             db.flush()
-
+        job_order.customer_id = customer.id
         db.add(job_order)
         db.flush()
 
@@ -323,14 +306,14 @@ def update_job_order(
         # 2. Insert job items first
         for item in data.job_items:
             service_type = db.exec(
-                select(ServiceType).where(ServiceType.id == item.service_type_id)
+                select(ServiceType).where(ServiceType.name == item.service_name)
             ).first()
             if not service_type:
                 raise HTTPException(status_code=404, detail="Service type not found")
             extra_type = None
-            if item.extra_type_id:
+            if item.extra_service_name:
                 extra_type = db.exec(
-                    select(ExtraType).where(ExtraType.id == item.extra_type_id)
+                    select(ExtraType).where(ExtraType.name == item.extra_service_name)
                 ).first()
                 if not extra_type:
                     raise HTTPException(status_code=404, detail="Extra type not found")
@@ -384,9 +367,6 @@ def update_job_order(
                 )
                 db.add(paymentItem)
         db.flush()
-        fresh_payments = db.exec(
-            select(Payment).where(Payment.job_order_id == job_order.id)
-        ).all()
         db.refresh(job_order)
         job_order.sync_computed_fields()
         db.commit()
@@ -430,9 +410,11 @@ def get_job_order_kpis(db: Session) -> dict:
     # Count of overdue jobs — job items past due_date and not released/cancelled
     now = datetime.now(timezone.utc)
     overdue_count = db.exec(
-    select(func.count()).select_from(JobItem).where(
-        JobItem.due_date < now,
-        col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED])
+        select(func.count())
+        .select_from(JobItem)
+        .where(
+            JobItem.due_date < now,
+            col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED]),
         )
     ).one()
 
