@@ -146,6 +146,8 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
             jo_number=data.jo_number,
             date_received=data.date_received,
             customer_id=customer.id,
+            created_by_id=current_user_id,
+            updated_by_id=current_user_id,
         )
         db.add(job_order)
         db.flush()
@@ -262,10 +264,12 @@ def update_job_order(
         ).first()
         if not job_order:
             raise HTTPException(status_code=404, detail="Job order not found")
-
+        
         # Update basic fields
         job_order.date_received = data.date_received
         job_order.override_payment_status = data.override_payment_status
+        job_order.updated_at = datetime.now(timezone.utc)
+        job_order.updated_by_id = current_user_id
 
         # Customer lookup by name (same as create)
         if not data.customer_name:
@@ -386,7 +390,7 @@ def update_job_order(
         raise
 
 
-def get_job_order_kpis(db: Session) -> dict:
+def get_admin_job_order_kpis(db: Session) -> dict:
     # Outstanding balance — sum of (total_due - total_paid) for unpaid/partial orders
     job_orders = db.exec(
         select(JobOrder).where(
@@ -431,3 +435,102 @@ def get_job_order_kpis(db: Session) -> dict:
         "overdue_count": overdue_count,
         "payments_this_week": payments_this_week or 0.0,
     }
+
+def get_user_job_order_kpis(db: Session) -> dict:
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+
+    # Count of overdue jobs — past due date, not released/cancelled
+    overdue_count = db.exec(
+        select(func.count())
+        .select_from(JobItem)
+        .where(
+            JobItem.due_date < now,
+            col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED, JobStatus.FOR_PICKUP]),
+        )
+    ).one()
+
+    # Count of jobs due today — due date is within today, not released/cancelled
+    due_today_count = db.exec(
+        select(func.count())
+        .select_from(JobItem)
+        .where(
+            JobItem.due_date >= today_start,
+            JobItem.due_date < today_end,
+            col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED, JobStatus.FOR_PICKUP]),
+        )
+    ).one()
+
+    # Count of jobs in progress
+    in_progress_count = db.exec(
+        select(func.count())
+        .select_from(JobItem)
+        .where(
+            col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED, JobStatus.FOR_PICKUP]),
+        )
+    ).one()
+
+    # Count of jobs ready for pickup — released but not fully claimed
+    released_items = db.exec(
+        select(JobItem).where(
+            JobItem.job_status == JobStatus.RELEASED,
+        )
+    ).all()
+    ready_for_pickup_count = sum(1 for item in released_items if item.remaining_on_hand > 0)
+
+    return {
+        "overdue_jobs": overdue_count,
+        "due_today": due_today_count,
+        "in_progress": in_progress_count,
+        "ready_for_pickup": ready_for_pickup_count,
+    }
+
+def get_jobs_with_outstanding_balance(db: Session) -> list[JobOrder]:
+    return list(db.exec(
+        select(JobOrder).where(
+            JobOrder.is_active == True,
+            col(JobOrder.payment_status).in_([PaymentStatus.UNPAID, PaymentStatus.PARTIAL])
+        )
+    ).all())
+    
+def get_unpaid_job_orders(db: Session) -> list[JobOrder]:
+    return list(db.exec(
+        select(JobOrder).where(
+            JobOrder.is_active == True,
+            JobOrder.payment_status == PaymentStatus.UNPAID
+        )
+    ).all())
+    
+def get_overdue_job_orders(db: Session) -> list[JobOrder]:
+    now = datetime.now(timezone.utc)
+    overdue_job_order_ids = db.exec(
+        select(JobItem.job_order_id).where(
+            JobItem.due_date < now,
+            col(JobItem.job_status).not_in([JobStatus.RELEASED, JobStatus.CANCELLED])
+        )
+    ).all()
+    return list(db.exec(
+        select(JobOrder).where(
+            col(JobOrder.id).in_(overdue_job_order_ids),  # ← wrap with col()
+            JobOrder.is_active == True
+        )
+    ).all())
+    
+def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
+    now = datetime.now(timezone.utc)
+    week_start = now - timedelta(days=now.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    job_order_ids = db.exec(
+        select(Payment.job_order_id).where(
+            Payment.date_received >= week_start
+        )
+    ).all()
+    
+    return list(db.exec(
+        select(JobOrder).where(
+            col(JobOrder.id).in_(job_order_ids),
+            JobOrder.is_active == True
+        )
+    ).all())

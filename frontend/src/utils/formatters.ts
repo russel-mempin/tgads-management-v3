@@ -1,4 +1,4 @@
-import type { JobItem } from '@/types/job_orders'
+import type { JobItemFromDB } from '@/types/job_orders'
 
 export const formatCurrency = (value: number | undefined) => {
   if (value === undefined) return '₱0.00'
@@ -10,8 +10,37 @@ export const formatCurrency = (value: number | undefined) => {
 
 export const formatDate = (date: string | Date | undefined) => {
   if (!date) return ''
-  const parsedDate = typeof date === 'string' ? new Date(date) : date
-  return parsedDate.toLocaleDateString('en-US', {
+  let parsedDate: Date
+  if (typeof date === 'string') {
+    // Append Z if no timezone info present, so JS treats it as UTC
+    const normalized = date.endsWith('Z') || date.includes('+') ? date : date + 'Z'
+    parsedDate = new Date(normalized)
+  } else {
+    parsedDate = date
+  }
+  return parsedDate.toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+export const formatDateNoYear = (date: string | Date | undefined) => {
+  if (!date) return ''
+  let parsedDate: Date
+  if (typeof date === 'string') {
+    // Append Z if no timezone info present, so JS treats it as UTC
+    const normalized = date.endsWith('Z') || date.includes('+') ? date : date + 'Z'
+    parsedDate = new Date(normalized)
+  } else {
+    parsedDate = date
+  }
+  return parsedDate.toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -49,6 +78,8 @@ export const mapCustomColor = (status: string): string | null => {
       return '!bg-purple-500 !text-white'
     case 'Pending':
       return '!bg-orange-600 !text-white'
+    case 'For Layout':
+      return '!bg-yellow-500 !text-white'
     default:
       return null
   }
@@ -69,7 +100,7 @@ const STATUS_PRIORITY: Record<string, number> = {
   Pending: 6,
 }
 
-export const getOverallJobStatus = (jobItems: JobItem[]): string => {
+export const getOverallJobStatus = (jobItems: JobItemFromDB[]): string => {
   if (!jobItems || jobItems.length === 0) return '—'
 
   return jobItems.reduce((prev, curr) => {

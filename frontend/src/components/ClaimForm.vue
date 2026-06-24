@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import type { ClaimCreate, JobItemCreate, JobItem, ClaimingHistory } from '@/types/job_orders';
+import type { JobItemPayload, JobItemFromDB, ClaimingHistory } from '@/types/job_orders';
 import { ref, watch, computed } from 'vue';
 import { Dialog, DatePicker, InputText, Select, InputNumber, Button } from 'primevue';
 
 const props = defineProps<{
 	isVisible: boolean
-	editItem?: ClaimCreate | null
-	jobItems: JobItemCreate[] | JobItem[]
-	claims: ClaimCreate[] | ClaimingHistory[]
+	editItem?: ClaimingHistory | null
+	jobItems: JobItemPayload[] | JobItemFromDB[]
+	claims: ClaimingHistory[]
 }>()
 
 const emit = defineEmits<{
 	(e: 'update:isVisible', value: boolean): void
-	(e: 'add-item', value: ClaimCreate): void
-	(e: 'update-item', value: ClaimCreate): void
+	(e: 'add-item', value: ClaimingHistory): void
+	(e: 'update-item', value: ClaimingHistory): void
 }>()
 
-const item = ref<ClaimCreate>({
+const item = ref<ClaimingHistory>({
 	date_claimed: new Date(),
 	name: '',
 	claimed_item_id: '',
@@ -38,9 +38,9 @@ const maxClaimable = computed(() => {
 	const jobItem = props.jobItems.find(i => i.item_id === item.value.claimed_item_id)
 	if (!jobItem) return 0
 
-	const alreadyClaimed = (props.claims as ClaimCreate[])
+	const alreadyClaimed = (props.claims as ClaimingHistory[])
 		.filter(c => c.claimed_item_id === item.value.claimed_item_id)
-		.filter((_, i) => !props.editItem || (props.claims as ClaimCreate[]).indexOf(props.editItem) !== i)
+		.filter((_, i) => !props.editItem || (props.claims as ClaimingHistory[]).indexOf(props.editItem) !== i)
 		.reduce((sum, c) => sum + c.pcs_claimed, 0)
 
 	return jobItem.quantity - alreadyClaimed
@@ -69,7 +69,7 @@ watch(() => props.editItem, (newItem) => {
 		:header="editItem ? 'Edit Claim History' : 'Add Claim History'" :style="{ width: '40rem' }">
 		<div class="flex flex-col mb-4">
 			<label class="font-semibold mb-1">Date Claimed</label>
-			<DatePicker v-model="item.date_claimed" showTime hourFormat="12" />
+			<DatePicker v-model="item.date_claimed" showTime hourFormat="12" dateFormat="M dd, yy" />
 		</div>
 		<div class="flex flex-col mb-4">
 			<label class="font-semibold mb-1">Name</label>
@@ -78,7 +78,7 @@ watch(() => props.editItem, (newItem) => {
 		<div class="grid grid-cols-2 gap-4 mb-4">
 			<div class="flex flex-col">
 				<label class="font-semibold mb-1">Item Claimed</label>
-				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItemCreate[]).map(i => i.item_id)"
+				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItemPayload[]).map(i => i.item_id)"
 					fluid />
 			</div>
 			<div class="flex flex-col">
@@ -88,7 +88,7 @@ watch(() => props.editItem, (newItem) => {
 		</div>
 		<div class="flex justify-end gap-2">
 			<Button label="Cancel" severity="secondary" @click="emit('update:isVisible', false)" />
-			<Button label="Save" @click="onSave" />
+			<Button label="Add" @click="onSave" />
 		</div>
 	</Dialog>
 </template>

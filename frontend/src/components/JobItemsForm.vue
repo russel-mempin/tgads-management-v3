@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // JobItemsForm.vue
-import { Button, Dialog, InputText, Select, InputNumber, DatePicker } from 'primevue'
+import { Button, Dialog, InputText, Select, InputNumber, DatePicker, InputGroup, InputGroupAddon } from 'primevue'
 import { ref, onMounted, watch, computed } from 'vue'
 import type { ServiceType } from '@/types/services'
 import { computePrice } from '@/api/job_orders';
 import { getAllServices, getAllExtras } from '@/api/services';
 import type { JobItemPayload } from '@/types/job_orders';
+import { formatCurrency } from '@/utils/formatters';
 
 const props = defineProps<{
     isVisible: boolean
@@ -171,44 +172,44 @@ const onSave = () => {
         <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0"
             enter-to-class="opacity-100" leave-active-class="transition-all duration-200 ease-in"
             leave-from-class="opacity-100" leave-to-class="opacity-0">
-            <div v-if="selectedIsAreaBased" class="grid grid-cols-3 gap-4 mb-4">
-                <div class="flex flex-col">
-                    <label class="font-semibold mb-1">Height <span class="text-red-500">*</span></label>
-                    <InputNumber v-model="item.height" fluid />
-                </div>
-                <div class="flex flex-col">
-                    <label class="font-semibold mb-1">Width <span class="text-red-500">*</span></label>
-                    <InputNumber v-model="item.width" fluid />
-                </div>
-                <div class="flex flex-col">
-                    <label class="font-semibold mb-1">Unit <span class="text-red-500">*</span></label>
-                    <Select v-model="item.size_unit" :options="unitSizes" fluid autocomplete="off" />
-                </div>
+            <div v-if="selectedIsAreaBased" class="flex flex-col mb-4">
+                <label class="font-semibold mb-1">Dimensions <span class="text-red-500">*</span></label>
+                <InputGroup>
+                    <InputNumber v-model="item.height" placeholder="Height" fluid />
+                    <InputGroupAddon>×</InputGroupAddon>
+                    <InputNumber v-model="item.width" placeholder="Width" fluid />
+                    <Select v-model="item.size_unit" :options="unitSizes"
+                        :pt="{ root: { class: '!flex-none !w-24' } }" />
+                </InputGroup>
             </div>
         </Transition>
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-3 gap-4 mb-4">
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Quantity <span class="text-red-500">*</span></label>
                 <InputNumber v-model="item.quantity" :min=1 fluid />
             </div>
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Discount</label>
-                <InputNumber v-model="item.discount" mode="currency" currency="PHP" fluid />
+                <InputNumber v-model="item.discount" mode="currency" currency="PHP" fluid :minFractionDigits="0" :maxFractionDigits="2" />
+            </div>
+            <div class="flex flex-col">
+                <label class="font-semibold mb-1">Extra Charge</label>
+                <InputNumber v-model="item.extra_charge" mode="currency" currency="PHP" fluid :minFractionDigits="0" :maxFractionDigits="2" />
             </div>
         </div>
-        <div class="grid grid-cols-3 gap-4 mb-4">
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Unit Price</label>
-                <InputNumber v-model="item.unit_price" mode="currency" currency="PHP" fluid disabled />
+        <div class="flex justify-between bg-gray-100 p-2 rounded-md mb-4">
+            <div class="flex gap-2">
+                <p>Unit Price - </p>
+                <p>{{ formatCurrency(item.unit_price) }}</p>
             </div>
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Extra Price</label>
-                <InputNumber v-model="item.extra_service_price" mode="currency" currency="PHP" fluid disabled />
+            <div class="flex gap-2">
+                <p>Extra Price - </p>
+                <p>{{ formatCurrency(item.extra_service_price) }}</p>
             </div>
-            <div class="flex flex-col">
-                <label class="font-semibold mb-1">Subtotal</label>
-                <InputNumber :modelValue="(item.unit_price + item.extra_service_price - item.discount) * item.quantity"
-                    mode="currency" currency="PHP" fluid disabled />
+            <div class="flex gap-2">
+                <p>Subtotal - </p>
+                <p>{{ formatCurrency((item.unit_price + item.extra_service_price + item.extra_charge - item.discount) *
+                    item.quantity) }}</p>
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -218,7 +219,7 @@ const onSave = () => {
             </div>
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Due Date <span class="text-red-500">*</span></label>
-                <DatePicker v-model="item.due_date" showTime hourFormat="12" />
+                <DatePicker v-model="item.due_date" showTime hourFormat="12" dateFormat="M dd, yy" />
             </div>
         </div>
         <div class="flex flex-col mb-4">
@@ -229,9 +230,9 @@ const onSave = () => {
             <label class="font-semibold mb-1">Notes</label>
             <InputText v-model="item.notes" fluid autocomplete="off" />
         </div>
-        <div class="flex justify-end gap-2">
-            <Button label="Cancel" severity="secondary" @click="emit('update:isVisible', false)" />
-            <Button label="Save" @click="onSave" />
+        <div class="flex items-center justify-end gap-2">
+            <Button class="w-24" label="Cancel" severity="secondary" @click="emit('update:isVisible', false)" />
+            <Button class="w-24" label="Add" @click="onSave" />
         </div>
     </Dialog>
 </template>

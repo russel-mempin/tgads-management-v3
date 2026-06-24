@@ -5,7 +5,7 @@ import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
 import { Plus, PhilippinePeso, Clock, TrendingUp } from '@lucide/vue';
 import { getAllJobOrders, getJobOrderCount, getJobOrderKpis } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
-import { formatCurrency, formatDate, mapSeverity, mapCustomColor } from '@/utils/formatters';
+import { formatCurrency, formatDateNoYear, mapSeverity, mapCustomColor } from '@/utils/formatters';
 
 const job_orders = ref<JobOrder[]>([])
 const router = useRouter()
@@ -28,21 +28,22 @@ const kpis = ref({
 })
 
 const fetchServices = async () => {
-	loading.value = true
-	const filterParams = {
-		offset: currentOffset.value,
-		limit: rows.value,
-		payment_status: paymentStatus.value || undefined,
-		job_status: jobStatus.value || undefined,
-		search: joNumberSearch.value || undefined,
-	}
-	const [data, count] = await Promise.all([
-		getAllJobOrders(filterParams),
-		getJobOrderCount(filterParams)
-	])
-	job_orders.value = data
-	totalRecords.value = count
-	loading.value = false
+    loading.value = true
+    const filterParams = {
+        offset: currentOffset.value,
+        limit: rows.value,
+        payment_status: paymentStatus.value || undefined,
+        job_status: jobStatus.value || undefined,
+        search: joNumberSearch.value || undefined,
+        filter: activeFilter.value || undefined,
+    }
+    const [data, count] = await Promise.all([
+        getAllJobOrders(filterParams),
+        getJobOrderCount(filterParams)
+    ])
+    job_orders.value = data
+    totalRecords.value = count
+    loading.value = false
 }
 
 const onPage = (event: any) => {
@@ -85,6 +86,13 @@ const onRowClick = (event: { data: JobOrder }) => {
 		expandedRows.value[event.data.id] = true
 	}
 }
+
+const activeFilter = ref<string | null>(null)
+
+const setFilter = (filter: string) => {
+    activeFilter.value = activeFilter.value === filter ? null : filter
+    clearFilters()
+}
 </script>
 
 <template>
@@ -107,8 +115,11 @@ const onRowClick = (event: { data: JobOrder }) => {
 		</section>
 		<!-- Summary Bar -->
 		<section class="my-6 grid grid-cols-4 gap-6">
-			<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
-				<div class="bg-orange-100 flex items-center justify-center w-12 h-12 rounded-full text-orange-700">
+			<div @click="setFilter('outstanding')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'outstanding' ? 'bg-orange-100' : 'bg-white hover:bg-orange-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-orange-700"
+					:class="activeFilter === 'outstanding' ? 'bg-orange-300' : 'bg-orange-100'">
 					<PhilippinePeso />
 				</div>
 				<div class="ml-4">
@@ -116,8 +127,11 @@ const onRowClick = (event: { data: JobOrder }) => {
 					<p class="font-bold text-3xl text-orange-700">{{ formatCurrency(kpis.outstanding_balance) }}</p>
 				</div>
 			</div>
-			<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
-				<div class="bg-red-100 flex items-center justify-center w-12 h-12 rounded-full text-red-700">
+			<div @click="setFilter('unpaid')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'unpaid' ? 'bg-red-100' : 'bg-white hover:bg-red-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700"
+					:class="activeFilter === 'unpaid' ? 'bg-red-300' : 'bg-red-100'">
 					<Clock />
 				</div>
 				<div class="ml-4">
@@ -125,8 +139,11 @@ const onRowClick = (event: { data: JobOrder }) => {
 					<p class="font-bold text-3xl text-red-700">{{ kpis.unpaid_count }}</p>
 				</div>
 			</div>
-			<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
-				<div class="bg-red-100 flex items-center justify-center w-12 h-12 rounded-full text-red-700">
+			<div @click="setFilter('overdue')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'overdue' ? 'bg-red-100' : 'bg-white hover:bg-red-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700"
+					:class="activeFilter === 'overdue' ? 'bg-red-300' : 'bg-red-100'">
 					<Clock />
 				</div>
 				<div class="ml-4">
@@ -134,8 +151,11 @@ const onRowClick = (event: { data: JobOrder }) => {
 					<p class="font-bold text-3xl text-red-700">{{ kpis.overdue_count }}</p>
 				</div>
 			</div>
-			<div class="bg-white border border-gray-200 shadow-xs p-4 rounded-xl flex items-center">
-				<div class="bg-green-100 flex items-center justify-center w-12 h-12 rounded-full text-green-700">
+			<div @click="setFilter('payments-week')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'payments-week' ? 'bg-green-100' : 'bg-white hover:bg-green-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-green-700"
+					:class="activeFilter === 'payments-week' ? 'bg-green-300' : 'bg-green-100'">
 					<TrendingUp />
 				</div>
 				<div class="ml-4">
@@ -163,7 +183,12 @@ const onRowClick = (event: { data: JobOrder }) => {
 				<Column field="customer_name" header="Customer"></Column>
 				<Column field="date_received" header="Start Date">
 					<template #body="slotProps">
-						{{ formatDate(slotProps.data.date_received) }}
+						{{ formatDateNoYear(slotProps.data.date_received) }}
+					</template>
+				</Column>
+				<Column field="updated_at" header="Last Update">
+					<template #body="slotProps">
+						{{ formatDateNoYear(slotProps.data.updated_at) }}
 					</template>
 				</Column>
 				<Column field="payment_status" header="Payment Status">
@@ -217,14 +242,14 @@ const onRowClick = (event: { data: JobOrder }) => {
 								<template #body="{ data }">
 									{{ (data.height && data.width) ? `${data.height} × ${data.width} ${data.size_unit}`
 										:
-									'—' }}
+										'—' }}
 								</template>
 							</Column>
 							<Column field="quantity" header="Qty."></Column>
 							<Column field="due_date" header="Due Date">
 								<template #body="slotProps">
 									<div class="flex items-center gap-2">
-										{{ formatDate(slotProps.data.due_date) }}
+										{{ formatDateNoYear(slotProps.data.due_date) }}
 										<span
 											v-if="new Date(slotProps.data.due_date) < new Date() && slotProps.data.job_status !== 'Released' && slotProps.data.job_status !== 'Cancelled' && slotProps.data.job_status !== 'For Pickup' && slotProps.data.job_status !== 'For Approval'"
 											class="text-xs font-medium text-red-500">
@@ -254,7 +279,7 @@ const onRowClick = (event: { data: JobOrder }) => {
 						<DataTable :value="slotProps.data.payments">
 							<Column field="date_received" header="Date received">
 								<template #body="slotProps">
-									{{ formatDate(slotProps.data.date_received) }}
+									{{ formatDateNoYear(slotProps.data.date_received) }}
 								</template>
 							</Column>
 							<Column field="method" header="Method"></Column>

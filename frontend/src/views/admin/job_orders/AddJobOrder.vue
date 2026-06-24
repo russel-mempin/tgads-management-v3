@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { ArrowLeft, Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
 import type { Customer } from '@/types/customers';
-import type { PaymentCreate, ClaimCreate, JobOrderCreate, JobItemPayload } from '@/types/job_orders';
+import type { JobOrderCreate, JobItemPayload, Payment, ClaimingHistory } from '@/types/job_orders';
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
@@ -51,7 +51,7 @@ watch(customerName, async (name) => {
 		const data = await getCustomerInfo(name);
 		if (data) customerInfo.value = data;
 	} else {
-		// New customer — clear fields
+		// New customer - clear fields and enable input for other info
 		isNewCustomer.value = true;
 		customerInfo.value = { name, contact_no: '', email: '', address: '' };
 	}
@@ -60,8 +60,8 @@ watch(customerName, async (name) => {
 const jo_number = ref(0);
 const date_received = ref(new Date());
 const items = ref<JobItemPayload[]>([]);
-const payments = ref<PaymentCreate[]>([]);
-const claims = ref<ClaimCreate[]>([]);
+const payments = ref<Payment[]>([]);
+const claims = ref<ClaimingHistory[]>([]);
 
 const totalDue = computed(() =>
 	items.value.reduce((sum: number, item: JobItemPayload) =>
@@ -73,50 +73,50 @@ const totalPaid = computed(() =>
 )
 
 const buildPayload = () => {
-    const payload = {
-        jo_number: jo_number.value,
-        date_received: date_received.value,
-        customer_name: customerInfo.value.name,
-        customer_address: customerInfo.value.address,
-        customer_contact_no: customerInfo.value.contact_no,
-        customer_email: customerInfo.value.email,
+	const payload = {
+		jo_number: jo_number.value,
+		date_received: date_received.value,
+		customer_name: customerInfo.value.name,
+		customer_address: customerInfo.value.address || 'N/A',
+		customer_contact_no: customerInfo.value.contact_no || 'N/A',
+		customer_email: customerInfo.value.email || 'N/A',
 
-        job_items: items.value.map(item => ({
-            jo_number: jo_number.value,
-            item_id: item.item_id,
-            description: item.description,
-            height: item.height,
-            width: item.width,
-            size_unit: item.size_unit,
-            quantity: item.quantity,
-            job_status: item.job_status,
-            due_date: new Date(item.due_date),
-            discount: item.discount,
-            extra_charge: item.extra_charge,
-            notes: item.notes,
-            service_name: item.service_name,
-            extra_service_name: item.extra_service_name ?? null,
-        })),
+		job_items: items.value.map(item => ({
+			jo_number: jo_number.value,
+			item_id: item.item_id,
+			description: item.description,
+			height: item.height,
+			width: item.width,
+			size_unit: item.size_unit,
+			quantity: item.quantity,
+			job_status: item.job_status,
+			due_date: new Date(item.due_date),
+			discount: item.discount,
+			extra_charge: item.extra_charge,
+			notes: item.notes,
+			service_name: item.service_name,
+			extra_service_name: item.extra_service_name ?? null,
+		})),
 
-        ...(payments.value.length ? {
-            payments: payments.value.map(payment => ({
-                date_received: new Date(payment.date_received),
-                method: payment.method,
-                amount: payment.amount,
-            }))
-        } : {}),
+		...(payments.value.length ? {
+			payments: payments.value.map(payment => ({
+				date_received: payment.date_received,
+				method: payment.method,
+				amount: payment.amount,
+			}))
+		} : {}),
 
-        ...(claims.value.length ? {
-            claims: claims.value.map(claim => ({
-                date_claimed: new Date(claim.date_claimed),
-                name: claim.name,
-                pcs_claimed: claim.pcs_claimed,
-                claimed_item_id: claim.claimed_item_id,
-            }))
-        } : {}),
-    }
+		...(claims.value.length ? {
+			claims: claims.value.map(claim => ({
+				date_claimed: claim.date_claimed,
+				name: claim.name,
+				pcs_claimed: claim.pcs_claimed,
+				claimed_item_id: claim.claimed_item_id,
+			}))
+		} : {}),
+	}
 
-    handleSave(payload)
+	handleSave(payload)
 }
 
 const handleSave = async (payload: JobOrderCreate) => {
@@ -201,8 +201,9 @@ const handleSave = async (payload: JobOrderCreate) => {
 			<section class="mt-6 grid grid-cols-2 gap-6 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
 				<div class="flex flex-col">
 					<div class="flex">
-						<label class="mb-1 text-slate-700 font-medium">Job Order No.</label>
-						<span class="text-sm text-red-500">&nbsp;*</span>
+						<label class="mb-1 text-slate-700 font-medium">Job Order No. <span
+								class="text-sm text-red-500">*</span></label>
+
 					</div>
 					<InputNumber v-model="jo_number" placeholder="JO Number" :useGrouping="false" fluid
 						:disabled="items.length > 0"
@@ -213,7 +214,8 @@ const handleSave = async (payload: JobOrderCreate) => {
 						<label class="mb-1 text-slate-700 font-medium">Date Received</label>
 						<span class="text-sm text-red-500">&nbsp;*</span>
 					</div>
-					<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12" />
+					<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12"
+						dateFormat="M dd, yy" />
 				</div>
 			</section>
 			<!-- Job Items Table -->

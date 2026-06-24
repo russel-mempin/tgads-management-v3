@@ -11,13 +11,17 @@ from app.crud.job_order import (
     archive_job_order,
     update_job_order,
     get_job_order_count,
-    get_job_order_kpis
+    get_admin_job_order_kpis,
+    get_user_job_order_kpis,
+    get_unpaid_job_orders,
+    get_overdue_job_orders,
+    get_jobs_with_outstanding_balance,
+    get_jobs_with_payments_this_week
 )
 from app.schemas.job_order import JobOrderCreate
 from app.services.dependencies import get_current_active_user
 from app.models import User
 from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus
-import uuid
 
 router = APIRouter(
     prefix="/job-orders",
@@ -34,9 +38,18 @@ def read_all(
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
+    filter: str | None = None, #outstanding, unpaid, overdue, payments-week, overdue, due-today, in-progress, for-pickup
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
+    if filter == "outstanding":
+        return get_jobs_with_outstanding_balance(db)
+    elif filter == "unpaid":
+        return get_unpaid_job_orders(db)
+    elif filter == "overdue":
+        return get_overdue_job_orders(db)
+    elif filter == "payments-week":
+        return get_jobs_with_payments_this_week(db)
     return get_all_job_orders(
         db,
         offset=offset,
@@ -46,6 +59,7 @@ def read_all(
         job_status=job_status,
         search=search,
     )
+    
 
 @router.get("/count")
 def read_job_order_count(
@@ -67,8 +81,12 @@ def read_job_order_count(
 @router.get("/kpis")
 def read_kpis(
     db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
 ):
-    return get_job_order_kpis(db)
+    if current_user.role  == UserRoles.ADMIN:
+        return get_admin_job_order_kpis(db)
+    elif current_user.role == UserRoles.USER:
+        return get_user_job_order_kpis(db)
 
 @router.get("/compute-unit-price", response_model=float)
 def compute_unit_price(

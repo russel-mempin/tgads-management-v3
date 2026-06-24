@@ -2,14 +2,15 @@ import http from './http'
 import type { JobOrder, JobOrderCreate } from '@/types/job_orders'
 
 export const getAllJobOrders = async (params: {
-	offset?: number
-	limit?: number
-	payment_status?: string
-	job_status?: string
-	search?: string
+    offset?: number
+    limit?: number
+    payment_status?: string
+    job_status?: string
+    search?: string
+    filter?: string
 } = {}) => {
-	const response = await http.get('/job-orders/', { params })
-	return response.data
+    const response = await http.get('/job-orders/', { params })
+    return response.data
 }
 
 export const getJobOrderCount = async (params: {

@@ -1,42 +1,49 @@
 import csv, os
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import Customer, JobOrder, JobItem, ServiceType, ExtraType
+from app.models import Customer, JobOrder, JobItem, ServiceType, ExtraType, User
 from datetime import datetime
 from app.enums import SizeUnit, JobStatus
 from app.utils.utils import to_float, to_int
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 CSV_FILES = [
-	os.path.join(BASE_DIR, "seed_data", "june2026.csv"),
+    os.path.join(BASE_DIR, "seed_data", "june2026.csv"),
 ]
 
 UNIT_MAP = {
-	"in": SizeUnit.INCHES,
-	"in.": SizeUnit.INCHES,
-	"ft": SizeUnit.FEET,
-	"ft.": SizeUnit.FEET,
-	"cm": SizeUnit.CENTIMETER,
-	"cm.": SizeUnit.CENTIMETER,
-	"mm": SizeUnit.MILLIMETER,
-	"mm.": SizeUnit.MILLIMETER,
-	"n/a": SizeUnit.NA,
+    "in": SizeUnit.INCHES,
+    "in.": SizeUnit.INCHES,
+    "ft": SizeUnit.FEET,
+    "ft.": SizeUnit.FEET,
+    "cm": SizeUnit.CENTIMETER,
+    "cm.": SizeUnit.CENTIMETER,
+    "mm": SizeUnit.MILLIMETER,
+    "mm.": SizeUnit.MILLIMETER,
+    "n/a": SizeUnit.NA,
 }
 
+
 def seed_job_orders_from_converted_excel():
-    service_instance_counter = {}    
+    service_instance_counter = {}
     for file_path in CSV_FILES:
         print(f"Seeding {file_path}...")
         _seed_file(file_path, service_instance_counter)
+
 
 def _seed_file(file_path: str, service_instance_counter: dict):
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
         last_date = datetime.now()  # fallback if first row is empty
         touched_job_orders = set()
-
+        user = session.exec(
+            select(User).where(User.first_name == "Russel")
+        ).first()
+        if not user:
+            print("User not found.")
+            return
+        user_id = user.id
         for row in reader:
             if row["Date"].strip():
                 last_date = datetime.strptime(row["Date"], "%m/%d/%y")
@@ -52,11 +59,18 @@ def _seed_file(file_path: str, service_instance_counter: dict):
             joborder = session.exec(
                 select(JobOrder).where(JobOrder.jo_number == row["JO No."])
             ).first()
+            
             if not joborder:
                 joborder = JobOrder(
                     jo_number=to_int(row["JO No."]),
                     customer_id=customer.id,
-                    date_received=datetime.strptime(row["Date"], "%m/%d/%y") if row["Date"].strip() else last_date,
+                    date_received=(
+                        datetime.strptime(row["Date"], "%m/%d/%y")
+                        if row["Date"].strip()
+                        else last_date
+                    ),
+                    created_by_id=user_id,
+                    updated_by_id=user_id,
                 )
                 session.add(joborder)
                 session.commit()
@@ -85,13 +99,15 @@ def _seed_file(file_path: str, service_instance_counter: dict):
             assembled_item_id = (
                 f"{joborder.jo_number}-{service_type.abbreviation}-{instance_num}"
             )
-            
-            size_unit = UNIT_MAP.get(row["Unit"].strip().lower(), SizeUnit.NA)  # default to NA if empty
+
+            size_unit = UNIT_MAP.get(
+                row["Unit"].strip().lower(), SizeUnit.NA
+            )  # default to NA if empty
 
             if size_unit is None:
                 print(f"Unknown unit: {row['Unit']}. Skipping row.")
                 continue
-            
+
             jobitem = JobItem(
                 jo_number=joborder.jo_number,
                 item_id=assembled_item_id,
@@ -100,18 +116,22 @@ def _seed_file(file_path: str, service_instance_counter: dict):
                 extra_type_id=extra_type.id if extra_type else None,
                 description=row["Description"],
                 size_unit=size_unit,
-                job_status=JobStatus.CANCELLED if service_type.name == "Cancelled" else JobStatus(row["Job Status"]),
+                job_status=(
+                    JobStatus.CANCELLED
+                    if service_type.name == "Cancelled"
+                    else JobStatus(row["Job Status"])
+                ),
                 height=to_float(row["Height"]),
                 width=to_float(row["Width"]),
                 quantity=to_int(row["Qty"]),
                 discount=to_float(row["Discount"]),
-                extra_charge=to_float(row["Extra Charge"])
+                extra_charge=to_float(row["Extra Charge"]),
             )
-            
+
             session.add(jobitem)
 
         session.commit()
-        
+
         for jo_id in touched_job_orders:
             job_order = session.get(JobOrder, jo_id)
             if job_order:

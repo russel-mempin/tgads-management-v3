@@ -33,20 +33,7 @@ export interface Payment {
   amount: number
 }
 
-export interface PaymentCreate {
-  date_received: Date
-  method: string
-  amount: number
-}
-
 export interface ClaimingHistory {
-  date_claimed: Date
-  name: string
-  pcs_claimed: number
-  claimed_item_id: string
-}
-
-export interface ClaimCreate {
   date_claimed: Date
   name: string
   pcs_claimed: number
@@ -68,6 +55,10 @@ export interface JobOrder {
   customer_name: string
   customer_email: string
   customer_contact_no: string
+  created_at: Date
+  updated_at: Date
+  created_by_name: string
+  updated_by_name: string
 }
 
 export interface JobOrderCreate {

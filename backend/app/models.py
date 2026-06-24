@@ -92,6 +92,8 @@ class JobOrderBase(SQLModel):
     is_active: bool = Field(default=True)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class JobOrder(JobOrderBase, table=True):
@@ -100,7 +102,19 @@ class JobOrder(JobOrderBase, table=True):
     customer_id: uuid.UUID = Field(
         sa_column=Column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
     )
+    created_by_id: uuid.UUID | None = Field(
+        sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    )
+    updated_by_id: uuid.UUID | None = Field(
+        sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    )
 
+    created_by: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[JobOrder.created_by_id]"}
+    )
+    updated_by: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
+    )
     customer: "Customer" = Relationship(back_populates="job_orders")
     job_items: list["JobItem"] = Relationship(
         back_populates="job_order",
@@ -166,6 +180,14 @@ class JobOrder(JobOrderBase, table=True):
     @property
     def customer_contact_no(self) -> str:
         return self.customer.contact_no
+    
+    @property
+    def created_by_name(self) -> str | None:
+        return f"{self.created_by.first_name} {self.created_by.last_name}" if self.created_by else None
+
+    @property
+    def updated_by_name(self) -> str | None:
+        return f"{self.updated_by.first_name} {self.updated_by.last_name}" if self.updated_by else None
     
     
 # ====================== JOB ITEMS =========================

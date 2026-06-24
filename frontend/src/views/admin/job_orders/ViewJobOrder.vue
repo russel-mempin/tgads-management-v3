@@ -75,27 +75,32 @@ const confirmDelete = (jo_number: number) => {
 			</div>
 		</section>
 		<div class="mt-6 overflow-y-auto h-[calc(100vh-8rem)]">
-			<section class="flex flex-col bg-white rounded-2xl border border-slate-200 p-4">
-				<div class="flex items-center justify-between">
+			<section class="grid grid-cols-2 bg-white rounded-2xl border border-slate-200 p-4">
+				<div>
 					<p class="font-medium text-sm text-slate-600">Job Order</p>
-					<Tag rounded class="w-24" :value="jobOrder?.payment_status" />
-				</div>
-				<div class="flex items-end justify-between">
 					<p class="font-semibold text-xl">#{{ jobOrder?.jo_number }}</p>
-					<p class="text-slate-600">Started on {{ formatDate(jobOrder?.date_received) }}</p>
+					<div class="mt-3 flex flex-col gap-1">
+						<p class="font-medium text-slate-800">{{ jobOrder?.customer_name }}</p>
+						<div class="flex flex-wrap gap-x-4 gap-y-1">
+							<div class="flex items-center gap-1.5 text-slate-600">
+								<Mail class="size-5 shrink-0" />
+								<span>{{ jobOrder?.customer_email ?? '—' }}</span>
+							</div>
+							<div class="flex items-center gap-1.5 text-slate-600">
+								<Phone class="size-5 shrink-0" />
+								<span>{{ jobOrder?.customer_contact_no ?? '—' }}</span>
+							</div>
+						</div>
+					</div>
 				</div>
-
-				<div class="mt-3 flex flex-col gap-1">
-					<p class="font-medium text-slate-800">{{ jobOrder?.customer_name }}</p>
-					<div class="flex flex-wrap gap-x-4 gap-y-1">
-						<div class="flex items-center gap-1.5 text-slate-600">
-							<Mail class="size-5 shrink-0" />
-							<span>{{ jobOrder?.customer_email ?? '—' }}</span>
-						</div>
-						<div class="flex items-center gap-1.5 text-slate-600">
-							<Phone class="size-5 shrink-0" />
-							<span>{{ jobOrder?.customer_contact_no ?? '—' }}</span>
-						</div>
+				<div class="flex flex-col items-end">
+					<Tag rounded class="w-30" :value="jobOrder?.payment_status" />
+					<div class="flex-1 flex flex-col items-end justify-end">
+						<p class="text-slate-600">Started on {{ formatDate(jobOrder?.date_received) }}</p>
+						<p class="text-slate-500">Created by {{ jobOrder?.created_by_name }} on {{
+							formatDate(jobOrder?.created_at) }}</p>
+						<p class="text-slate-500">Last Updated by {{ jobOrder?.updated_by_name }} on {{
+							formatDate(jobOrder?.updated_at) }}</p>
 					</div>
 				</div>
 			</section>

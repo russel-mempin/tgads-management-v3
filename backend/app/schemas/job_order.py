@@ -41,6 +41,8 @@ class JobOrderPublic(JobOrderBase):
     customer_name: str
     customer_email: str | None = None
     customer_contact_no: str | None = None
+    created_by_name: str | None = None
+    updated_by_name: str | None = None
     
 class JobOrderCreate(SQLModel):
     jo_number: int
