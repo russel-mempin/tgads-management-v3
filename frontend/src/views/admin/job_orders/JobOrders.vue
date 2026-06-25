@@ -6,6 +6,7 @@ import { Plus, PhilippinePeso, Clock, TrendingUp } from '@lucide/vue';
 import { getAllJobOrders, getJobOrderCount, getJobOrderKpis } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
 import { formatCurrency, formatDateNoYear, mapSeverity, mapCustomColor } from '@/utils/formatters';
+import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const job_orders = ref<JobOrder[]>([])
 const router = useRouter()
@@ -28,22 +29,22 @@ const kpis = ref({
 })
 
 const fetchServices = async () => {
-    loading.value = true
-    const filterParams = {
-        offset: currentOffset.value,
-        limit: rows.value,
-        payment_status: paymentStatus.value || undefined,
-        job_status: jobStatus.value || undefined,
-        search: joNumberSearch.value || undefined,
-        filter: activeFilter.value || undefined,
-    }
-    const [data, count] = await Promise.all([
-        getAllJobOrders(filterParams),
-        getJobOrderCount(filterParams)
-    ])
-    job_orders.value = data
-    totalRecords.value = count
-    loading.value = false
+	loading.value = true
+	const filterParams = {
+		offset: currentOffset.value,
+		limit: rows.value,
+		payment_status: paymentStatus.value || undefined,
+		job_status: jobStatus.value || undefined,
+		search: joNumberSearch.value || undefined,
+		filter: activeFilter.value || undefined,
+	}
+	const [data, count] = await Promise.all([
+		getAllJobOrders(filterParams),
+		getJobOrderCount(filterParams)
+	])
+	job_orders.value = data
+	totalRecords.value = count
+	loading.value = false
 }
 
 const onPage = (event: any) => {
@@ -90,8 +91,8 @@ const onRowClick = (event: { data: JobOrder }) => {
 const activeFilter = ref<string | null>(null)
 
 const setFilter = (filter: string) => {
-    activeFilter.value = activeFilter.value === filter ? null : filter
-    clearFilters()
+	activeFilter.value = activeFilter.value === filter ? null : filter
+	clearFilters()
 }
 </script>
 
@@ -99,12 +100,9 @@ const setFilter = (filter: string) => {
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0 overflow-hidden">
 		<!-- Page Title -->
 		<section class="flex justify-between items-center">
-			<div>
-				<h1 class="text-xl font-semibold">Job Orders</h1>
-				<h2 clsas="text-gray-800">View and manage all job orders in the system. Filter data to quickly find
+			<HeaderTitle title="Job Orders" subtitle="View and manage all job orders in the system. Filter data to quickly find
 					relevant
-					orders.</h2>
-			</div>
+					orders." />
 			<RouterLink to="/admin/job-orders/add">
 				<Button label="Add Job Order">
 					<template #icon>

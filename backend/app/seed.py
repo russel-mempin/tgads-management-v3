@@ -10,6 +10,7 @@ from app.seed_code.seed_customers import seed_customers_from_csv
 from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
 from app.seed_code.seed_from_converted import seed_job_orders_from_converted_excel
+from app.seed_code.seed_expenses import seed_expenses_from_csv
 
 BASE_DIR = os.path.dirname(__file__)
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -27,6 +28,7 @@ def seed_dev_data():
     6. job_items
     7. payments
     8. claiming_history
+    9. expenses
     """
     if ENV != "test":
         print("Entered dev environment.")
@@ -49,6 +51,8 @@ def seed_dev_data():
         print("Seeded payments.")
         seed_claiming_history_from_csv()
         print("Seeded claiming history.")
+        seed_expenses_from_csv()
+        print("Seeded expenses.")
 
     with Session(engine) as session:
         existing = session.exec(select(JobOrder)).first()
@@ -75,6 +79,8 @@ def seed_dev_data():
         print("Seeded payments.")
         seed_claiming_history_from_csv()
         print("Seeded claiming history.")
+        seed_expenses_from_csv()
+        print("Seeded expenses.")
         
 def seed_prod_data():
     with Session(engine) as session:

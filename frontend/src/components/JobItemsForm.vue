@@ -143,30 +143,14 @@ const onSave = () => {
                 <label class="font-semibold mb-1">Service Type <span class="text-red-500">*</span></label>
                 <Select :modelValue="serviceList.find((s: ServiceType) => s.name === item.service_name)"
                     :options="serviceList" optionLabel="name" placeholder="Service Type" filter
-                    filterMatchMode="contains" @change="(e) => onServiceChange(e.value)" fluid :pt="{
-                        option: ({ context }) => ({
-                            class: context.selected
-                                ? '!bg-blue-600 !text-white !font-semibold'
-                                : context.focused
-                                    ? '!bg-blue-50 !text-blue-700 !font-semibold'
-                                    : ''
-                        })
-                    }" />
+                    filterMatchMode="contains" @change="(e) => onServiceChange(e.value)" fluid />
             </div>
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Extra Type <span class="text-red-500">*</span></label>
                 <Select
                     :modelValue="extraList.find((s: { name: string, price: number }) => s.name === item.extra_service_name)"
                     :options="extraList" optionLabel="name" placeholder="Extra Type" filter filterMatchMode="contains"
-                    fluid @change="(e) => onExtraChange(e.value)" :pt="{
-                        option: ({ context }) => ({
-                            class: context.selected
-                                ? '!bg-blue-600 !text-white !font-semibold'
-                                : context.focused
-                                    ? '!bg-blue-50 !text-blue-700 !font-semibold'
-                                    : ''
-                        })
-                    }" />
+                    fluid @change="(e) => onExtraChange(e.value)" />
             </div>
         </div>
         <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0"

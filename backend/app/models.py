@@ -18,7 +18,13 @@ class AuditLog(SQLModel, table=True):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     user: "User" = Relationship(back_populates="audit_logs")
-
+    
+    @property
+    def user_name(self) -> str | None:
+        if self.user is None:
+            return None
+        return f"{self.user.first_name} {self.user.last_name}"
+    
 
 # ====================== USERS =========================
 class UserBase(SQLModel):
@@ -307,6 +313,7 @@ class ExpenseBase(SQLModel):
     category: ExpenseCategory
     amount: float = Field()
     description: str = Field()
+    is_archived: bool = Field(default=False)
     
 class Expense(ExpenseBase, table=True):
     __tablename__ = "expenses"  # type: ignore

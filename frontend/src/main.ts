@@ -7,10 +7,10 @@ import { definePreset } from '@primeuix/themes'
 import App from './App.vue'
 import router from './router'
 import ToastService from 'primevue/toastservice'
-import ConfirmationService from 'primevue/confirmationservice';
+import ConfirmationService from 'primevue/confirmationservice'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
-import Tooltip from 'primevue/tooltip';
+import Tooltip from 'primevue/tooltip'
 
 const app = createApp(App)
 
@@ -34,7 +34,7 @@ const MyPreset = definePreset(Aura, {
 app.use(createPinia())
 app.use(router)
 app.use(ToastService)
-app.use(ConfirmationService);
+app.use(ConfirmationService)
 app.directive('tooltip', Tooltip)
 app.use(PrimeVue, {
   theme: {
@@ -43,6 +43,17 @@ app.use(PrimeVue, {
       prefix: 'p',
       darkModeSelector: 'system',
       cssLayer: false,
+    },
+  },
+  pt: {
+    select: {
+      option: ({ context }: any) => ({
+        class: context.selected
+          ? '!bg-blue-600 !text-white !font-semibold'
+          : context.focused
+            ? '!bg-blue-600 !text-white !font-semibold'
+            : '',
+      }),
     },
   },
 })

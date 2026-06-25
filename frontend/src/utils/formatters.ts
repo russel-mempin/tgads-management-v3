@@ -109,3 +109,28 @@ export const getOverallJobStatus = (jobItems: JobItemFromDB[]): string => {
     return currPriority > prevPriority ? curr.job_status : prev
   }, '' as string)
 }
+
+export const mapExpenseCategory = (category: string): string => {
+  switch (category) {
+    case 'Food':
+      return '!bg-orange-500 !text-white'
+    case 'Maintenance':
+      return '!bg-gray-500 !text-white'
+    case 'Utilities':
+      return '!bg-yellow-500 !text-white'
+    case 'Transportation':
+      return '!bg-blue-500 !text-white'
+    case 'Supplies':
+      return '!bg-teal-500 !text-white'
+    case 'Payroll':
+      return '!bg-green-600 !text-white'
+    case 'Benefits':
+      return '!bg-purple-500 !text-white'
+    case 'Production':
+      return '!bg-red-500 !text-white'
+    case 'Miscellaneous':
+      return '!bg-slate-400 !text-white'
+    default:
+      return ''
+  }
+}

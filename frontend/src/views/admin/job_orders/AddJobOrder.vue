@@ -12,6 +12,7 @@ import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
 import { createJobOrder } from '@/api/job_orders';
 import { formatCurrency } from '@/utils/formatters';
+import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const toast = useToast()
 const router = useRouter()
@@ -71,6 +72,20 @@ const totalDue = computed(() =>
 const totalPaid = computed(() =>
 	payments.value.reduce((sum: number, p) => sum + p.amount, 0)
 )
+
+const formatContactNo = (e: Event) => {
+	const input = e.target as HTMLInputElement
+	let value = input.value.replace(/\D/g, '') // strip non-digits
+	if (value.length > 11) value = value.slice(0, 11) // max 11 digits
+
+	if (value.length <= 4) {
+		customerInfo.value.contact_no = value
+	} else if (value.length <= 7) {
+		customerInfo.value.contact_no = `${value.slice(0, 4)}-${value.slice(4)}`
+	} else {
+		customerInfo.value.contact_no = `${value.slice(0, 4)}-${value.slice(4, 7)}-${value.slice(7)}`
+	}
+}
 
 const buildPayload = () => {
 	const payload = {
@@ -145,10 +160,10 @@ const handleSave = async (payload: JobOrderCreate) => {
 <template>
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0">
 		<section class="mb-6 flex-shrink-0">
-			<div>
-				<h1 class="text-xl font-semibold">Add Job Order</h1>
-				<h2 class="text-gray-800">Fill in the details below to create a new job order.</h2>
-			</div>
+			<HeaderTitle 
+				title="Add Job Order"
+				subtitle="Fill in the details below to create a new job order."
+			/>
 			<div class="mt-1 flex items-center">
 				<p class="text-gray-500 font-medium">Fields marked with</p>
 				<p class="text-red-500 font-medium">&nbsp;*&nbsp;</p>
@@ -163,15 +178,7 @@ const handleSave = async (payload: JobOrderCreate) => {
 						<label class="mb-1 text-slate-700 font-medium">Customer Name</label>
 						<span class="text-sm text-red-500"> * </span>
 						<Select v-model="customerName" fluid editable :options="customerList"
-							placeholder="Select or input a customer" class="w-full md:w-56" :pt="{
-								option: ({ context }) => ({
-									class: context.selected
-										? '!bg-blue-600 !text-white !font-semibold'
-										: context.focused
-											? '!bg-blue-50 !text-blue-700 !font-semibold'
-											: ''
-								})
-							}" />
+							placeholder="Select or input a customer" class="w-full md:w-56" />
 						<p class="text-sm font-medium text-gray-500 mt-1">Start typing to search saved customers, or
 							enter a
 							new
@@ -185,12 +192,12 @@ const handleSave = async (payload: JobOrderCreate) => {
 								:disabled="!isNewCustomer" />
 						</div>
 						<div class="flex flex-col">
-							<label class="mb-1 text-slate-700 font-medium">Contact No.</label>
-							<InputText v-model="customerInfo.contact_no" placeholder="09XX XXX XXXX"
-								:disabled="!isNewCustomer" />
+							<label class="mb-1 text-slate-700 font-medium">Contact No.<span class="text-sm text-red-500"> * </span></label>
+							<InputText v-model="customerInfo.contact_no" placeholder="09XX-XXX-XXXX"
+								:disabled="!isNewCustomer" @input="formatContactNo" />
 						</div>
 						<div class="flex flex-col">
-							<label class="mb-1 text-slate-700 font-medium">Email</label>
+							<label class="mb-1 text-slate-700 font-medium">Email<span class="text-sm text-red-500"> * </span></label>
 							<InputText v-model="customerInfo.email" placeholder="name@email.com"
 								:disabled="!isNewCustomer" />
 						</div>

@@ -9,6 +9,7 @@ import { formatDate, formatCurrency } from '@/utils/formatters';
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
+import HeaderTitle from '@/components/HeaderTitle.vue';
 import { Info } from '@lucide/vue';
 import { archiveJobOrder } from '@/api/job_orders';
 
@@ -55,10 +56,10 @@ const confirmDelete = (jo_number: number) => {
 	</ConfirmDialog>
 	<div class="mx-12 my-6">
 		<section class="flex justify-between items-center">
-			<div>
-				<h1 class="text-xl font-semibold">View Job Order</h1>
-				<h2>See full information about a Job Order.</h2>
-			</div>
+			<HeaderTitle 
+				title="View Job Order"
+				subtitle="See full information about a Job Order."
+			/>
 			<div class="flex gap-6">
 				<Button @click="router.push(`/admin/job-orders/edit/${route.params.jo_number}`)" severity="warn"
 					class="w-26" label="Edit">

@@ -11,6 +11,7 @@ import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
 import { formatCurrency } from '@/utils/formatters';
+import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -146,10 +147,10 @@ const handleSave = async (payload: JobOrderCreate) => {
 <template>
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0">
 		<section class="mb-6 flex-shrink-0">
-			<div>
-				<h1 class="text-xl font-semibold">Edit Job Order</h1>
-				<h2>Update information of a Job Order upon saving.</h2>
-			</div>
+			<HeaderTitle
+				title="Edit Job Order"
+				subtitle="Update information of a Job Order upon saving."
+			/>
 			<div class="mt-1 flex items-center">
 				<p class="text-gray-500 font-medium">Fields marked with</p>
 				<p class="text-red-500 font-medium">&nbsp;*&nbsp;</p>
@@ -164,15 +165,7 @@ const handleSave = async (payload: JobOrderCreate) => {
 						<label class="mb-1 text-slate-700 font-medium">Customer Name <span class="text-sm text-red-500">
 								* </span> </label>
 						<Select v-model="customerName" fluid editable :options="customerList"
-							placeholder="Select or input a customer" class="w-full md:w-56" :pt="{
-								option: ({ context }) => ({
-									class: context.selected
-										? '!bg-blue-600 !text-white !font-semibold'
-										: context.focused
-											? '!bg-blue-50 !text-blue-700 !font-semibold'
-											: ''
-								})
-							}" />
+							placeholder="Select or input a customer" class="w-full md:w-56" />
 						<p class="text-sm font-medium text-gray-500 mt-1">Start typing to search saved customers, or
 							enter a
 							new
