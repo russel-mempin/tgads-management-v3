@@ -11,7 +11,7 @@ import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
 import { createJobOrder } from '@/api/job_orders';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, nowInManila } from '@/utils/formatters';
 import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const toast = useToast()
@@ -59,7 +59,7 @@ watch(customerName, async (name) => {
 });
 
 const jo_number = ref(0);
-const date_received = ref(new Date());
+const date_received = ref(nowInManila());
 const items = ref<JobItemPayload[]>([]);
 const payments = ref<Payment[]>([]);
 const claims = ref<ClaimingHistory[]>([]);
@@ -160,15 +160,9 @@ const handleSave = async (payload: JobOrderCreate) => {
 <template>
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0">
 		<section class="mb-6 flex-shrink-0">
-			<HeaderTitle 
-				title="Add Job Order"
-				subtitle="Fill in the details below to create a new job order."
-			/>
-			<div class="mt-1 flex items-center">
-				<p class="text-gray-500 font-medium">Fields marked with</p>
-				<p class="text-red-500 font-medium">&nbsp;*&nbsp;</p>
-				<p class="text-gray-500 font-medium">are required.</p>
-			</div>
+			<HeaderTitle title="Add Job Order" subtitle="Fill in the details below to create a new job order." />
+			<p class="text-gray-500 font-medium">Fields marked with<span class="text-red-500 font-semiold"> * </span>are
+				required.</p>
 		</section>
 		<div class="flex-1 overflow-y-auto min-h-0 pr-1">
 			<!-- Customer Name Search -->
@@ -192,12 +186,14 @@ const handleSave = async (payload: JobOrderCreate) => {
 								:disabled="!isNewCustomer" />
 						</div>
 						<div class="flex flex-col">
-							<label class="mb-1 text-slate-700 font-medium">Contact No.<span class="text-sm text-red-500"> * </span></label>
+							<label class="mb-1 text-slate-700 font-medium">Contact No.<span
+									class="text-sm text-red-500"> * </span></label>
 							<InputText v-model="customerInfo.contact_no" placeholder="09XX-XXX-XXXX"
 								:disabled="!isNewCustomer" @input="formatContactNo" />
 						</div>
 						<div class="flex flex-col">
-							<label class="mb-1 text-slate-700 font-medium">Email<span class="text-sm text-red-500"> * </span></label>
+							<label class="mb-1 text-slate-700 font-medium">Email<span class="text-sm text-red-500"> *
+								</span></label>
 							<InputText v-model="customerInfo.email" placeholder="name@email.com"
 								:disabled="!isNewCustomer" />
 						</div>
@@ -221,7 +217,7 @@ const handleSave = async (payload: JobOrderCreate) => {
 						<label class="mb-1 text-slate-700 font-medium">Date Received</label>
 						<span class="text-sm text-red-500">&nbsp;*</span>
 					</div>
-					<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12"
+					<DatePicker v-model="date_received" :maxDate="nowInManila()" showTime hourFormat="12"
 						dateFormat="M dd, yy" />
 				</div>
 			</section>

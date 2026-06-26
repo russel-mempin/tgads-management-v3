@@ -1,11 +1,17 @@
 import type { JobItemFromDB } from '@/types/job_orders'
 
 export const formatCurrency = (value: number | undefined) => {
-  if (value === undefined) return '₱0.00'
+  if (value === undefined) return '₱ 0.00'
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: 'PHP',
-  }).format(value)
+  })
+    .format(value)
+    .replace('₱', '₱ ')
+}
+
+export const nowInManila = () => {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
 }
 
 export const formatDate = (date: string | Date | undefined) => {

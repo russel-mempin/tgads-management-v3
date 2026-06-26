@@ -325,6 +325,8 @@ class MiscSaleBase(SQLModel):
     date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     description: str = Field()
     amount: float = Field()
+    is_archived: bool = Field(default=False)
+    
     
 class MiscSale(MiscSaleBase, table=True):
     __tablename__ = "misc_sales" # type: ignore

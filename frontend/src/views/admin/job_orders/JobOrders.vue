@@ -5,7 +5,7 @@ import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
 import { Plus, PhilippinePeso, Clock, TrendingUp } from '@lucide/vue';
 import { getAllJobOrders, getJobOrderCount, getJobOrderKpis } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
-import { formatCurrency, formatDateNoYear, mapSeverity, mapCustomColor } from '@/utils/formatters';
+import { formatCurrency, formatDateNoYear, mapSeverity, mapCustomColor, nowInManila } from '@/utils/formatters';
 import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const job_orders = ref<JobOrder[]>([])
@@ -249,7 +249,7 @@ const setFilter = (filter: string) => {
 									<div class="flex items-center gap-2">
 										{{ formatDateNoYear(slotProps.data.due_date) }}
 										<span
-											v-if="new Date(slotProps.data.due_date) < new Date() && slotProps.data.job_status !== 'Released' && slotProps.data.job_status !== 'Cancelled' && slotProps.data.job_status !== 'For Pickup' && slotProps.data.job_status !== 'For Approval'"
+											v-if="new Date(slotProps.data.due_date) < nowInManila() && slotProps.data.job_status !== 'Released' && slotProps.data.job_status !== 'Cancelled' && slotProps.data.job_status !== 'For Pickup' && slotProps.data.job_status !== 'For Approval'"
 											class="text-xs font-medium text-red-500">
 											Overdue
 										</span>

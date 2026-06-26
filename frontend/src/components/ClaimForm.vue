@@ -2,6 +2,7 @@
 import type { JobItemPayload, JobItemFromDB, ClaimingHistory } from '@/types/job_orders';
 import { ref, watch, computed } from 'vue';
 import { Dialog, DatePicker, InputText, Select, InputNumber, Button } from 'primevue';
+import { nowInManila } from '@/utils/formatters';
 
 const props = defineProps<{
 	isVisible: boolean
@@ -17,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const item = ref<ClaimingHistory>({
-	date_claimed: new Date(),
+	date_claimed: nowInManila(),
 	name: '',
 	claimed_item_id: '',
 	pcs_claimed: 1,
@@ -25,7 +26,7 @@ const item = ref<ClaimingHistory>({
 
 const resetItem = () => {
 	item.value = {
-		date_claimed: new Date(),
+		date_claimed: nowInManila(),
 		name: '',
 		claimed_item_id: '',
 		pcs_claimed: 1,

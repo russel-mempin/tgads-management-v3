@@ -10,7 +10,7 @@ import { Button, InputText, Select, InputNumber, DatePicker, useToast } from 'pr
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, nowInManila } from '@/utils/formatters';
 import HeaderTitle from '@/components/HeaderTitle.vue';
 
 const route = useRoute();
@@ -27,7 +27,7 @@ const customerInfo = ref<Customer>({
 	address: ''
 });
 const jo_number = ref(0);
-const date_received = ref(new Date());
+const date_received = ref(nowInManila());
 const items = ref<JobItemPayload[]>([]);
 const payments = ref<Payment[]>([]);
 const claims = ref<ClaimingHistory[]>([]);
@@ -200,7 +200,7 @@ const handleSave = async (payload: JobOrderCreate) => {
 				</div>
 				<div class="flex flex-col">
 					<label class="mb-1 text-slate-700 font-medium">Date Received</label>
-					<DatePicker v-model="date_received" :maxDate="new Date()" showTime hourFormat="12" />
+					<DatePicker v-model="date_received" :maxDate="nowInManila()" showTime hourFormat="12" />
 				</div>
 			</section>
 			<section class="mt-6">

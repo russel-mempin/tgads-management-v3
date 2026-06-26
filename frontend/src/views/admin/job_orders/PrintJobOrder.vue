@@ -3,7 +3,7 @@ import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { JobOrder } from '@/types/job_orders'
 import { getJobOrder } from '@/api/job_orders'
-import { formatDate, formatCurrency } from '@/utils/formatters'
+import { formatDate, formatCurrency, nowInManila } from '@/utils/formatters'
 
 const route = useRoute()
 const jobOrder = ref<JobOrder>()
@@ -73,7 +73,7 @@ const paddedClaims = computed(() => {
 			</div>
 			<div class="meta-field">
 				<div class="meta-label">Print Date / Time</div>
-				<div class="meta-value">{{ formatDate(new Date()) }}</div>
+				<div class="meta-value">{{ formatDate(nowInManila()) }}</div>
 			</div>
 		</div>
 

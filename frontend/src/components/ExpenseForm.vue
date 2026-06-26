@@ -2,6 +2,7 @@
 import type { Expense } from '@/types/expenses';
 import { ref, watch } from 'vue';
 import { Dialog, DatePicker, Select, InputNumber, InputText, Button } from 'primevue';
+import { nowInManila } from '@/utils/formatters';
 
 const props = defineProps<{
 	isVisible: boolean
@@ -15,7 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const item = ref<Expense>({
-	date: new Date(),
+	date: nowInManila(),
 	category: 'Food',
 	amount: 1,
 	description: '',
@@ -24,7 +25,7 @@ const expenseCategories = ref(['Food', 'Maintenance', 'Utilities', 'Transportati
 
 const resetItem = () => {
 	item.value = {
-		date: new Date(),
+		date: nowInManila(),
 		category: 'Food',
 		amount: 1,
 		description: '',

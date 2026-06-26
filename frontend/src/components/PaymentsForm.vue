@@ -2,6 +2,7 @@
 import type { Payment } from '@/types/job_orders';
 import { ref, watch } from 'vue';
 import { Dialog, DatePicker, Select, InputNumber, Button } from 'primevue';
+import { nowInManila } from '@/utils/formatters';
 
 const props = defineProps<{
 	isVisible: boolean
@@ -15,7 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const item = ref<Payment>({
-	date_received: new Date(),
+	date_received: nowInManila(),
 	method: 'Cash',
 	amount: 1
 })
@@ -24,7 +25,7 @@ const paymentMethods = ref(['Cash', 'GCash', 'Cheque'])
 
 const resetItem = () => {
 	item.value = {
-		date_received: new Date(),
+		date_received: nowInManila(),
 		method: 'Cash',
 		amount: 1
 	}
