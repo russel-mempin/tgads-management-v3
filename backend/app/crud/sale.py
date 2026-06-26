@@ -63,3 +63,28 @@ def update_misc_sale(db: Session, misc_sale_id: uuid.UUID, data: MiscSaleBase, c
     except Exception:
         db.rollback()
         raise
+    
+    
+def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        misc_sale = db.exec(
+            select(MiscSale).where(MiscSale.id == misc_sale_id)
+        ).first()
+        if not misc_sale:
+            raise HTTPException(status_code=404, detail="Misc sale not found")
+
+        misc_sale.is_archived = True
+        db.add(misc_sale)
+
+        audit = AuditLog(
+            action=f"Deleted misc_sale {misc_sale.description}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(misc_sale)
+        return "Misc sale deleted."
+    except HTTPException:
+        raise  # don't rollback for 404s, nothing was changed
+    except Exception:
+        db.rollback()
+        raise

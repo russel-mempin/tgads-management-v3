@@ -4,7 +4,7 @@ import { Button, DataTable, Column, useConfirm, useToast, ConfirmDialog } from '
 import { Plus, Info } from '@lucide/vue';
 import HeaderTitle from '@/components/HeaderTitle.vue';
 import SalesForm from '@/components/SalesForm.vue';
-import { getAllMiscSales } from '@/api/sales';
+import { getAllMiscSales, archiveMiscSale } from '@/api/sales';
 import type { MiscSale } from '@/types/sales';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 
@@ -44,7 +44,7 @@ const confirmDelete = (id: string) => {
 			severity: 'danger'
 		},
 		accept: async () => {
-			// await archiveExtraService(id)
+			await archiveMiscSale(id)
 			await fetchMiscSales();
 			toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Data deleted', life: 3000 });
 		},

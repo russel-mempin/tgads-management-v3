@@ -109,12 +109,12 @@ def archive_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UU
         db.add(service)
 
         audit = AuditLog(
-            action=f"Archived service named {service.name}", user_id=current_user_id
+            action=f"Deleted service named {service.name}", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
         db.refresh(service)
-        return "Service archived."
+        return "Service deleted."
     except HTTPException:
         raise  # don't rollback for 404s, nothing was changed
     except Exception:
@@ -189,12 +189,12 @@ def archive_extra(db: Session, extra_id: uuid.UUID, current_user_id: uuid.UUID):
         extra.is_active = False
         db.add(extra)
         audit = AuditLog(
-            action=f"Archived extra named {extra.name}", user_id=current_user_id
+            action=f"Deleted extra named {extra.name}", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
         db.refresh(extra)
-        return "Extra archived."
+        return "Extra deleted."
     except HTTPException:
         raise  # don't rollback for 404s, nothing was changed
     except Exception:

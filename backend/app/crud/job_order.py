@@ -241,13 +241,13 @@ def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
         db.add(job_order)
 
         audit = AuditLog(
-            action=f"Archived job order {job_order.jo_number}", user_id=current_user_id
+            action=f"Deleted job order {job_order.jo_number}", user_id=current_user_id
         )
         db.add(audit)
 
         db.commit()
         db.refresh(job_order)
-        return "Job order archived."
+        return "Job order deleted."
     except HTTPException:
         raise
     except Exception:
