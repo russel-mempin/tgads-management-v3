@@ -35,7 +35,7 @@ const onSave = async () => {
 	try {
 		if (props.editItem) {
 			if (!props.editItem.id) {
-				toast.add({ severity: 'error', summary: 'Error', detail: 'Missing expense ID.', life: 3000 })
+				toast.add({ severity: 'error', summary: 'Error', detail: 'Missing sales ID.', life: 3000 })
 				return
 			}
 			await updateMiscSale(props.editItem.id, item.value)

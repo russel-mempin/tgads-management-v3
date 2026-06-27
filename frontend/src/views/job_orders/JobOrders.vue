@@ -103,7 +103,7 @@ const setFilter = (filter: string) => {
 			<HeaderTitle title="Job Orders" subtitle="View and manage all job orders in the system. Filter data to quickly find
 					relevant
 					orders." />
-			<RouterLink to="/admin/job-orders/add">
+			<RouterLink to="/job-orders/add">
 				<Button label="Add Job Order">
 					<template #icon>
 						<Plus />
@@ -212,7 +212,7 @@ const setFilter = (filter: string) => {
 					<template #body="{ data }">
 						<div class="flex justify-self-end gap-2">
 							<Button class="w-18 h-10" variant="outlined" label="View"
-								@click.stop="router.push(`/admin/job-orders/view/${data.jo_number}`)" />
+								@click.stop="router.push(`/job-orders/view/${data.jo_number}`)" />
 							<Button class="w-18 h-10" variant="text" :pt="{ label: '!text-gray-500', }" label="Print"
 								@click.stop="printJobOrder(data.jo_number)" />
 						</div>

@@ -11,6 +11,8 @@ class SizeUnit(str, Enum):
 class UserRoles(str, Enum):
     ADMIN = "Admin"
     USER = "User"
+    OWNER = "Owner"
+    
     
 class PaymentStatus(str, Enum):
     UNPAID = "Unpaid"
@@ -19,6 +21,7 @@ class PaymentStatus(str, Enum):
     CREDIT = "Credit"
     REFUNDED = "Refunded"
     OVERCHARGED = "Overcharged"
+    
     
 class JobStatus(str, Enum):
     PENDING = "Pending"
@@ -34,6 +37,7 @@ class PaymentMethod(str, Enum):
     CASH = "Cash"
     GCASH = "GCash"
     CHEQUE = "Cheque"
+    
     
 class ExpenseCategory(str, Enum):
     FOOD = "Food"

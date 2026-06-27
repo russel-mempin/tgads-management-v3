@@ -17,6 +17,7 @@ class Token(BaseModel):
     role: str
     first_name: str
     last_name: str
+    is_superAdmin: bool
     
 class TokenData(BaseModel):
     username: str

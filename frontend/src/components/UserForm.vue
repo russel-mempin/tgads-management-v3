@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { User, UserCreate } from '@/types/users';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Button, Dialog, InputText, Password, Select } from 'primevue';
 import { useToast } from 'primevue';
 import { X, Check } from '@lucide/vue';
 import { createUser } from '@/api/users';
+import { useAuthStore } from '@/stores/auth';
 
 const toast = useToast()
+const authStore = useAuthStore()
 
 const props = defineProps<{
 	isVisible: boolean
@@ -29,7 +31,11 @@ const user = ref<UserCreate>({
 	is_active: true,
 });
 
-const userRoles = ref(['Admin', 'User'])
+const visibleRoles = computed(() => {
+	if (authStore.isSuperuser || authStore.isOwner) return ['User', 'Admin', 'Owner']  // superuser & owner sees all
+	if (authStore.isAdmin) return ['User'] // admin can only create Users
+	return []
+})
 
 const resetData = () => {
 	user.value = {
@@ -86,36 +92,43 @@ const onSave = async () => {
 <template>
 	<Dialog :visible="isVisible" @update:visible="emit('update:isVisible', $event)" modal
 		:header="editData ? 'Edit User' : 'Add User'" :style="{ width: '40rem' }">
+		<p class="text-gray-500 font-medium mb-4">Fields marked with<span class="text-red-500 font-semiold"> *
+			</span>are
+			required.</p>
 		<div class="grid grid-cols-2 gap-4">
 			<div class="flex flex-col mb-4">
-				<label class="font-semibold mb-1">First Name</label>
+				<label class="font-semibold mb-1">First Name<span class="text-red-500 font-semibold"> *</span></label>
 				<InputText v-model="user.first_name" />
 			</div>
 			<div class="flex flex-col mb-4">
-				<label class="font-semibold mb-1">Last Name</label>
+				<label class="font-semibold mb-1">Last Name<span class="text-red-500 font-semibold"> *</span></label>
 				<InputText v-model="user.last_name" />
 			</div>
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Username</label>
+			<div class="mb-1">
+				<label class="font-semibold">Username&nbsp;&nbsp;</label>
+				<span
+					class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-500">Auto-generated</span>
+			</div>
 			<InputText v-model="user.username" disabled />
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Password</label>
+			<label class="font-semibold mb-1">Password<span class="text-red-500 font-semibold"> *</span></label>
 			<Password v-model="user.password" fluid />
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Email</label>
+			<label class="font-semibold mb-1">Email<span class="text-red-500 font-semibold"> *</span></label>
 			<InputText v-model="user.email" />
 		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div class="flex flex-col mb-4">
-				<label class="font-semibold mb-1">Role</label>
-				<Select v-model="user.role" :options="userRoles" />
+				<label class="font-semibold mb-1">Role<span class="text-red-500 font-semibold"> *</span></label>
+				<Select v-model="user.role" :options="visibleRoles" />
 			</div>
 			<div class="flex flex-col mb-4">
 				<div class="flex flex-col mb-4">
-					<label class="font-semibold mb-1">Active</label>
+					<label class="font-semibold mb-1">Active<span class="text-red-500 font-semibold"> *</span></label>
 					<div class="pill-toggle" :class="user.is_active ? 'on' : 'off'"
 						@click="user.is_active = !user.is_active">
 						<div class="pill-icon" :class="{ active: !user.is_active }">
@@ -125,6 +138,18 @@ const onSave = async () => {
 							<Check :size="16" />
 						</div>
 					</div>
+				</div>
+			</div>
+		</div>
+		<div v-if="authStore.isSuperuser" class="flex flex-col mb-4">
+			<label class="font-semibold mb-1">Superuser</label>
+			<div class="pill-toggle" :class="user.is_superAdmin ? 'on' : 'off'"
+				@click="user.is_superAdmin = !user.is_superAdmin">
+				<div class="pill-icon" :class="{ active: !user.is_superAdmin }">
+					<X :size="16" />
+				</div>
+				<div class="pill-icon" :class="{ active: user.is_superAdmin }">
+					<Check :size="16" />
 				</div>
 			</div>
 		</div>

@@ -39,7 +39,7 @@ const confirmDelete = (jo_number: number) => {
 		accept: async () => {
 			await archiveJobOrder(jo_number)
 			toast.add({ severity: 'info', summary: 'Confirmed', detail: 'Job order deleted', life: 3000 });
-			router.push('/admin/job-orders')
+			router.push('/job-orders')
 		},
 		reject: () => {
 			toast.add({ severity: 'error', summary: 'Cancelled', detail: 'You have cancelled', life: 3000 });
@@ -61,7 +61,7 @@ const confirmDelete = (jo_number: number) => {
 				subtitle="See full information about a Job Order."
 			/>
 			<div class="flex gap-6">
-				<Button @click="router.push(`/admin/job-orders/edit/${route.params.jo_number}`)" severity="warn"
+				<Button @click="router.push(`/job-orders/edit/${route.params.jo_number}`)" severity="warn"
 					class="w-26" label="Edit">
 					<template #icon>
 						<PenBox />

@@ -20,11 +20,6 @@ export async function getAllUsers() {
 	return res.data
 }
 
-export async function archiveUser(id: string) {
-	const res = await http.patch(`/users/${id}/archive`)
-	return res.data
-}
-
 export async function createUser(payload: UserCreate) {
 	const res = await http.post('users/', payload)
 	return res.data

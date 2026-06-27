@@ -11,7 +11,6 @@ type Props = {
 const props = defineProps<Props>()
 
 const route = useRoute()
-// Consider link active for exact path or any nested sub-route (e.g., /admin/suppliers and /admin/suppliers/add)
 const isParentActive = computed(() => route.path === props.to || route.path.startsWith(props.to + '/'))
 
 </script>

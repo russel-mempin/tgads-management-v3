@@ -14,6 +14,7 @@ def get_all_misc_sales(
         .limit(limit)
     ).all())
     
+    
 def create_misc_sale(db: Session, data: MiscSaleBase, current_user_id: uuid.UUID):
     try:
         misc_sale = MiscSale(

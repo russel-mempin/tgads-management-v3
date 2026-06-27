@@ -16,69 +16,77 @@ const router = createRouter({
     },
     {
       path: '/job-orders/print/:jo_number',
-      component: () => import('@/views/admin/job_orders/PrintJobOrder.vue'),
+      component: () => import('@/views/job_orders/PrintJobOrder.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/admin',
-      component: () => import('@/layouts/AdminLayout.vue'),
-      meta: { requiresAdmin: true },
+      path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
+      meta: { requiresAuth: true },
       children: [
         {
           path: 'dashboard',
-          component: () => import('@/views/admin/Dashboard.vue'),
+          component: () => import('@/views/Dashboard.vue'),
         },
         {
           path: 'job-orders',
-          component: () => import('@/views/admin/job_orders/JobOrders.vue'),
+          component: () => import('@/views/job_orders/JobOrders.vue'),
         },
         {
           path: 'job-orders/add',
-          component: () => import('@/views/admin/job_orders/AddJobOrder.vue'),
+          component: () => import('@/views/job_orders/AddJobOrder.vue'),
+          meta: { adminOnly: true },
         },
         {
           path: 'job-orders/view/:jo_number',
-          component: () => import('@/views/admin/job_orders/ViewJobOrder.vue'),
+          component: () => import('@/views/job_orders/ViewJobOrder.vue'),
         },
         {
           path: 'job-orders/edit/:jo_number',
-          component: () => import('@/views/admin/job_orders/EditJobOrder.vue'),
+          component: () => import('@/views/job_orders/EditJobOrder.vue'),
+          meta: { adminOnly: true },
         },
         {
           path: 'sales',
-          component: () => import('@/views/admin/Sales.vue'),
+          component: () => import('@/views/Sales.vue'),
         },
         {
           path: 'expenses',
-          component: () => import('@/views/admin/Expenses.vue'),
-        },
-        {
-          path: 'deposits',
-          component: () => import('@/views/admin/Deposits.vue'),
+          component: () => import('@/views/Expenses.vue'),
         },
         {
           path: 'customers',
-          component: () => import('@/views/admin/Customers.vue'),
+          component: () => import('@/views/Customers.vue'),
         },
         {
-          path: 'cash-flow',
-          component: () => import('@/views/admin/CashFlow.vue'),
+          path: 'deposits',
+          component: () => import('@/views/Deposits.vue'),
+          meta: { adminOnly: true },
         },
         {
           path: 'manage-services',
-          component: () => import('@/views/admin/ManageServices.vue'),
+          component: () => import('@/views/ManageServices.vue'),
+          meta: { adminOnly: true },
         },
         {
           path: 'manage-extras',
-          component: () => import('@/views/admin/ManageExtras.vue'),
+          component: () => import('@/views/ManageExtras.vue'),
+          meta: { adminOnly: true },
         },
         {
           path: 'manage-users',
-          component: () => import('@/views/admin/ManageUsers.vue'),
+          component: () => import('@/views/ManageUsers.vue'),
+          meta: { adminOnly: true },
+        },
+        {
+          path: 'cash-flow',
+          component: () => import('@/views/CashFlow.vue'),
+          meta: { ownerOnly: true },
         },
         {
           path: 'audit-logs',
-          component: () => import('@/views/admin/AuditLogs.vue'),
+          component: () => import('@/views/AuditLogs.vue'),
+          meta: { superuserOnly: true },
         },
       ],
     },
@@ -88,13 +96,10 @@ const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
-  if (to.meta.requiresAdmin && (!auth.isLoggedIn || !auth.isAdmin)) {
-    return '/'
-  }
-
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return '/'
-  }
+  if (to.meta.requiresAuth && !auth.isLoggedIn) return '/'
+  if (to.meta.adminOnly && !auth.isAdmin) return '/job-orders'
+  if (to.meta.ownerOnly && !auth.isOwner) return '/job-orders'
+  if (to.meta.superuserOnly && !auth.isSuperuser) return '/job-orders'
 })
 
 export default router
