@@ -42,7 +42,7 @@ def seed_dev_data():
     else:
         # Create tables if they don't exist
         SQLModel.metadata.create_all(engine)
-        print("Created tables (if they didn't exist).")
+        print("Created tables. (Development)")
 
         # Only seed if database is empty
         with Session(engine) as session:
@@ -68,6 +68,8 @@ def seed_dev_data():
         print("Seeded expenses.")
         
 def seed_prod_data():
+    SQLModel.metadata.create_all(engine)
+    print("Created tables. (Production)")
     with Session(engine) as session:
         existing = session.exec(select(User)).first()
         if existing:
