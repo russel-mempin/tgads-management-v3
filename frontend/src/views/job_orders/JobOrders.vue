@@ -2,31 +2,28 @@
 import { ref, onMounted, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router'
 import { Button, InputText, Select, DataTable, Column, Tag } from 'primevue';
-import { Plus, PhilippinePeso, Clock, TrendingUp } from '@lucide/vue';
+import { Plus, PhilippinePeso, Clock, TrendingUp, FileExclamationPoint, Check } from '@lucide/vue';
 import { getAllJobOrders, getJobOrderCount, getJobOrderKpis } from '@/api/job_orders'
 import type { JobOrder } from '@/types/job_orders'
 import { formatCurrency, formatDateNoYear, mapSeverity, mapCustomColor, nowInManila } from '@/utils/formatters';
 import HeaderTitle from '@/components/HeaderTitle.vue';
+import { useAuthStore } from '@/stores/auth';
 
-const job_orders = ref<JobOrder[]>([])
+const authStore = useAuthStore()
 const router = useRouter()
+const job_orders = ref<JobOrder[]>([])
 const totalRecords = ref(0)
 const loading = ref(false)
 const rows = ref(20)
 const currentOffset = ref(0)
-
 const joNumberSearch = ref('');
 const jobStatus = ref('');
 const paymentStatus = ref('');
 const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', 'Refunded', 'Overcharged']);
 const jobStatusOptions = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
 const expandedRows = ref<Record<string, boolean>>({})
-const kpis = ref({
-	outstanding_balance: 0,
-	unpaid_count: 0,
-	overdue_count: 0,
-	payments_this_week: 0,
-})
+
+const kpis = ref<Record<string, any>>({})
 
 const fetchServices = async () => {
 	loading.value = true
@@ -111,8 +108,8 @@ const setFilter = (filter: string) => {
 				</Button>
 			</RouterLink>
 		</section>
-		<!-- Summary Bar -->
-		<section class="my-6 grid grid-cols-4 gap-6">
+		<!-- Business KPI's -->
+		<section v-if="authStore.isOwner" class="mt-6 grid grid-cols-3 gap-6">
 			<div @click="setFilter('outstanding')"
 				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
 				:class="activeFilter === 'outstanding' ? 'bg-orange-100' : 'bg-white hover:bg-orange-50'">
@@ -137,18 +134,6 @@ const setFilter = (filter: string) => {
 					<p class="font-bold text-3xl text-red-700">{{ kpis.unpaid_count }}</p>
 				</div>
 			</div>
-			<div @click="setFilter('overdue')"
-				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-				:class="activeFilter === 'overdue' ? 'bg-red-100' : 'bg-white hover:bg-red-50'">
-				<div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700"
-					:class="activeFilter === 'overdue' ? 'bg-red-300' : 'bg-red-100'">
-					<Clock />
-				</div>
-				<div class="ml-4">
-					<p class="uppercase font-semibold text-sm text-gray-600">Overdue Items</p>
-					<p class="font-bold text-3xl text-red-700">{{ kpis.overdue_count }}</p>
-				</div>
-			</div>
 			<div @click="setFilter('payments-week')"
 				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
 				:class="activeFilter === 'payments-week' ? 'bg-green-100' : 'bg-white hover:bg-green-50'">
@@ -162,6 +147,58 @@ const setFilter = (filter: string) => {
 				</div>
 			</div>
 		</section>
+		<!-- Operation KPI's -->
+		<section v-if="authStore.isLoggedIn" class="my-6 grid grid-cols-4 gap-6">
+			<div @click="setFilter('overdue')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'overdue' ? 'bg-orange-100' : 'bg-white hover:bg-orange-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-orange-700"
+					:class="activeFilter === 'overdue' ? 'bg-orange-300' : 'bg-orange-100'">
+					<FileExclamationPoint />
+				</div>
+				<div class="ml-4">
+					<p class="uppercase font-semibold text-sm text-gray-600">Overdue Jobs</p>
+					<p class="font-bold text-3xl text-orange-700">{{ kpis.overdue_jobs }}</p>
+				</div>
+			</div>
+			<div @click="setFilter('in-progress')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'in-progress' ? 'bg-blue-100' : 'bg-white hover:bg-red-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-blue-700"
+					:class="activeFilter === 'in-progress' ? 'bg-blue-300' : 'bg-blue-100'">
+					<Clock />
+				</div>
+				<div class="ml-4">
+					<p class="uppercase font-semibold text-sm text-gray-600">In Progress</p>
+					<p class="font-bold text-3xl text-blue-700">{{ kpis.in_progress }}</p>
+				</div>
+			</div>
+			<div @click="setFilter('due-today')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'due-today' ? 'bg-yellow-100' : 'bg-white hover:bg-yellow-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700"
+					:class="activeFilter === 'due-today' ? 'bg-yellow-300' : 'bg-yellow-100'">
+					<Clock />
+				</div>
+				<div class="ml-4">
+					<p class="uppercase font-semibold text-sm text-gray-600">Due Today</p>
+					<p class="font-bold text-3xl text-red-700">{{ kpis.due_today }}</p>
+				</div>
+			</div>
+			<div @click="setFilter('for-pickup')"
+				class="border border-gray-200 shadow-xs p-4 rounded-xl flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+				:class="activeFilter === 'for-pickup' ? 'bg-green-100' : 'bg-white hover:bg-green-50'">
+				<div class="flex items-center justify-center w-12 h-12 rounded-full text-green-700"
+					:class="activeFilter === 'for-pickup' ? 'bg-green-300' : 'bg-green-100'">
+					<Check />
+				</div>
+				<div class="ml-4">
+					<p class="uppercase font-semibold text-sm text-gray-600">Ready for pickup</p>
+					<p class="font-bold text-3xl text-green-700">{{ kpis.ready_for_pickup }}</p>
+				</div>
+			</div>
+		</section>
+
 		<!-- Filters -->
 		<section class="mb-4 flex gap-6">
 			<InputText class="flex-1" v-model="joNumberSearch" placeholder="Search by customer name or JO Number..." />

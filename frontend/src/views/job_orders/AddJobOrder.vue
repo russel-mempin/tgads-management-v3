@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { ArrowLeft, Save } from '@lucide/vue';
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
 import type { Customer } from '@/types/customers';
-import type { JobOrderCreate, JobItemPayload, Payment, ClaimingHistory } from '@/types/job_orders';
+import type { JobOrderCreate, JobItem, Payment, ClaimingHistory } from '@/types/job_orders';
 import JobItemsList from '@/components/JobItemsList.vue';
 import PaymentsTable from '@/components/PaymentsTable.vue';
 import ClaimsTable from '@/components/ClaimsTable.vue';
@@ -60,13 +60,13 @@ watch(customerName, async (name) => {
 
 const jo_number = ref(0);
 const date_received = ref(nowInManila());
-const items = ref<JobItemPayload[]>([]);
+const items = ref<JobItem[]>([]);
 const payments = ref<Payment[]>([]);
 const claims = ref<ClaimingHistory[]>([]);
 
 const totalDue = computed(() =>
-	items.value.reduce((sum: number, item: JobItemPayload) =>
-		sum + (item.unit_price + item.extra_service_price - item.discount) * item.quantity, 0)
+    items.value.reduce((sum: number, item) =>
+        sum + ((item.unit_price ?? 0) + (item.extra_service_price ?? 0) - item.discount) * item.quantity, 0)
 )
 
 const totalPaid = computed(() =>

@@ -1,4 +1,4 @@
-interface JobItemCore {
+export interface JobItem {
   jo_number: number
   item_id: string
   description: string
@@ -13,18 +13,12 @@ interface JobItemCore {
   notes: string
   service_name: string
   extra_service_name: string
-}
-
-export interface JobItemFromDB extends JobItemCore {
-  subtotal: number
-  total_claimed: number
-  remaining_on_hand: number
-}
-
-export interface JobItemPayload extends JobItemCore {
-  // Display only (Not saved in database)
-  unit_price: number
-  extra_service_price: number
+  // Display only
+  unit_price?: number
+  extra_service_price?: number
+  subtotal?: number
+  total_claimed?: number        // optional since not needed in forms
+  remaining_on_hand?: number    // optional since not needed in forms
 }
 
 export interface Payment {
@@ -46,7 +40,7 @@ export interface JobOrder {
   date_received: Date
   override_payment_status: boolean
   overall_job_status: string
-  job_items: JobItemFromDB[]
+  job_items: JobItem[]
   payments: Payment[]
   claims: ClaimingHistory[]
   payment_status: string
@@ -70,7 +64,7 @@ export interface JobOrderCreate {
   customer_address?: string
   customer_contact_no?: string
   customer_email?: string
-  job_items: JobItemCore[]
+  job_items: JobItem[]
   payments?: Payment[]
   claims?: ClaimingHistory[]
 }

@@ -7,7 +7,9 @@ import SalesForm from '@/components/SalesForm.vue';
 import { getAllMiscSales, archiveMiscSale } from '@/api/sales';
 import type { MiscSale } from '@/types/sales';
 import { formatCurrency, formatDate } from '@/utils/formatters';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore()
 const confirm = useConfirm();
 const toast = useToast();
 const isVisible = ref(false);
@@ -64,7 +66,7 @@ const confirmDelete = (id: string) => {
 	</ConfirmDialog>
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0 overflow-hidden">
 		<section class="flex justify-between items-center">
-			<HeaderTitle title="Sales" subtitle="Monitor all sales including document printing and others without Job Orders." />
+			<HeaderTitle :title="authStore.isOwner ? 'Sales' : 'Daily Sales'" subtitle="Monitor sales including document printing and others without Job Orders." />
 			<Button label="Add Misc. Sale" @click="isVisible = true">
 				<template #icon>
 					<Plus />

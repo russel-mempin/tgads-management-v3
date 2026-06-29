@@ -7,7 +7,9 @@ import ExpenseForm from '@/components/ExpenseForm.vue';
 import { getAllExpenses, archiveExpense } from '@/api/expenses';
 import type { Expense } from '@/types/expenses';
 import { formatCurrency, formatDate, mapExpenseCategory } from '@/utils/formatters';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore()
 const confirm = useConfirm();
 const toast = useToast();
 const isVisible = ref(false);
@@ -64,8 +66,9 @@ const confirmDelete = (id: string) => {
 	</ConfirmDialog>
 	<div class="mx-12 my-6 flex flex-col h-full min-h-0 overflow-hidden">
 		<section class="flex justify-between items-center">
-			<HeaderTitle title="Expenses" subtitle="Track your business expenses and monitor spending trends. Filter by month and year to review and compare
-					expenses across different periods." />
+			<HeaderTitle :title="authStore.isOwner ? 'Expenses' : 'Daily Expenses'"
+				:subtitle="authStore.isOwner ? 'Track your business expenses and monitor spending trends. Filter by month and year to review and compare expenses across different periods.' : `Log and view today's expenses. Use filters to find specific entries by category.`" 
+			/>
 			<Button label="Add Expense" @click="isVisible = true">
 				<template #icon>
 					<Plus />

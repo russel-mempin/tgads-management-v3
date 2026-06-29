@@ -11,12 +11,16 @@ from app.crud.job_order import (
     archive_job_order,
     update_job_order,
     get_job_order_count,
-    get_admin_job_order_kpis,
-    get_user_job_order_kpis,
+    get_business_kpis,
+    get_operation_kpis,
     get_unpaid_job_orders,
     get_overdue_job_orders,
     get_jobs_with_outstanding_balance,
-    get_jobs_with_payments_this_week
+    get_jobs_with_payments_this_week,
+    get_overdue_jobs,
+    get_jobs_in_progress,
+    get_jobs_due_today,
+    get_jobs_ready_for_pickup,
 )
 from app.schemas.job_order import JobOrderCreate
 from app.services.dependencies import get_current_active_user
@@ -38,7 +42,9 @@ def read_all(
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
-    filter: str | None = None, #outstanding, unpaid, overdue, payments-week, overdue, due-today, in-progress, for-pickup
+    filter: (
+        str | None
+    ) = None,  # outstanding, unpaid, overdue, payments-week, overdue, due-today, in-progress, for-pickup
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -50,6 +56,14 @@ def read_all(
         return get_overdue_job_orders(db)
     elif filter == "payments-week":
         return get_jobs_with_payments_this_week(db)
+    elif filter == "overdue-jobs":
+        return get_overdue_jobs(db)
+    elif filter == "in-progress":
+        return get_jobs_in_progress(db)
+    elif filter == "due-today":
+        return get_jobs_due_today(db)
+    elif filter == "for-pickup":
+        return get_jobs_ready_for_pickup(db)
     return get_all_job_orders(
         db,
         offset=offset,
@@ -59,7 +73,7 @@ def read_all(
         job_status=job_status,
         search=search,
     )
-    
+
 
 @router.get("/count")
 def read_job_order_count(
@@ -68,7 +82,7 @@ def read_job_order_count(
     job_status: JobStatus | None = None,
     search: str | None = None,
     db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     return get_job_order_count(
         db,
@@ -78,15 +92,20 @@ def read_job_order_count(
         search=search,
     )
 
+
 @router.get("/kpis")
 def read_kpis(
     db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
-    if current_user.role  == UserRoles.ADMIN:
-        return get_admin_job_order_kpis(db)
-    elif current_user.role == UserRoles.USER:
-        return get_user_job_order_kpis(db)
+    operational = get_operation_kpis(db)
+
+    if current_user.role == UserRoles.OWNER:
+        business = get_business_kpis(db)
+        return {**operational, **business}
+
+    return operational
+
 
 @router.get("/compute-unit-price", response_model=float)
 def compute_unit_price(

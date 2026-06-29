@@ -1,14 +1,14 @@
 <script setup lang="ts">
 // JobItemsList.vue
-import type { JobItemCreate, JobItem } from '@/types/job_orders';
+import type { JobItem } from '@/types/job_orders';
 import { Button, Tag } from 'primevue'
 import { Plus } from '@lucide/vue';
-import { formatDate, formatCurrency, formatNullable } from '@/utils/formatters';
+import { formatDate, formatCurrency, formatNullable, mapCustomColor, mapSeverity } from '@/utils/formatters';
 import { ref } from 'vue';
 import JobItemsForm from './JobItemsForm.vue';
 
 const props = defineProps<{
-	items: JobItemCreate[] | JobItem[],
+	items: JobItem[] | JobItem[],
 	jo_number: number,
 	readOnly: boolean
 }>()
@@ -16,20 +16,20 @@ const props = defineProps<{
 const isVisible = ref(false);
 
 const emit = defineEmits<{
-	(e: 'update:items', value: JobItemCreate[]): void
+	(e: 'update:items', value: JobItem[]): void
 }>()
 
-const addItem = (newItem: JobItemCreate) => {
-	emit('update:items', [...(props.items as JobItemCreate[]), newItem])
+const addItem = (newItem: JobItem) => {
+	emit('update:items', [...(props.items as JobItem[]), newItem])
 }
 
 const deleteItem = (itemId: string) => {
-	emit('update:items', (props.items as JobItemCreate[]).filter(i => i.item_id !== itemId))
+	emit('update:items', (props.items as JobItem[]).filter(i => i.item_id !== itemId))
 }
 
-const editingItem = ref<JobItemCreate | null>(null)
+const editingItem = ref<JobItem | null>(null)
 
-const openEdit = (value: JobItemCreate) => {
+const openEdit = (value: JobItem) => {
 	editingItem.value = {
 		...value,
 		due_date: new Date(value.due_date),
@@ -37,8 +37,8 @@ const openEdit = (value: JobItemCreate) => {
 	isVisible.value = true
 }
 
-const updateItem = (updated: JobItemCreate) => {
-	emit('update:items', (props.items as JobItemCreate[]).map(i =>
+const updateItem = (updated: JobItem) => {
+	emit('update:items', (props.items as JobItem[]).map(i =>
 		i.item_id === updated.item_id ? updated : i
 	))
 	editingItem.value = null
@@ -46,8 +46,7 @@ const updateItem = (updated: JobItemCreate) => {
 </script>
 <template>
 	<JobItemsForm v-if="!readOnly" v-model:isVisible="isVisible" :joNumber="jo_number"
-		:existingItems="(items as JobItemCreate[])" :editItem="editingItem" @add-item="addItem"
-		@update-item="updateItem" />
+		:existingItems="(items as JobItem[])" :editItem="editingItem" @add-item="addItem" @update-item="updateItem" />
 	<div class="bg-white rounded-2xl border border-gray-200 shadow-xs">
 		<div class="px-6 py-3 flex items-center justify-between border-b border-slate-200">
 			<p class="text-xl font-medium text-slate-600">Job Items</p>
@@ -63,8 +62,8 @@ const updateItem = (updated: JobItemCreate) => {
 			<p class="text-center text-slate-400">No items yet — add the first one to start
 				this job.
 			</p>
-			<Button label="Add Item" iconPos="left" v-if="!readOnly" @click="isVisible = true"
-				severity="primary" :disabled="!props.jo_number"
+			<Button label="Add Item" iconPos="left" v-if="!readOnly" @click="isVisible = true" severity="primary"
+				:disabled="!props.jo_number"
 				v-tooltip.left="{ value: 'Please enter JO Number first.', disabled: !!props.jo_number }">
 				<template #icon>
 					<Plus class="w-4" />
@@ -81,11 +80,14 @@ const updateItem = (updated: JobItemCreate) => {
 							<p class="text-slate-800">{{ value.service_name }}</p>
 						</span>
 						<span class="p-4 flex items-center gap-4">
-							<Tag class="w-24" :value="value.job_status" rounded />
+							<Tag :value="value.job_status"
+								:severity="mapCustomColor(value.job_status) ? undefined : mapSeverity(value.job_status)"
+								:class="mapCustomColor(value.job_status)" 
+							/>
 							<p class="text-slate-700">Due {{ formatDate(value.due_date.toString()) }}</p>
 							<p class="font-semibold text-lg text-slate-800 text-right">{{
-								formatCurrency((value.unit_price +
-									value.extra_service_price - value.discount) * value.quantity) }}</p>
+								formatCurrency(((value.unit_price ?? 0) +
+									(value.extra_service_price ?? 0) - value.discount) * value.quantity) }}</p>
 						</span>
 					</div>
 					<div class="p-4 flex gap-4">
@@ -123,7 +125,7 @@ const updateItem = (updated: JobItemCreate) => {
 						</div>
 						<div class="flex gap-4">
 							<Button v-if="!readOnly" severity="warn" class="w-20"
-								@click="openEdit(value as JobItemCreate)">Edit</Button>
+								@click="openEdit(value as JobItem)">Edit</Button>
 							<Button v-if="!readOnly" severity="danger" class="w-20"
 								@click="deleteItem(value.item_id)">Delete</Button>
 						</div>

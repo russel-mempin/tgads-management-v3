@@ -58,7 +58,7 @@ const onClose = () => {
 				</Column>
 				<Column field="username" header="Username" />
 				<Column field="email" header="Email" />
-				<Column v-if="authStore.isOwner" field="role" header="Access Level" />
+				<Column field="role" header="Access Level" />
 				<Column v-if="authStore.isSuperuser" field="is_superAdmin" header="Super Admin">
 					<template #body="{ data }">
 						<Tag :value="data.is_superAdmin ? 'Yes' : 'No'"

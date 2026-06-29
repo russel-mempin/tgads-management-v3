@@ -5,17 +5,17 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { ServiceType } from '@/types/services'
 import { computePrice } from '@/api/job_orders';
 import { getAllServices, getAllExtras } from '@/api/services';
-import type { JobItemPayload } from '@/types/job_orders';
-import { formatCurrency } from '@/utils/formatters';
+import type { JobItem } from '@/types/job_orders';
+import { formatCurrency, nowInManila } from '@/utils/formatters';
 
 const props = defineProps<{
     isVisible: boolean
     joNumber: number
-    existingItems: JobItemPayload[]
-    editItem?: JobItemPayload | null
+    existingItems: JobItem[]
+    editItem?: JobItem | null
 }>()
 
-const item = ref<JobItemPayload>({
+const item = ref<JobItem>({
     jo_number: props.joNumber,
     item_id: '',
     description: '',
@@ -47,7 +47,7 @@ const previewItemId = computed(() => {
         return props.editItem.item_id
     }
 
-    const count = props.existingItems.filter((i: JobItemPayload) => i.service_name === item.value.service_name).length + 1
+    const count = props.existingItems.filter((i: JobItem) => i.service_name === item.value.service_name).length + 1
     return `${props.joNumber}-${abbreviation}-${count}`
 })
 
@@ -90,8 +90,8 @@ watch(() => props.editItem, (newItem) => {
 
 const emit = defineEmits<{
     (e: 'update:isVisible', value: boolean): void
-    (e: 'add-item', value: JobItemPayload): void
-    (e: 'update-item', value: JobItemPayload): void
+    (e: 'add-item', value: JobItem): void
+    (e: 'update-item', value: JobItem): void
 }>()
 
 const resetItem = () => {
@@ -174,11 +174,13 @@ const onSave = () => {
             </div>
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Discount</label>
-                <InputNumber v-model="item.discount" mode="currency" currency="PHP" fluid :minFractionDigits="0" :maxFractionDigits="2" />
+                <InputNumber v-model="item.discount" mode="currency" currency="PHP" fluid :minFractionDigits="0"
+                    :maxFractionDigits="2" />
             </div>
             <div class="flex flex-col">
                 <label class="font-semibold mb-1">Extra Charge</label>
-                <InputNumber v-model="item.extra_charge" mode="currency" currency="PHP" fluid :minFractionDigits="0" :maxFractionDigits="2" />
+                <InputNumber v-model="item.extra_charge" mode="currency" currency="PHP" fluid :minFractionDigits="0"
+                    :maxFractionDigits="2" />
             </div>
         </div>
         <div class="flex justify-between bg-gray-100 p-2 rounded-md mb-4">
@@ -192,8 +194,8 @@ const onSave = () => {
             </div>
             <div class="flex gap-2">
                 <p>Subtotal - </p>
-                <p>{{ formatCurrency((item.unit_price + item.extra_service_price + item.extra_charge - item.discount) *
-                    item.quantity) }}</p>
+                <p>{{ formatCurrency(((item.unit_price ?? 0) + (item.extra_service_price ?? 0) + item.extra_charge -
+                    item.discount) * item.quantity) }}</p>
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
