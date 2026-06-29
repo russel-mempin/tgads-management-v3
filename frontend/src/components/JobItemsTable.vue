@@ -2,7 +2,7 @@
 // JobItemsTable.vue
 import { onMounted, computed, ref } from 'vue';
 import { getAllServices, getAllExtras } from '@/api/services';
-import type { JobItemCreate } from '@/types/job_orders';
+import type { JobItem } from '@/types/job_orders';
 import type { ServiceType } from '@/types/services';
 import { Button, DataTable, Column, Tag } from 'primevue';
 import { Plus, Trash, SquarePen } from '@lucide/vue'
@@ -18,13 +18,13 @@ onMounted(async () => {
 });
 
 const props = defineProps<{
-	items: JobItemCreate[],
+	items: JobItem[],
 	jo_number: number,
 }>()
 const isVisible = ref(false);
 
 const emit = defineEmits<{
-	(e: 'update:items', value: JobItemCreate[]): void
+	(e: 'update:items', value: JobItem[]): void
 }>()
 
 const localItems = computed({
@@ -32,7 +32,7 @@ const localItems = computed({
 	set: (value) => emit('update:items', value)
 })
 
-const addItem = (newItem: JobItemCreate) => {
+const addItem = (newItem: JobItem) => {
 	localItems.value = [...localItems.value, newItem]
 }
 </script>

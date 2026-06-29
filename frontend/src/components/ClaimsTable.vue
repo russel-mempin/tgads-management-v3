@@ -3,38 +3,38 @@ import { DataTable, Column, Button } from 'primevue';
 import ClaimForm from './ClaimForm.vue';
 import { Plus } from '@lucide/vue';
 import { ref } from 'vue';
-import type { ClaimCreate, ClaimingHistory, JobItemCreate, JobItem } from '@/types/job_orders';
+import type { ClaimingHistory, JobItem } from '@/types/job_orders';
 import { formatDate } from '@/utils/formatters';
 
 const props = defineProps<{
-    claims: ClaimCreate[] | ClaimingHistory[],
-    jobItems: JobItemCreate[] | JobItem[],
+    claims: ClaimingHistory[],
+    jobItems: JobItem[],
     readOnly?: boolean
 }>()
 
 const isVisible = ref(false);
 const editingIndex = ref<number | null>(null)
-const editingItem = ref<ClaimCreate | null>(null)
+const editingItem = ref<ClaimingHistory | null>(null)
 
 const emit = defineEmits<{
-	(e: 'update:claims', value: ClaimCreate[]): void
+	(e: 'update:claims', value: ClaimingHistory[]): void
 }>()
 
-const addItem = (newItem: ClaimCreate) => {
-	emit('update:claims', [...(props.claims as ClaimCreate[]), newItem])
+const addItem = (newItem: ClaimingHistory) => {
+	emit('update:claims', [...(props.claims as ClaimingHistory[]), newItem])
 }
 const deleteItem = (index: number) => {
-	emit('update:claims', (props.claims as ClaimCreate[]).filter((_, i) => i !== index))
+	emit('update:claims', (props.claims as ClaimingHistory[]).filter((_, i) => i !== index))
 }
-const openEdit = (item: ClaimCreate, index: number) => {
+const openEdit = (item: ClaimingHistory, index: number) => {
 	editingItem.value = item
 	editingIndex.value = index
 	isVisible.value = true
 }
 
-const updateItem = (updated: ClaimCreate) => {
+const updateItem = (updated: ClaimingHistory) => {
 	if (editingIndex.value === null) return
-	const newClaims = [...(props.claims as ClaimCreate[])]
+	const newClaims = [...(props.claims as ClaimingHistory[])]
 	newClaims[editingIndex.value] = updated
 	emit('update:claims', newClaims)
 	editingItem.value = null

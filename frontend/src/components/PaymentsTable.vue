@@ -3,38 +3,38 @@ import { DataTable, Column, Button } from 'primevue';
 import PaymentsForm from './PaymentsForm.vue';
 import { Plus } from '@lucide/vue';
 import { ref } from 'vue';
-import type { PaymentCreate, Payment, JobItemCreate, JobItem } from '@/types/job_orders';
+import type { Payment, JobItem } from '@/types/job_orders';
 import { formatDate, formatCurrency } from '@/utils/formatters';
 
 const props = defineProps<{
-	payments: PaymentCreate[] | Payment[],
-	jobItems: JobItemCreate[] | JobItem[],
+	payments: Payment[],
+	jobItems: JobItem[],
 	readOnly: boolean
 }>()
 
 const isVisible = ref(false);
 const editingIndex = ref<number | null>(null)
-const editingItem = ref<PaymentCreate | null>(null)
+const editingItem = ref<Payment | null>(null)
 
 const emit = defineEmits<{
-	(e: 'update:payments', value: PaymentCreate[]): void
+	(e: 'update:payments', value: Payment[]): void
 }>()
 
-const addItem = (newItem: PaymentCreate) => {
-	emit('update:payments', [...(props.payments as PaymentCreate[]), newItem])
+const addItem = (newItem: Payment) => {
+	emit('update:payments', [...(props.payments as Payment[]), newItem])
 }
 const deleteItem = (index: number) => {
-	emit('update:payments', (props.payments as PaymentCreate[]).filter((_, i) => i !== index))
+	emit('update:payments', (props.payments as Payment[]).filter((_, i) => i !== index))
 }
-const openEdit = (item: PaymentCreate, index: number) => {
+const openEdit = (item: Payment, index: number) => {
 	editingItem.value = item
 	editingIndex.value = index
 	isVisible.value = true
 }
 
-const updateItem = (updated: PaymentCreate) => {
+const updateItem = (updated: Payment) => {
 	if (editingIndex.value === null) return
-	const newPayments = [...(props.payments as PaymentCreate[])]
+	const newPayments = [...(props.payments as Payment[])]
 	newPayments[editingIndex.value] = updated
 	emit('update:payments', newPayments)
 	editingItem.value = null

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { JobOrder, Payment, ClaimingHistory, JobItemFromDB } from '@/types/job_orders';
+import type { JobOrder, Payment, ClaimingHistory, JobItem } from '@/types/job_orders';
 import { getJobOrder } from '@/api/job_orders';
 import { Button, Tag, useConfirm, ConfirmDialog, useToast } from 'primevue';
 import { Trash, PenBox, Mail, Phone } from '@lucide/vue';
@@ -130,9 +130,9 @@ const confirmDelete = (jo_number: number) => {
 			</section>
 			<section class="mt-6 grid grid-cols-2 gap-6">
 				<PaymentsTable :payments="(jobOrder?.payments ?? []) as Payment[]"
-					:jobItems="(jobOrder?.job_items ?? []) as JobItemFromDB[]" :readOnly="true" />
+					:jobItems="(jobOrder?.job_items ?? []) as JobItem[]" :readOnly="true" />
 				<ClaimsTable :claims="(jobOrder?.claims ?? []) as ClaimingHistory[]"
-					:jobItems="(jobOrder?.job_items ?? []) as JobItemFromDB[]" :readOnly="true" />
+					:jobItems="(jobOrder?.job_items ?? []) as JobItem[]" :readOnly="true" />
 			</section>
 		</div>
 	</div>

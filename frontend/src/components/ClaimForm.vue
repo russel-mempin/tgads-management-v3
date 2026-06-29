@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { JobItemPayload, JobItemFromDB, ClaimingHistory } from '@/types/job_orders';
+import type { JobItem, ClaimingHistory } from '@/types/job_orders';
 import { ref, watch, computed } from 'vue';
 import { Dialog, DatePicker, InputText, Select, InputNumber, Button } from 'primevue';
 import { nowInManila } from '@/utils/formatters';
@@ -7,7 +7,7 @@ import { nowInManila } from '@/utils/formatters';
 const props = defineProps<{
 	isVisible: boolean
 	editItem?: ClaimingHistory | null
-	jobItems: JobItemPayload[] | JobItemFromDB[]
+	jobItems: JobItem[]
 	claims: ClaimingHistory[]
 }>()
 
@@ -79,7 +79,7 @@ watch(() => props.editItem, (newItem) => {
 		<div class="grid grid-cols-2 gap-4 mb-4">
 			<div class="flex flex-col">
 				<label class="font-semibold mb-1">Item Claimed</label>
-				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItemPayload[]).map(i => i.item_id)"
+				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItem[]).map(i => i.item_id)"
 					fluid />
 			</div>
 			<div class="flex flex-col">

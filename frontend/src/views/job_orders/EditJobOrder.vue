@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Save } from '@lucide/vue';
-import type { JobOrder, JobItemPayload, Payment, ClaimingHistory, JobOrderCreate } from '@/types/job_orders'
+import type { JobOrder, JobItem, Payment, ClaimingHistory, JobOrderCreate } from '@/types/job_orders'
 import type { Customer } from '@/types/customers';
 import { getJobOrder, editJobOrder } from '@/api/job_orders'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers';
@@ -28,7 +28,7 @@ const customerInfo = ref<Customer>({
 });
 const jo_number = ref(0);
 const date_received = ref(nowInManila());
-const items = ref<JobItemPayload[]>([]);
+const items = ref<JobItem[]>([]);
 const payments = ref<Payment[]>([]);
 const claims = ref<ClaimingHistory[]>([]);
 onMounted(async () => {
@@ -44,7 +44,7 @@ watch(jobOrder, (data) => {
 	customerName.value = data.customer_name
 	jo_number.value = Number(data.jo_number)
 	date_received.value = new Date(data.date_received)
-	items.value = data.job_items as unknown as JobItemPayload[]
+	items.value = data.job_items as unknown as JobItem[]
 	payments.value = data.payments as unknown as Payment[]
 	// Map claims to use item_id instead of UUID job_item_id
 	claims.value = data.claims.map(c => ({
@@ -78,8 +78,8 @@ watch(customerName, async (name) => {
 });
 
 const totalDue = computed(() =>
-	items.value.reduce((sum: number, item: JobItemPayload) =>
-		sum + (item.unit_price + item.extra_service_price - item.discount) * item.quantity, 0)
+    items.value.reduce((sum: number, item: JobItem) =>
+        sum + ((item.unit_price ?? 0) + (item.extra_service_price ?? 0) - item.discount) * item.quantity, 0)
 )
 
 const totalPaid = computed(() =>
