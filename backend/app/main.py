@@ -17,11 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if os.getenv("APP_ENV") != "production":
+if os.getenv("APP_ENV") == "test" or os.getenv("APP_ENV") == "dev":
     from app.seed import seed_dev_data
     seed_dev_data()
-    
-if os.getenv("APP_ENV") == "production":
+
+elif os.getenv("APP_ENV") == "prod":
     from app.seed import seed_prod_data
     seed_prod_data()
 

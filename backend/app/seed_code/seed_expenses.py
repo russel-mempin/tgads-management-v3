@@ -7,7 +7,7 @@ from app.utils.utils import to_float
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "seed_data", "jan2026expenses.csv")
+CSV_PATH = os.path.join(BASE_DIR, "seed_data", "2026expenses.csv")
 
 def seed_expenses_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
