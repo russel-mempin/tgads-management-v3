@@ -117,6 +117,7 @@ const buildPayload = () => {
 				date_received: new Date(p.date_received),
 				method: p.method,
 				amount: p.amount,
+				reference_number: p.reference_number
 			}))
 		} : {}),
 
