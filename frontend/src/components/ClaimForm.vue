@@ -69,21 +69,21 @@ watch(() => props.editItem, (newItem) => {
 	<Dialog :visible="isVisible" @update:visible="emit('update:isVisible', $event)" modal
 		:header="editItem ? 'Edit Claim History' : 'Add Claim History'" :style="{ width: '40rem' }">
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Date Claimed</label>
+			<label class="font-semibold mb-1">Date Claimed <span class="text-red-500">*</span></label>
 			<DatePicker v-model="item.date_claimed" showTime hourFormat="12" dateFormat="M dd, yy" />
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Name</label>
+			<label class="font-semibold mb-1">Name <span class="text-red-500">*</span></label>
 			<InputText v-model="item.name" fluid autocomplete="off" />
 		</div>
 		<div class="grid grid-cols-2 gap-4 mb-4">
 			<div class="flex flex-col">
-				<label class="font-semibold mb-1">Item Claimed</label>
+				<label class="font-semibold mb-1">Item Claimed <span class="text-red-500">*</span></label>
 				<Select v-model="item.claimed_item_id" :options="(props.jobItems as JobItem[]).map(i => i.item_id)"
 					fluid />
 			</div>
 			<div class="flex flex-col">
-				<label class="font-semibold mb-1">Pcs. Claimed</label>
+				<label class="font-semibold mb-1">Pcs. Claimed <span class="text-red-500">*</span></label>
 				<InputNumber v-model="item.pcs_claimed" :min="1" :max="maxClaimable" fluid />
 			</div>
 		</div>

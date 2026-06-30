@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Payment } from '@/types/job_orders';
 import { ref, watch } from 'vue';
-import { Dialog, DatePicker, Select, InputNumber, Button } from 'primevue';
+import { Dialog, DatePicker, Select, InputNumber, InputText, Button } from 'primevue';
 import { nowInManila } from '@/utils/formatters';
 
 const props = defineProps<{
@@ -18,7 +18,8 @@ const emit = defineEmits<{
 const item = ref<Payment>({
 	date_received: nowInManila(),
 	method: 'Cash',
-	amount: 1
+	amount: 1,
+	reference_number: ''
 })
 
 const paymentMethods = ref(['Cash', 'GCash', 'Cheque'])
@@ -27,7 +28,8 @@ const resetItem = () => {
 	item.value = {
 		date_received: nowInManila(),
 		method: 'Cash',
-		amount: 1
+		amount: 1,
+		reference_number: ''
 	}
 }
 
@@ -54,17 +56,21 @@ watch(() => props.editItem, (newItem) => {
 	<Dialog :visible="isVisible" @update:visible="emit('update:isVisible', $event)" modal
 		:header="editItem ? 'Edit Payment' : 'Add Payment'" :style="{ width: '40rem' }">
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Date Received</label>
+			<label class="font-semibold mb-1">Date Received <span class="text-red-500">*</span></label>
 			<DatePicker v-model="item.date_received" showTime hourFormat="12" dateFormat="M dd, yy" />
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Method</label>
+			<label class="font-semibold mb-1">Method <span class="text-red-500">*</span></label>
 			<Select v-model="item.method" :options="paymentMethods" />
 		</div>
 		<div class="flex flex-col mb-4">
-			<label class="font-semibold mb-1">Amount</label>
+			<label class="font-semibold mb-1">Amount <span class="text-red-500">*</span></label>
 			<InputNumber v-model="item.amount" mode="currency" currency="PHP" fluid :minFractionDigits="0"
 				:maxFractionDigits="2" />
+		</div>
+		<div class="flex flex-col mb-4">
+			<label class="font-semibold mb-1">Reference Number <span class="text-red-500">*</span></label>
+			<InputText v-model="item.reference_number" />
 		</div>
 		<div class="flex justify-end gap-2">
 			<Button label="Cancel" severity="secondary" @click="emit('update:isVisible', false)" />

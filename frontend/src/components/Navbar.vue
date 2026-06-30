@@ -27,8 +27,9 @@ const allItems: NavItem[] = [
 	{ to: '/expenses', label: "Expenses", icon: BanknoteArrowDown, category: 'Finance' },
 	// Finance - admin and above
 	{ to: '/deposits', label: "Deposits", icon: Landmark, category: 'Finance', adminOnly: true },
-	// Finance - owner and above
-	{ to: '/cash-flow', label: "Cash Flow", icon: Sheet, category: 'Finance', ownerOnly: true },
+	// Reports - owner and above
+	{ to: '/reports/daily', label: "Daily Collection", icon: Sheet, category: 'Reports', ownerOnly: true },
+	{ to: '/reports/monthly', label: "Monthly Performance", icon: Sheet, category: 'Reports', ownerOnly: true },
 	// Settings - admin and above
 	{ to: '/manage-services', label: "Manage Services", icon: ConciergeBell, category: 'Settings', adminOnly: true },
 	{ to: '/manage-extras', label: "Manage Extras", icon: Layers, category: 'Settings', adminOnly: true },
@@ -47,6 +48,7 @@ const visibleItems = computed(() => allItems.filter(item => {
 const navigationItems = computed(() => visibleItems.value.filter(link => link.category === 'None'))
 const operationItems = computed(() => visibleItems.value.filter(link => link.category === 'Operations'))
 const financeItems = computed(() => visibleItems.value.filter(link => link.category === 'Finance'))
+const reportItems = computed(() => visibleItems.value.filter(link => link.category === 'Reports'))
 const settingItems = computed(() => visibleItems.value.filter(link => link.category === 'Settings'))
 
 const logout = () => {
@@ -82,6 +84,14 @@ const toggleTheme = () => {
 			<p class="ml-8 my-2 tracking-wider montserrat font-semibold text-slate-600 text-sm">OPERATIONS</p>
 			<div class="flex flex-col gap-[0.2rem] px-4 inter">
 				<NavbarItem v-for="link in operationItems" :key="link.to" :to="link.to" :label="link.label"
+					:icon="link.icon" />
+			</div>
+		</template>
+
+		<template v-if="reportItems.length">
+			<p class="ml-8 my-2 tracking-wider montserrat font-semibold text-slate-600 text-sm">REPORTS</p>
+			<div class="flex flex-col gap-[0.2rem] px-4 inter">
+				<NavbarItem v-for="link in reportItems" :key="link.to" :to="link.to" :label="link.label"
 					:icon="link.icon" />
 			</div>
 		</template>

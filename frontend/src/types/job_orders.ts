@@ -25,6 +25,7 @@ export interface Payment {
   date_received: Date
   method: string
   amount: number
+  reference_number: string
 }
 
 export interface ClaimingHistory {

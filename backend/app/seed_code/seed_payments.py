@@ -17,6 +17,9 @@ def seed_payments_from_csv(file_path: str = CSV_PATH):
             if not row["JO Number"]:
                 print(f"No JO number for payment of {row['Customer Name']} amounting to {row['Amount']}. Skipped.")
                 continue
+            if not row.get("Reference Number", "").strip():
+                print(f"No reference number for payment of {row['Customer Name']} amounting to {row['Amount']}. Skipped.")
+                continue
             job_order = session.exec(
                 select(JobOrder).where(JobOrder.jo_number == row["JO Number"])
             ).first()
@@ -27,6 +30,7 @@ def seed_payments_from_csv(file_path: str = CSV_PATH):
                 date_received=datetime.strptime(row["Date"], "%m/%d/%y"),
                 method=PaymentMethod(row["Method"]),
                 amount=to_float(row["Amount"]),
+                reference_number=row["Reference Number"],
                 job_order_id=job_order.id
             )
             print(f"Added payment from: {row['Customer Name']} amounting to: {row['Amount']}")
@@ -35,7 +39,6 @@ def seed_payments_from_csv(file_path: str = CSV_PATH):
 
         session.commit()
 
-        # Sync computed fields for every job order that got a payment
         for jo_id in touched_job_orders:
             job_order = session.get(JobOrder, jo_id)
             if job_order:

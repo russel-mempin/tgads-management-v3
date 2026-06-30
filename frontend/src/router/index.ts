@@ -64,6 +64,16 @@ const router = createRouter({
           meta: { adminOnly: true },
         },
         {
+          path: 'reports/daily',
+          component: () => import('@/views/Deposits.vue'),
+          meta: { ownerOnly: true },
+        },
+        {
+          path: 'reports/monthly',
+          component: () => import('@/views/Deposits.vue'),
+          meta: { ownerOnly: true },
+        },
+        {
           path: 'manage-services',
           component: () => import('@/views/ManageServices.vue'),
           meta: { adminOnly: true },

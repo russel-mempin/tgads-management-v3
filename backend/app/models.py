@@ -264,6 +264,7 @@ class JobItem(JobItemBase, table=True):
 # ====================== PAYMENTS =========================
 class PaymentBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    reference_number: str = Field(unique=True, index=True)
     method: PaymentMethod
     amount: float = Field(default=0.0)    
     
