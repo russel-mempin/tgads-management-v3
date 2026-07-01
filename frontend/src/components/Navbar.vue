@@ -23,8 +23,8 @@ const allItems: NavItem[] = [
 	{ to: '/job-orders', label: "Job Orders", icon: BriefcaseBusiness, category: 'Operations' },
 	{ to: '/customers', label: "Customers", icon: BookUser, category: 'Operations' },
 	// Finance - all roles
-	{ to: '/sales', label: "Sales", icon: BanknoteArrowUp, category: 'Finance' },
-	{ to: '/expenses', label: "Expenses", icon: BanknoteArrowDown, category: 'Finance' },
+	{ to: '/sales', label: authStore.isOwner ? "Sales" : "Daily Sales", icon: BanknoteArrowUp, category: 'Finance' },
+	{ to: '/expenses', label: authStore.isOwner ? "Expenses" : "Daily Expenses", icon: BanknoteArrowDown, category: 'Finance' },
 	// Finance - admin and above
 	{ to: '/deposits', label: "Deposits", icon: Landmark, category: 'Finance', adminOnly: true },
 	// Reports - owner and above

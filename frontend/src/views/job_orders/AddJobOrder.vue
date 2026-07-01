@@ -118,6 +118,7 @@ const buildPayload = () => {
 				date_received: payment.date_received,
 				method: payment.method,
 				amount: payment.amount,
+				reference_number: payment.reference_number
 			}))
 		} : {}),
 
