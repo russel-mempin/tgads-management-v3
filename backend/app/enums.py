@@ -49,3 +49,8 @@ class ExpenseCategory(str, Enum):
     BENEFITS = "Benefits"
     PRODUCTION = "Production"
     MISCELLANEOUS = "Miscellaneous"
+    
+class AccountType(str, Enum):
+    CASH_ON_HAND = "Cash on Hand"
+    BANK = "Bank"
+    GCASH = "GCash"

@@ -159,9 +159,9 @@ const onSave = () => {
             <div v-if="selectedIsAreaBased" class="flex flex-col mb-4">
                 <label class="font-semibold mb-1">Dimensions <span class="text-red-500">*</span></label>
                 <InputGroup>
-                    <InputNumber v-model="item.height" placeholder="Height" fluid />
+                    <InputNumber v-model="item.height" placeholder="Height" fluid :maxFractionDigits="4" />
                     <InputGroupAddon>×</InputGroupAddon>
-                    <InputNumber v-model="item.width" placeholder="Width" fluid />
+                    <InputNumber v-model="item.width" placeholder="Width" fluid :maxFractionDigits="4" />
                     <Select v-model="item.size_unit" :options="unitSizes"
                         :pt="{ root: { class: '!flex-none !w-24' } }" />
                 </InputGroup>

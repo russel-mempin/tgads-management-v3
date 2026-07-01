@@ -65,12 +65,12 @@ const router = createRouter({
         },
         {
           path: 'reports/daily',
-          component: () => import('@/views/Deposits.vue'),
+          component: () => import('@/views/DailyReports.vue'),
           meta: { ownerOnly: true },
         },
         {
           path: 'reports/monthly',
-          component: () => import('@/views/Deposits.vue'),
+          component: () => import('@/views/MonthlyReports.vue'),
           meta: { ownerOnly: true },
         },
         {

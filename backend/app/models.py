@@ -3,7 +3,7 @@ from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
 from pydantic import EmailStr
-from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, ExpenseCategory
+from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, ExpenseCategory, AccountType
 from app.utils.utils import compute_unit_price
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -334,10 +334,29 @@ class MiscSale(MiscSaleBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     
     
-# ====================== CASH ANCHOR =========================
-class CashAnchor(SQLModel, table=True):
-    __tablename__ = "cash_anchor" # type: ignore
-    id: int = Field(default=1, primary_key=True)
-    year: int = Field()
-    month: int = Field()
-    beginning_balance: float = Field()
+# ====================== ACCOUNTS =========================
+class Account(SQLModel, table=True):
+    __tablename__ = "accounts" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(unique=True, index=True)  # "Cash on Hand", "BPI Savings", "GCash"
+    type: AccountType = Field()
+    beginning_balance: float = Field(default=0.0)
+    beginning_balance_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    current_balance: float = Field(default=0.0)
+    is_active: bool = Field(default=True)
+
+    transactions: list["AccountTransaction"] = Relationship(back_populates="account")
+
+
+class AccountTransaction(SQLModel, table=True):
+    __tablename__ = "account_transactions" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    account_id: uuid.UUID = Field(foreign_key="accounts.id")
+    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    description: str = Field()
+    amount: float = Field()  # positive = in, negative = out
+    running_balance: float = Field()
+    source_type: str = Field()  # "payment", "expense", "misc_sale", "transfer", "adjustment"
+    source_id: uuid.UUID | None = Field(default=None)
+
+    account: "Account" = Relationship(back_populates="transactions")
