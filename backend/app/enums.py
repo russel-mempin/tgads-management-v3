@@ -33,11 +33,13 @@ class JobStatus(str, Enum):
     CANCELLED = "Cancelled"
     
     
-class PaymentMethod(str, Enum):
-    CASH = "Cash"
-    GCASH = "GCash"
-    CHEQUE = "Cheque"
-    
+class TransactionSource(str, Enum):
+    PAYMENT = "payment"
+    EXPENSE = "expense"
+    MISC_SALE = "misc_sale"
+    TRANSFER = "transfer"
+    ADJUSTMENT = "adjustment"
+    EXPENSE_REVERSAL = "expense_reversal"
     
 class ExpenseCategory(str, Enum):
     FOOD = "Food"
@@ -51,6 +53,6 @@ class ExpenseCategory(str, Enum):
     MISCELLANEOUS = "Miscellaneous"
     
 class AccountType(str, Enum):
-    CASH_ON_HAND = "Cash on Hand"
+    CASH_ON_HAND = "Cash"
     BANK = "Bank"
-    GCASH = "GCash"
+    EWALLET = "E-Wallet"

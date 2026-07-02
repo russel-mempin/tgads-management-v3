@@ -10,6 +10,7 @@ from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
 from app.seed_code.seed_job_orders import seed_job_orders_from_converted_excel
 from app.seed_code.seed_expenses import seed_expenses_from_csv
+from app.seed_code.seed_accounts import seed_accounts
 
 BASE_DIR = os.path.dirname(__file__)
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -30,6 +31,8 @@ def seed_dev_data():
         print("Seeded service types.")
         seed_extra_types_from_csv()
         print("Seeded extra types.")
+        seed_accounts()
+        print("Seeded accounts.")
         seed_job_orders_from_converted_excel()
         print("Seeded job orders.")
         seed_payments_from_csv()
@@ -58,6 +61,8 @@ def seed_dev_data():
         print("Seeded service types.")
         seed_extra_types_from_csv()
         print("Seeded extra types.")
+        seed_accounts()
+        print("Seeded accounts.")
         seed_job_orders_from_converted_excel()
         print("Seeded job orders.")
         seed_payments_from_csv()
@@ -84,3 +89,5 @@ def seed_prod_data():
     print("Seeded service types.")
     seed_extra_types_from_csv()
     print("Seeded extra types.")
+    seed_accounts()
+    print("Seeded accounts.")

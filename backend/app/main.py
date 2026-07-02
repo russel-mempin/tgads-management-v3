@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
-from app.routes import users, job_orders, customers, services, expenses, sales, reports
+from app.routes import users, job_orders, customers, services, expenses, sales, reports, accounts
 import os
 
 app = FastAPI()
@@ -32,3 +32,4 @@ app.include_router(services.router)
 app.include_router(expenses.router)
 app.include_router(sales.router)
 app.include_router(reports.router)
+app.include_router(accounts.router)

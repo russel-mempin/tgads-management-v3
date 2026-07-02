@@ -3,7 +3,7 @@ from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
 from pydantic import EmailStr
-from app.enums import UserRoles, SizeUnit, PaymentMethod, PaymentStatus, JobStatus, ExpenseCategory, AccountType
+from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus, ExpenseCategory, AccountType, TransactionSource
 from app.utils.utils import compute_unit_price
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -264,9 +264,8 @@ class JobItem(JobItemBase, table=True):
 # ====================== PAYMENTS =========================
 class PaymentBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    reference_number: str = Field(unique=True, index=True)
-    method: PaymentMethod
-    amount: float = Field(default=0.0)    
+    reference_number: str | None = Field(default=None)
+    amount: float = Field(default=0.0)
     
 
 class Payment(PaymentBase, table=True):
@@ -277,8 +276,13 @@ class Payment(PaymentBase, table=True):
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
         )
     )
+    account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
 
     job_order: "JobOrder" = Relationship(back_populates="payments")
+    
+    @property
+    def account_name(self) -> str:
+        return self.account_name
 
 
 # ====================== CLAIMING HISTORY =========================
@@ -319,6 +323,13 @@ class ExpenseBase(SQLModel):
 class Expense(ExpenseBase, table=True):
     __tablename__ = "expenses"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    
+    account: "Account" = Relationship(back_populates="expenses")
+    
+    @property
+    def account_name(self) -> str:
+        return self.account.name
     
 
 # ====================== MISC SALES =========================
@@ -346,6 +357,7 @@ class Account(SQLModel, table=True):
     is_active: bool = Field(default=True)
 
     transactions: list["AccountTransaction"] = Relationship(back_populates="account")
+    expenses: list["Expense"] = Relationship(back_populates="account")
 
 
 class AccountTransaction(SQLModel, table=True):
@@ -356,7 +368,7 @@ class AccountTransaction(SQLModel, table=True):
     description: str = Field()
     amount: float = Field()  # positive = in, negative = out
     running_balance: float = Field()
-    source_type: str = Field()  # "payment", "expense", "misc_sale", "transfer", "adjustment"
+    source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
 
     account: "Account" = Relationship(back_populates="transactions")

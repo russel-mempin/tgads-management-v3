@@ -21,15 +21,17 @@ class JobItemCreate(JobItemBase):
     extra_service_name: str | None = None
     
 class PaymentPublic(PaymentBase):
-    pass
-
+    account_id: uuid.UUID
+    account_name: str
+    
+class PaymentCreate(PaymentBase):
+    account_name: str
 
 class ClaimPublic(ClaimingHistoryBase):
     job_item_id: uuid.UUID
     
 class ClaimCreate(ClaimingHistoryBase):
     pass
-
 
 class JobOrderPublic(JobOrderBase):
     id: uuid.UUID
@@ -53,5 +55,5 @@ class JobOrderCreate(SQLModel):
     customer_contact_no: str | None = None
     customer_email: str | None = None
     job_items: list["JobItemCreate"] = Field(default_factory=list)
-    payments: Optional[List["PaymentPublic"]] = None
+    payments: Optional[List["PaymentCreate"]] = None
     claims: Optional[List["ClaimCreate"]] = None

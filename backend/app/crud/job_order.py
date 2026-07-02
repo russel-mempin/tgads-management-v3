@@ -187,7 +187,6 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
             for payment in data.payments:
                 paymentItem = Payment(
                     date_received=payment.date_received,
-                    method=payment.method,
                     amount=payment.amount,
                     job_order_id=job_order.id,
                 )

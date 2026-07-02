@@ -8,6 +8,7 @@ from sqlmodel import Session
 from app.schemas.user import TokenData
 from jwt.exceptions import InvalidTokenError
 from app.models import User
+from app.enums import UserRoles
 
 
 
@@ -38,9 +39,25 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-def require_role(*roles: str):
-    def role_checker(current_user: User = Depends(get_current_user)):
+def require_role(*roles: UserRoles):
+    def role_checker(
+        current_user: User = Depends(get_current_active_user),
+    ):
         if current_user.role not in roles:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to access this.",
+            )
         return current_user
+
     return role_checker
+
+def require_super_admin(
+    current_user: User = Depends(get_current_active_user),
+):
+    if not current_user.is_superAdmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super administrator access required.",
+        )
+    return current_user
