@@ -1,7 +1,7 @@
 import csv, os
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import ServiceType, SizeUnit
+from app.models import Service, SizeUnit
 from app.utils.utils import to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -13,15 +13,15 @@ def seed_service_types_from_csv(file_path: str = CSV_PATH):
 
         for row in reader:
             existing = session.exec(
-                select(ServiceType).where(
-                    ServiceType.name == row["name"]
+                select(Service).where(
+                    Service.name == row["name"]
                 )
             ).first()
 
             if existing:
                 continue
 
-            service_type = ServiceType(
+            service_type = Service(
                 name=row["name"],
                 abbreviation=row["abbreviation"],
                 is_area_based=row["area_based"].lower() == "true",

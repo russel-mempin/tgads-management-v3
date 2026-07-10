@@ -13,6 +13,19 @@ class UserRoles(str, Enum):
     USER = "User"
     OWNER = "Owner"
     
+
+class PriceUnit(str, Enum):
+    PCS = "pcs"
+    SQIN = "sqin"
+    SQFT = "sqft"
+    SQM = "sqm"
+
+
+class PricingStrategy(str, Enum):
+    AREA = "Area"
+    BY_PIECE = "By Piece"
+    FIXED = "Fixed"
+
     
 class PaymentStatus(str, Enum):
     UNPAID = "Unpaid"
@@ -40,7 +53,9 @@ class TransactionSource(str, Enum):
     TRANSFER = "transfer"
     ADJUSTMENT = "adjustment"
     EXPENSE_REVERSAL = "expense_reversal"
+    REFUND = "refund"
     
+
 class ExpenseCategory(str, Enum):
     FOOD = "Food"
     MAINTENANCE = "Maintenance"
@@ -52,6 +67,7 @@ class ExpenseCategory(str, Enum):
     PRODUCTION = "Production"
     MISCELLANEOUS = "Miscellaneous"
     
+
 class AccountType(str, Enum):
     CASH_ON_HAND = "Cash"
     BANK = "Bank"

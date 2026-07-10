@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.enums import SizeUnit
 
 if TYPE_CHECKING:
-    from app.models import ServiceType, JobOrder
+    from app.models import Service, JobOrder
 
 def to_float(value: str) -> float:
     if not value:
@@ -22,7 +22,7 @@ def to_int(v: str) -> int:
         return 0
     
     
-def compute_unit_price(height: float, width: float, service_type: ServiceType, size_unit: SizeUnit) -> float:
+def compute_unit_price(height: float, width: float, service_type: Service, size_unit: SizeUnit) -> float:
 	if service_type is None:
 		return 0.0
 

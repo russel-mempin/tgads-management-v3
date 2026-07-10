@@ -1,7 +1,7 @@
 import csv, os
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import Customer, JobOrder, JobItem, ServiceType, ExtraType, User
+from app.models import Customer, JobOrder, JobItem, Service, ExtraService, User
 from datetime import datetime
 from app.enums import SizeUnit, JobStatus
 from app.utils.utils import to_float, to_int
@@ -79,15 +79,15 @@ def _seed_file(file_path: str, service_instance_counter: dict):
             touched_job_orders.add(joborder.id)
 
             service_type = session.exec(
-                select(ServiceType).where(ServiceType.name == row["Service"])
+                select(Service).where(Service.name == row["Service"])
             ).first()
 
             if not service_type:
-                print(f"ServiceType not found: {row['Service']}. Skipping row.")
+                print(f"Service not found: {row['Service']}. Skipping row.")
                 continue
 
             extra_type = session.exec(
-                select(ExtraType).where(ExtraType.name == row["Extra Service"])
+                select(ExtraService).where(ExtraService.name == row["Extra Service"])
             ).first()
 
             counter_key = (joborder.jo_number, service_type.abbreviation)

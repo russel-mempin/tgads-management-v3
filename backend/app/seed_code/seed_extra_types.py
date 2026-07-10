@@ -1,7 +1,7 @@
 import csv, os
 from sqlmodel import Session, select
 from app.database import engine
-from app.models import ExtraType
+from app.models import ExtraService
 from app.utils.utils import to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -13,15 +13,15 @@ def seed_extra_types_from_csv(file_path: str = CSV_PATH):
 
         for row in reader:
             existing = session.exec(
-                select(ExtraType).where(
-                    ExtraType.name == row["name"]
+                select(ExtraService).where(
+                    ExtraService.name == row["name"]
                 )
             ).first()
 
             if existing:
                 continue
 
-            extra_type = ExtraType(
+            extra_type = ExtraService(
                 name=row["name"],
                 price=to_float(row["price"]),
             )

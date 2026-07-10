@@ -3,9 +3,9 @@ from sqlalchemy import or_, cast, String, func
 from app.models import (
     JobOrder,
     JobItem,
-    ServiceType,
+    Service,
     Customer,
-    ExtraType,
+    ExtraService,
     Payment,
     ClaimingHistory,
     AuditLog,
@@ -101,7 +101,7 @@ def get_price(
     db: Session, height: float, width: float, service_name: str, size_unit: SizeUnit
 ) -> float:
     service = db.exec(
-        select(ServiceType).where(ServiceType.name == service_name)
+        select(Service).where(Service.name == service_name)
     ).first()
 
     if service is None:
@@ -154,7 +154,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
 
         for item in data.job_items:
             service_type = db.exec(
-                select(ServiceType).where(ServiceType.name == item.service_name)
+                select(Service).where(Service.name == item.service_name)
             ).first()
             if not service_type:
                 raise HTTPException(status_code=404, detail="Service type not found")
@@ -309,7 +309,7 @@ def update_job_order(
         # 2. Insert job items first
         for item in data.job_items:
             service_type = db.exec(
-                select(ServiceType).where(ServiceType.name == item.service_name)
+                select(Service).where(Service.name == item.service_name)
             ).first()
             if not service_type:
                 raise HTTPException(status_code=404, detail="Service type not found")

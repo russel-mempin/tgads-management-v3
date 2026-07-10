@@ -1,13 +1,13 @@
-from app.models import ServiceTypeBase, ExtraType
+from app.models import ServiceBase, ExtraService
 import uuid
 from sqlmodel import SQLModel
 from app.enums import SizeUnit
 
 
-class ServicePublic(ServiceTypeBase):
+class ServicePublic(ServiceBase):
     id: uuid.UUID
     
-class ServiceCreate(ServiceTypeBase):
+class ServiceCreate(ServiceBase):
     pass
 
 class ExtraPublic(SQLModel):

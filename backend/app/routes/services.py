@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.database import get_session
 from app.crud.service import get_all_services, get_all_extras, create_service, update_service, archive_service, create_extra, update_extra, archive_extra
 from app.schemas.service import ServicePublic, ServiceCreate, ServiceUpdate, ExtraCreate, ExtraPublic
-from app.models import ExtraType, User
+from app.models import ExtraService, User
 from app.services.dependencies import get_current_active_user
 import uuid
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/services", tags=["services"], dependencies=[Depends(
 def read_all_services(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_services(db, offset=offset, limit=limit)
 
-@router.get("/extras", response_model=list[ExtraType])
+@router.get("/extras", response_model=list[ExtraService])
 def read_all_extras(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_extras(db, offset=offset, limit=limit)
 

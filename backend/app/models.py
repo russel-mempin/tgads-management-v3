@@ -3,9 +3,7 @@ from sqlalchemy import Column, ForeignKey
 from datetime import datetime, timezone
 import uuid
 from pydantic import EmailStr
-from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus, ExpenseCategory, AccountType, TransactionSource
-from app.utils.utils import compute_unit_price
-from decimal import Decimal, ROUND_HALF_UP
+from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus, ExpenseCategory, AccountType, TransactionSource, PricingStrategy, PriceUnit
 
 
 # ====================== AUDIT LOGS =========================
@@ -62,32 +60,90 @@ class Customer(CustomerBase, table=True):
     )
 
 
+# ====================== SERVICE OPTIONS =========================    
+class ServiceOption(SQLModel, table=True):
+    __tablename__ = "service_options" # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+    service_id: uuid.UUID = Field(
+        foreign_key="services.id"
+    )
+
+    name: str
+    base_rate: float
+
+    service: "Service" = Relationship(
+        back_populates="options"
+    )
+    price_tiers: list["ServicePriceTier"] = Relationship(
+        back_populates="service_option"
+    )
+    job_items: list["JobItem"] = Relationship(
+        back_populates="service_option"
+    )    
+    @property
+    def full_service_name(self):
+        if self.service:
+            return f"{self.service.name} - {self.name}"
+        return self.name
+
+
 # ====================== SERVICE TYPES =========================
-class ServiceTypeBase(SQLModel):
+class ServiceBase(SQLModel):
     name: str = Field(unique=True, index=True)
     abbreviation: str = Field(unique=True, index=True)
-    price: float = Field(default=0.0)
-    unit: str = Field()
-    is_area_based: bool = Field(default=True)
+    pricing_strategy: PricingStrategy
+    unit: PriceUnit
     is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-class ServiceType(ServiceTypeBase, table=True):
-    __tablename__ = "service_types"  # type: ignore
+class Service(ServiceBase, table=True):
+    __tablename__ = "services"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    job_items: list["JobItem"] = Relationship(back_populates="service_type")
+    job_items: list["JobItem"] = Relationship(back_populates="service")
+    options: list["ServiceOption"] = Relationship(
+        back_populates="service"
+    )
 
 
-# ====================== EXTRA TYPES =========================
-class ExtraType(SQLModel, table=True):
-    __tablename__ = "extra_types"  # type: ignore
+# ====================== SERVICE PRICE TIER =========================
+class ServicePriceTier(SQLModel, table=True):
+    __tablename__ = "service_price_tiers"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+    service_option_id: uuid.UUID = Field(
+        foreign_key="service_options.id"
+    )
+
+    min_qty: int
+    max_qty: int | None = None
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    rate: float = Field(default=0.0)
+
+    service_option: "ServiceOption" = Relationship(
+        back_populates="price_tiers"
+    )
+
+
+# ====================== EXTRA SERVICES =========================
+class ExtraService(SQLModel, table=True):
+    __tablename__ = "extra_services"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(unique=True, index=True)
     price: float = Field(default=0.0)
     is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    job_items: list["JobItem"] = Relationship(back_populates="extra_type")
+    job_item_extras: list["JobItemExtra"] = Relationship(
+        back_populates="extra_service"
+    )
 
 
 # ====================== JOB ORDERS =========================
@@ -197,19 +253,55 @@ class JobOrder(JobOrderBase, table=True):
     
     
 # ====================== JOB ITEMS =========================
+class JobItemExtra(SQLModel, table=True):
+    __tablename__ = "job_item_extras"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+    job_item_id: uuid.UUID = Field(
+        foreign_key="job_items.id"
+    )
+
+    extra_service_id: uuid.UUID = Field(
+        foreign_key="extra_services.id"
+    )
+
+    price_snapshot: float
+    name_snapshot: str
+
+    job_item: "JobItem" = Relationship(
+        back_populates="extras"
+    )
+
+    extra_service: "ExtraService" = Relationship(
+        back_populates="job_item_extras"
+    )
+
+
 class JobItemBase(SQLModel):
-    jo_number: int = Field()
     item_id: str = Field(unique=True, index=True)
+
     description: str | None = Field(default=None)
-    height: float = Field(default=0.0)
-    width: float = Field(default=0.0)
-    size_unit: SizeUnit
-    quantity: int = Field(default=0)
+
+    # Things affecting pricing
+    height: float | None = Field(default=None)
+    width: float | None = Field(default=None)
+    size_unit: SizeUnit | None = Field(default=None)
+    quantity: int = Field(default=1)
+
+    # Workflow related
     job_status: JobStatus
     due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    discount: float = Field(default=0.0)
-    extra_charge: float = Field(default=0.0)
     notes: str | None = Field(default=None)
+
+    # Pricing data
+    unit_price: float = Field(default=0.0)
+    discount_amount: float = Field(default=0.0)
+    extra_total: float = Field(default=0.0)
+    subtotal: float = Field(default=0.0)
+    
+    service_name_snapshot: str
+    service_option_name_snapshot: str | None
+    service_abbreviation_snapshot: str
 
 
 class JobItem(JobItemBase, table=True):
@@ -221,19 +313,24 @@ class JobItem(JobItemBase, table=True):
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
         )
     )
-    service_type_id: uuid.UUID = Field(foreign_key="service_types.id")
-    extra_type_id: uuid.UUID | None = Field(default=None, foreign_key="extra_types.id")
-
+    service_id: uuid.UUID = Field(foreign_key="services.id")
+    service_option_id: uuid.UUID | None = Field(
+        foreign_key="service_options.id",
+        default=None
+    )
     job_order: "JobOrder" = Relationship(back_populates="job_items")
-    service_type: "ServiceType" = Relationship(back_populates="job_items")
-    extra_type: "ExtraType" = Relationship(back_populates="job_items")
+    service: "Service" = Relationship(back_populates="job_items")
+    service_option: "ServiceOption" = Relationship(
+        back_populates="job_items"
+    )
     claims: list["ClaimingHistory"] = Relationship(back_populates="job_item")
-
-
-    @property
-    def unit_price(self) -> float:
-        price = compute_unit_price(self.height, self.width, self.service_type, self.size_unit)
-        return float(Decimal(str(price)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+    extras: list["JobItemExtra"] = Relationship(
+        back_populates="job_item",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan"
+        }
+    )
+    
 
     @property
     def total_claimed(self) -> int:
@@ -244,22 +341,13 @@ class JobItem(JobItemBase, table=True):
         return self.quantity - self.total_claimed
     
     @property
-    def service_name(self) -> str:
-        return self.service_type.name
+    def service_name(self):
+        return self.service_name_snapshot
     
     @property
-    def extra_service_name(self) -> str | None:
-        return self.extra_type.name if self.extra_type else None
-    
-    @property
-    def extra_service_price(self) -> float:
-        return self.extra_type.price if self.extra_type else 0.0
-    
-    @property
-    def subtotal(self) -> float:
-        extra_type_price = self.extra_type.price if self.extra_type else 0.0
-        return ((self.unit_price + self.extra_charge) * self.quantity) + extra_type_price - self.discount
-    
+    def is_fully_claimed(self):
+        return self.remaining_on_hand == 0
+
     
 # ====================== PAYMENTS =========================
 class PaymentBase(SQLModel):
@@ -276,13 +364,16 @@ class Payment(PaymentBase, table=True):
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
         )
     )
+    account: "Account" = Relationship(
+        back_populates="payments"
+    )
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
 
     job_order: "JobOrder" = Relationship(back_populates="payments")
     
     @property
     def account_name(self) -> str:
-        return self.account_name
+        return self.account.name
 
 
 # ====================== CLAIMING HISTORY =========================
@@ -344,7 +435,7 @@ class MiscSale(MiscSaleBase, table=True):
     __tablename__ = "misc_sales" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     
-    
+
 # ====================== ACCOUNTS =========================
 class Account(SQLModel, table=True):
     __tablename__ = "accounts" # type: ignore
@@ -356,6 +447,9 @@ class Account(SQLModel, table=True):
     current_balance: float = Field(default=0.0)
     is_active: bool = Field(default=True)
 
+    payments: list["Payment"] = Relationship(
+        back_populates="account"
+    )
     transactions: list["AccountTransaction"] = Relationship(back_populates="account")
     expenses: list["Expense"] = Relationship(back_populates="account")
 
@@ -370,5 +464,6 @@ class AccountTransaction(SQLModel, table=True):
     running_balance: float = Field()
     source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     account: "Account" = Relationship(back_populates="transactions")
