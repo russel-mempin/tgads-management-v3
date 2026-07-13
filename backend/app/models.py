@@ -7,6 +7,7 @@ from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus, ExpenseCate
 
 
 # ====================== AUDIT LOGS =========================
+# For storing changes made by users on the database
 class AuditLog(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     action: str
@@ -43,6 +44,7 @@ class User(UserBase, table=True):
 
 
 # ====================== CUSTOMERS =========================
+# Customer info, only name is required but users still should try to fill at least contact_number or email
 class CustomerBase(SQLModel):
     name: str = Field(unique=True, index=True)
     address: str = Field(default="N/A")
@@ -58,6 +60,7 @@ class Customer(CustomerBase, table=True):
 
 
 # ====================== SERVICE OPTIONS =========================    
+# Defines the options available for the services.
 class ServiceOption(SQLModel, table=True):
     __tablename__ = "service_options" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -90,6 +93,7 @@ class ServiceOption(SQLModel, table=True):
 
 
 # ====================== SERVICE TYPES =========================
+# Defines the group of services
 class ServiceBase(SQLModel):
     name: str = Field(unique=True, index=True)
     abbreviation: str = Field(unique=True, index=True)
@@ -112,6 +116,9 @@ class Service(ServiceBase, table=True):
 
 
 # ====================== SERVICE PRICE TIER =========================
+# For services that have different tiers of pricing based on consumption.
+# min_threshold defines the minimum consumption to reach a tier
+# max_threshold defines the highest consumption before the next tier
 class ServicePriceTier(SQLModel, table=True):
     __tablename__ = "service_price_tiers"
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -130,6 +137,7 @@ class ServicePriceTier(SQLModel, table=True):
 
 
 # ====================== EXTRA SERVICES =========================
+# Holds all information about extra services similar to Service
 class ExtraService(SQLModel, table=True):
     __tablename__ = "extra_services"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)

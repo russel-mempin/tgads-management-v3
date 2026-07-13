@@ -133,7 +133,7 @@ def seed_job_items_from_csv(
                     skipped.append(f"JO {jo_number}: no option '{row['option']}' under '{row['service']}'")
                     continue
 
-                requires_size = service.pricing_strategy = PricingStrategy.AREA
+                requires_size = service.pricing_strategy == PricingStrategy.AREA
                 has_size = (
                     not requires_size
                     or (row.get("width", "").strip() and row.get("height", "").strip() and row.get("unit", "").strip())
