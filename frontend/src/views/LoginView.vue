@@ -3,8 +3,6 @@ import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { loginBackend } from '@/api/users'
-import { useToast } from 'primevue/usetoast'
-import { InputText, Password, Button } from 'primevue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -12,6 +10,7 @@ const toast = useToast()
 
 const username = ref('')
 const password = ref('')
+const showPassword = ref(false)
 
 const login = async () => {
     try {
@@ -21,10 +20,9 @@ const login = async () => {
     } catch (error: any) {
         console.error(error.response?.data || error)
         toast.add({
-            severity: 'error',
-            summary: 'Login Failed',
-            detail: error.response?.data?.detail ?? 'An error occurred. Please try again.',
-            life: 3000,
+            title: 'Login Failed',
+            description: error.response?.data?.detail ?? 'An error occurred. Please try again.',
+            icon: 'i-lucide-calendar-days',
         })
     }
 }
@@ -39,13 +37,24 @@ const login = async () => {
         <form @submit.prevent="login" class="flex flex-col gap-4">
             <div class="flex flex-col gap-1">
                 <label class="font-medium text-slate-700">Username</label>
-                <InputText v-model="username" placeholder="Enter your username" fluid />
+                <UInput v-model="username" placeholder="Enter your username" fluid />
             </div>
             <div class="flex flex-col gap-1">
                 <label class="font-medium text-slate-700">Password</label>
-                <Password v-model="password" placeholder="Enter your password" fluid :feedback="false" toggleMask />
+                <UInput v-model="password" placeholder="Enter your password" :type="showPassword ? 'text' : 'password'"
+                    :ui="{ trailing: 'pe-1' }">
+                    <template #trailing>
+                        <UButton color="neutral" variant="link" size="sm"
+                            :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="showPassword ? 'Hide password' : 'Show password'" :aria-pressed="showPassword"
+                            aria-controls="password" @click="() => { showPassword = !showPassword }" />
+                    </template>
+                </UInput>
             </div>
-            <Button type="submit" label="Login" class="mt-4" fluid />
+            <UButton type="submit" label="Login" size="lg" trailing-icon="i-lucide-log-in" block :ui="{
+                base: 'relative',
+                trailingIcon: 'absolute inset-e-3'
+            }" />
         </form>
     </div>
 </template>

@@ -1,9 +1,5 @@
-<script setup lang="ts">
-import { RouterView } from 'vue-router'
-import { Toast } from 'primevue'
-</script>
-
 <template>
-	<Toast />
-	<RouterView />
+  <UApp>
+    <RouterView />
+  </UApp>
 </template>

@@ -1,5 +1,5 @@
 import http from './http'
-import type { UserCreate } from '@/types/users'
+import type { UserCreate } from '@/types/userTypes'
 
 export async function loginBackend(username: string, password: string) {
 	const data = new URLSearchParams()
