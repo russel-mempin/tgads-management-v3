@@ -266,7 +266,7 @@ def seed_job_items_from_csv(
         session.commit()
 
     if skipped:
-        print(f"\n[WARN] {len(skipped)} job items skipped:")
+        print(f"\n[WARN] {len(skipped)} problematic job items:")
         for s in skipped:
             print(f"  - {s}")
 
