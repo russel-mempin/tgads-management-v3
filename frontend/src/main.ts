@@ -1,4 +1,6 @@
 import './assets/css/main.css'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/montserrat'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
