@@ -20,14 +20,18 @@ export default defineConfig({
           variants: {
             active: {
               true: {
-                link: 'font-semibold',
+                link: 'font-semibold text-primary bg-primary-50 dark:bg-primary-950/40',
                 linkLeadingIcon: 'text-primary opacity-100'
+              },
+              false: {
+                link: 'text-slate-700 dark:text-slate-300',
+                linkLeadingIcon: 'text-slate-500 dark:text-slate-400'
               }
             }
           }
         }
       }
-    }),
+    })
   ],
   resolve: {
     alias: {

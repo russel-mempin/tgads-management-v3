@@ -116,13 +116,13 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
             {{ group.category }}
           </p>
           <UNavigationMenu 
-            :items="group.items" 
+            :items="group.items"
             orientation="vertical" 
             :collapsed="state === 'collapsed'" 
             tooltip :ui="{
               link: state === 'collapsed'
                 ? 'justify-center px-0 py-3 overflow-hidden'
-                : 'px-4 py-3 overflow-hidden'
+                : 'px-4 py-3 overflow-hidden gap-4'
           }" />
         </template>
       </div>
