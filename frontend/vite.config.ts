@@ -10,7 +10,24 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
-    ui(),
+    ui({
+      ui: {
+        colors: {
+          primary: 'blue',
+          neutral: 'slate'
+        },
+        navigationMenu: {
+          variants: {
+            active: {
+              true: {
+                link: 'font-semibold',
+                linkLeadingIcon: 'text-primary opacity-100'
+              }
+            }
+          }
+        }
+      }
+    }),
   ],
   resolve: {
     alias: {
