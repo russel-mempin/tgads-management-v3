@@ -16,6 +16,21 @@ export default defineConfig({
           primary: 'blue',
           neutral: 'slate'
         },
+        input: {
+          slots: {
+            base: 'placeholder:text-slate-500 dark:placeholder:text-slate-400'
+          }
+        },
+        select: {
+          slots: {
+            placeholder: 'text-slate-500 dark:text-slate-400'
+          }
+        },
+        selectMenu: {
+          slots: {
+            placeholder: 'text-slate-500 dark:text-slate-400'
+          }
+        },
         navigationMenu: {
           variants: {
             active: {
