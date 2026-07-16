@@ -21,6 +21,12 @@ const router = createRouter({
         {
           path: 'dashboard',
           component: () => import('@/views/Dashboard.vue'),
+          meta: {
+            breadcrumb: 'Dashboard',
+            subtitle: (auth) => auth.isOwner
+              ? 'See your business performance, workloads, and trends in one place.'
+              : `View today's job orders and keep track of overdue items.`
+          }
         }
       ]
     }
