@@ -29,18 +29,18 @@ const login = async () => {
 </script>
 
 <template>
-    <div class="px-10 py-8 rounded-md">
+    <div class="px-10 py-8 rounded-md border border-primary">
         <div class="mb-8">
-            <h1 class="text-2xl text-slate-600 font-semibold">Welcome back!</h1>
-            <p>Sign in to start managing job order data.</p>
+            <h1 class="text-2xl text-highlighted font-semibold">Welcome back!</h1>
+            <p class="text-muted">Sign in to start managing job order data.</p>
         </div>
         <form @submit.prevent="login" class="flex flex-col gap-4">
             <div class="flex flex-col gap-1">
-                <label class="font-medium text-slate-700">Username</label>
+                <label class="font-medium text-highlighted">Username</label>
                 <UInput v-model="username" placeholder="Enter your username" fluid />
             </div>
             <div class="flex flex-col gap-1">
-                <label class="font-medium text-slate-700">Password</label>
+                <label class="font-medium text-highlighted">Password</label>
                 <UInput v-model="password" placeholder="Enter your password" :type="showPassword ? 'text' : 'password'"
                     :ui="{ trailing: 'pe-1' }">
                     <template #trailing>

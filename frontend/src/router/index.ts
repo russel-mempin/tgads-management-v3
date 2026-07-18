@@ -14,6 +14,11 @@ const router = createRouter({
       ],
     },
     {
+      path: '/job-orders/print/:jo_number',
+      component: () => import('@/views/job_orders/PrintJobOrder.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
       meta: { requiresAuth: true },

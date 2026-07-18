@@ -1,10 +1,16 @@
 from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase
-from app.enums import JobStatus, PaymentStatus
+from app.enums import PaymentStatus
 from sqlmodel import Field, SQLModel
 import uuid
 from typing import List, Optional
 from datetime import datetime
 
+class JobItemExtraPublic(SQLModel):
+    id: uuid.UUID
+    extra_service_id: uuid.UUID
+    quantity: int
+    price_snapshot: float
+    name_snapshot: str
 
 class JobItemPublic(JobItemBase):
     id: uuid.UUID
@@ -13,8 +19,7 @@ class JobItemPublic(JobItemBase):
     total_claimed: int
     remaining_on_hand: int
     service_name: str
-    extra_service_name: str | None = None
-    extra_service_price: float = 0.0
+    extras: list[JobItemExtraPublic] = Field(default_factory=list)
     
 class JobItemCreate(JobItemBase):
     service_name: str

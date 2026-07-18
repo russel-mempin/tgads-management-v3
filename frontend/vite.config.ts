@@ -14,7 +14,7 @@ export default defineConfig({
       ui: {
         colors: {
           primary: 'blue',
-          neutral: 'slate'
+          neutral: 'slate',
         },
         input: {
           slots: {
