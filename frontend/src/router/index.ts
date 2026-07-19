@@ -1,5 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+const DEFAULT_TITLE = 'TGADS Management System';
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string
+    requiresAuth?: boolean
+    adminOnly?: boolean
+    ownerOnly?: boolean
+    superuserOnly?: boolean
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -16,7 +28,7 @@ const router = createRouter({
     {
       path: '/job-orders/print/:jo_number',
       component: () => import('@/views/job_orders/PrintJobOrder.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, title: `Print Job Order` },
     },
     {
       path: '/',
@@ -27,6 +39,7 @@ const router = createRouter({
           path: 'dashboard',
           component: () => import('@/views/Dashboard.vue'),
           meta: {
+            title: 'Dashboard',
             breadcrumb: 'Dashboard',
             subtitle: (auth) => auth.isOwner
               ? 'See your business performance, workloads, and trends in one place.'
@@ -37,6 +50,7 @@ const router = createRouter({
           path: 'job-orders',
           component: () => import('@/views/job_orders/JobOrders.vue'),
           meta: {
+            title: 'Job Orders',
             breadcrumb: 'Job Orders',
             subtitle: 'View and manage all job orders. Use filters to quickly find the ones you need.'
           }
@@ -45,6 +59,27 @@ const router = createRouter({
           path: 'job-orders/view/:jo_number',
           component: () => import('@/views/job_orders/ViewJobOrder.vue'),
           meta: {
+            title: 'Job Orders - View',
+            breadcrumb: 'View Job Order',
+            breadcrumbParent: { label: 'Job Orders', to: '/job-orders' },
+            subtitle: 'See full information about a Job Order.'
+          }
+        },
+        {
+          path: 'job-orders/add',
+          component: () => import('@/views/job_orders/AddJobOrder.vue'),
+          meta: {
+            title: 'Job Orders - Add',
+            breadcrumb: 'Add Job Order',
+            breadcrumbParent: { label: 'Job Orders', to: '/job-orders' },
+            subtitle: 'Create a new Job Order upon clicking save.'
+          }
+        },
+        {
+          path: 'job-orders/view/:jo_number',
+          component: () => import('@/views/job_orders/ViewJobOrder.vue'),
+          meta: {
+            title: 'Job Orders - View',
             breadcrumb: 'View Job Order',
             breadcrumbParent: { label: 'Job Orders', to: '/job-orders' },
             subtitle: 'See full information about a Job Order.'
@@ -54,5 +89,10 @@ const router = createRouter({
     }
   ],
 })
+
+router.beforeEach((to) => {
+  // Set title from meta, fallback to default
+  document.title = to.meta.title || DEFAULT_TITLE;
+});
 
 export default router

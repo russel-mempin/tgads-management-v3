@@ -17,7 +17,7 @@ const jobStatus = ref('');
 const paymentStatus = ref('');
 const currentOffset = ref(0)
 const paymentStatusOptions = ref(['Fully Paid', 'Partial', 'Unpaid', 'Credit', 'Refunded', 'Overcharged']);
-const jobStatusOptions = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released', 'Cancelled']);
+const jobStatusOptions = ref(['Pending', 'For Layout', 'For Approval', 'For Printing', 'For Pickup', 'Released']);
 const loading = ref(false)
 const rows = ref(10)
 const totalRecords = ref(0)
@@ -70,14 +70,6 @@ const clearFilters = () => {
 const setFilter = (filter: string) => {
     activeFilter.value = activeFilter.value === filter ? null : filter
     clearFilters()
-}
-
-const viewJobOrder = (jo_number: number) => {
-    router.push(`/job-orders/view/${jo_number}`)
-}
-
-const printJobOrder = (jo_number: number) => {
-    router.push(`/job-orders/print/${jo_number}`)
 }
 
 const columns: TableColumn<JobOrder>[] = [
@@ -168,7 +160,7 @@ const columns: TableColumn<JobOrder>[] = [
                     size: 'md',
                     onClick: (event: Event) => {
                         event.stopPropagation()
-                        viewJobOrder(row.original.jo_number)
+                        router.push(`/job-orders/view/${row.original.jo_number}`)
                     }
                 }),
                 h(UButton, {
@@ -179,7 +171,7 @@ const columns: TableColumn<JobOrder>[] = [
                     size: 'md',
                     onClick: (event: Event) => {
                         event.stopPropagation()
-                        printJobOrder(row.original.jo_number)
+                        router.push(`/job-orders/print/${row.original.jo_number}`)
                     }
                 })
             ])
@@ -262,8 +254,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             showClear />
         <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="soft"
             @click="clearFilters" />
-        <UButton size="lg" icon="i-lucide-file-plus-corner" label="Add Job Order" color="primary" variant="solid"
-            @click="clearFilters" />
+        <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner" label="Add Job Order" color="primary" variant="solid" />
     </section>
     <section class="mt-4 border border-default rounded-md">
         <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()" :ui="{

@@ -56,7 +56,7 @@ class User(UserBase, table=True):
 # ====================== CUSTOMERS =========================
 # Customer info, only name is required but users still should try to fill at least contact_number or email
 class CustomerBase(SQLModel):
-    name: str | None = Field(default=None, index=True)
+    name: str = Field(unique=True, index=True)
     address: str | None = None
     contact_no: str | None = None
     email: str | None = None
@@ -134,7 +134,7 @@ class Service(ServiceBase, table=True):
 # min_threshold defines the minimum consumption to reach a tier
 # max_threshold defines the highest consumption before the next tier
 class ServicePriceTier(SQLModel, table=True):
-    __tablename__ = "service_price_tiers"
+    __tablename__ = "service_price_tiers" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     service_option_id: uuid.UUID = Field(foreign_key="service_options.id")
@@ -171,6 +171,8 @@ class JobOrderBase(SQLModel):
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
     is_unlogged: bool = Field(default=False)
+    is_walk_in: bool = Field(default=False)
+    for_review: str | None = Field(default=None)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -180,8 +182,8 @@ class JobOrderBase(SQLModel):
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    customer_id: uuid.UUID = Field(
-        sa_column=Column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    customer_id: uuid.UUID | None = Field(
+        sa_column=Column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=True)
     )
     created_by_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -254,15 +256,15 @@ class JobOrder(JobOrderBase, table=True):
         self.overall_job_status = self.computed_overall_job_status
 
     @property
-    def customer_name(self) -> str:
+    def customer_name(self) -> str | None:
         return self.customer.name
 
     @property
-    def customer_email(self) -> str:
+    def customer_email(self) -> str | None:
         return self.customer.email
 
     @property
-    def customer_contact_no(self) -> str:
+    def customer_contact_no(self) -> str | None:
         return self.customer.contact_no
 
     @property
@@ -284,7 +286,7 @@ class JobOrder(JobOrderBase, table=True):
 
 # ====================== JOB ITEMS =========================
 class JobItemExtra(SQLModel, table=True):
-    __tablename__ = "job_item_extras"
+    __tablename__ = "job_item_extras" # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     job_item_id: uuid.UUID = Field(foreign_key="job_items.id")

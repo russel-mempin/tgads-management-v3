@@ -30,7 +30,7 @@ export interface JobItem {
 
 export interface Payment {
   date_received: Date
-  method: string
+  account_name: string
   amount: number
   reference_number: string
 }

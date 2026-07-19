@@ -96,8 +96,8 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
     body: 'py-0 px-1.5'
   }">
     <template #header="{ state }">
-      <div class="flex items-center gap-2 px-1.5 py-1 overflow-hidden"
-        :class="state === 'collapsed' && 'justify-center'">
+      <div class="flex items-center gap-2 px-1.5 py-1 w-full"
+        :class="state === 'collapsed' ? 'justify-center px-0' : ''">
         <div class="flex items-center justify-center size-8 rounded-md bg-primary shrink-0">
           <UIcon name="i-lucide-building-2" class="size-5 text-inverted" />
         </div>
@@ -115,14 +115,10 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
             class="font-montserrat px-2.5 mt-3 mb-1 text-xs font-semibold tracking-wider text-muted uppercase truncate">
             {{ group.category }}
           </p>
-          <UNavigationMenu 
-            :items="group.items"
-            orientation="vertical" 
-            :collapsed="state === 'collapsed'" 
-            tooltip :ui="{
-              link: state === 'collapsed'
-                ? 'justify-center px-0 py-3 overflow-hidden'
-                : 'px-4 py-3 overflow-hidden gap-4'
+          <UNavigationMenu :items="group.items" orientation="vertical" :collapsed="state === 'collapsed'" tooltip :ui="{
+            link: state === 'collapsed'
+              ? 'justify-center px-0 py-3 overflow-hidden'
+              : 'px-4 py-3 overflow-hidden gap-4'
           }" />
         </template>
       </div>

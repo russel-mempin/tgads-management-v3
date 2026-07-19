@@ -1,4 +1,5 @@
-import csv, os
+import csv
+import os
 from sqlmodel import Session, select
 from app.database import engine
 from app.models import Service, ServiceOption, ServicePriceTier
@@ -36,7 +37,6 @@ def seed_services_from_csv(file_path: str = SERVICES_CSV_PATH):
                 abbreviation=row["abbreviation"],
                 pricing_strategy=parse_enum(PricingStrategy, row["pricing_strategy"]),
                 unit=parse_enum(PriceUnit, row["unit"]),
-                is_active=row["is_active"].strip().lower() in ("true", "1", "yes"),
             )
  
             session.add(service)
