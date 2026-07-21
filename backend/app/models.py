@@ -50,6 +50,7 @@ class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     audit_logs: list["AuditLog"] = Relationship(back_populates="user")
+    void_job_orders: list["VoidJobOrder"] = Relationship(back_populates="created_by")
     hashed_password: str = Field()
 
 
@@ -134,7 +135,7 @@ class Service(ServiceBase, table=True):
 # min_threshold defines the minimum consumption to reach a tier
 # max_threshold defines the highest consumption before the next tier
 class ServicePriceTier(SQLModel, table=True):
-    __tablename__ = "service_price_tiers" # type: ignore
+    __tablename__ = "service_price_tiers"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     service_option_id: uuid.UUID = Field(foreign_key="service_options.id")
@@ -286,7 +287,7 @@ class JobOrder(JobOrderBase, table=True):
 
 # ====================== JOB ITEMS =========================
 class JobItemExtra(SQLModel, table=True):
-    __tablename__ = "job_item_extras" # type: ignore
+    __tablename__ = "job_item_extras"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     job_item_id: uuid.UUID = Field(foreign_key="job_items.id")
@@ -492,8 +493,11 @@ class VoidJobOrder(SQLModel, table=True):
     __tablename__ = "void_job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     jo_number: int = Field(unique=True, index=True)
-    date: datetime | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    voided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    reason: str
+    created_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
+
+    created_by: "User" = Relationship(back_populates="void_job_orders")
 
 
 # ====================== UNLINKED PAYMENTS =========================

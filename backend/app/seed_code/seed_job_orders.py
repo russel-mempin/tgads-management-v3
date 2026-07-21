@@ -147,8 +147,14 @@ def seed_job_items_from_csv(
                 ).first()
                 if service is None:
                     skipped.append(
-                        f"JO {jo_number}: no Service named '{row['service']}'"
+                        f"Voided job {jo_number}: no service listed."
                     )
+                    void = VoidJobOrder(
+                        jo_number=jo_number,
+                        date=datetime.now(timezone.utc),
+                        reason="Imported from file, listed as cancelled.",
+                    )
+                    session.add(void)
                     continue
                 option = session.exec(
                     select(ServiceOption).where(

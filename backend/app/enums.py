@@ -1,6 +1,7 @@
 from enum import Enum
 
 class SizeUnit(str, Enum):
+    METER = "meter"
     INCHES = "in."
     FEET = "ft."
     CENTIMETER = "cm."
