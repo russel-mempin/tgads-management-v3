@@ -171,8 +171,6 @@ class JobOrderBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
-    is_unlogged: bool = Field(default=False)
-    is_walk_in: bool = Field(default=False)
     for_review: bool = Field(default=False)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
@@ -493,6 +491,7 @@ class VoidJobOrder(SQLModel, table=True):
     __tablename__ = "void_job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     jo_number: int = Field(unique=True, index=True)
+    job_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     voided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reason: str
     created_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")

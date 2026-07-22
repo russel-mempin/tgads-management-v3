@@ -1,4 +1,4 @@
-from sqlmodel import Session, select, col, true
+from sqlmodel import Session, select, col
 from sqlalchemy import or_, cast, String, func
 from app.models import (
     JobOrder,
@@ -32,7 +32,7 @@ def get_all_job_orders(
     )
 
     if not include_archived:
-        query = query.where(JobOrder.is_active.is_(true()))
+        query = query.where(JobOrder.is_active)
 
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
@@ -70,7 +70,7 @@ def get_job_order_count(
     )
 
     if not include_archived:
-        query = query.where(JobOrder.is_active.is_(true()))
+        query = query.where(JobOrder.is_active)
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
     if job_status:
@@ -88,7 +88,7 @@ def get_job_order_count(
 
 def get_job_order_for_review(db: Session):
     return list(db.exec(
-        select(JobOrder).where(JobOrder.for_review == True)  # noqa: E712
+        select(JobOrder).where(JobOrder.for_review)
     ).all())
 
 def get_job_order(db: Session, jo_number: int) -> JobOrder:
@@ -397,7 +397,7 @@ def get_business_kpis(db: Session) -> dict:
     # Outstanding balance — sum of (total_due - total_paid) for unpaid/partial orders
     job_orders = db.exec(
         select(JobOrder).where(
-            JobOrder.is_active_is(true()),
+            JobOrder.is_active,
             col(JobOrder.payment_status).in_(
                 [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
             ),
@@ -410,7 +410,7 @@ def get_business_kpis(db: Session) -> dict:
         select(func.count())
         .select_from(JobOrder)
         .where(
-            JobOrder.is_active.is_(true()), JobOrder.payment_status == PaymentStatus.UNPAID
+            JobOrder.is_active, JobOrder.payment_status == PaymentStatus.UNPAID
         )
     ).one()
 
@@ -459,7 +459,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active.is_(true()),
+            JobOrder.is_active,
         )
     ).one()
 
@@ -478,7 +478,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active.is_(true()),
+            JobOrder.is_active,
         )
     ).one()
 
@@ -494,7 +494,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active.is_(true()),
+            JobOrder.is_active,
         )
     ).one()
 
@@ -504,7 +504,7 @@ def get_operation_kpis(db: Session) -> dict:
         .select_from(JobOrder)
         .where(
             JobOrder.overall_job_status == JobStatus.FOR_PICKUP,
-            JobOrder.is_active.is_(true()),
+            JobOrder.is_active,
         )
     ).one()
 
@@ -520,7 +520,7 @@ def get_jobs_with_outstanding_balance(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
                 col(JobOrder.payment_status).in_(
                     [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
                 ),
@@ -533,7 +533,7 @@ def get_unpaid_job_orders(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
                 JobOrder.payment_status == PaymentStatus.UNPAID,
             )
         ).all()
@@ -552,7 +552,7 @@ def get_overdue_job_orders(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder).where(
                 col(JobOrder.id).in_(overdue_job_order_ids),  # ← wrap with col()
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
             )
         ).all()
     )
@@ -570,7 +570,7 @@ def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                col(JobOrder.id).in_(job_order_ids), JobOrder.is_active.is_(true())
+                col(JobOrder.id).in_(job_order_ids), JobOrder.is_active
             )
         ).all()
     )
@@ -591,7 +591,7 @@ def get_overdue_jobs(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -611,7 +611,7 @@ def get_jobs_in_progress(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
             )
             .order_by(col(JobOrder.jo_number).desc())
         ).all()
@@ -637,7 +637,7 @@ def get_jobs_due_today(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active.is_(true()),
+                JobOrder.is_active,
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -651,7 +651,7 @@ def get_jobs_ready_for_pickup(db: Session) -> list[JobOrder]:
             select(JobOrder)
             .join(JobItem, col(JobOrder.id) == col(JobItem.job_order_id))
             .where(
-                JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.is_active.is_(true())
+                JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.is_active
             )
             .distinct()
         ).all()
