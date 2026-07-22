@@ -16,15 +16,17 @@ const subtitle = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-1">
+    <div class="flex flex-1 overflow-x-hidden">
         <Sidebar v-model:open="open" />
         <div class="flex-1 flex flex-col">
-            <div class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default">
+            <div
+                class="sticky top-0 z-10 h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default bg-default/75 backdrop-blur-md">
                 <UButton icon="i-lucide-panel-left" color="neutral" variant="ghost"
                     :aria-label="open ? 'Close sidebar' : 'Open sidebar'" @click="() => { open = !open }" />
                 <h1 class="ml-4 text-lg font-semibold">{{ route.meta.breadcrumb }}</h1>
             </div>
-            <p v-if="subtitle" class="bg-elevated border-b border-default text-muted py-2 px-4">
+            <p v-if="subtitle"
+                class="sticky top-(--ui-header-height) z-10 bg-elevated border-b border-default text-muted py-2 px-4">
                 {{ subtitle }}
             </p>
             <div class="flex-1 p-4">

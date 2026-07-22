@@ -76,13 +76,13 @@ const router = createRouter({
           }
         },
         {
-          path: 'job-orders/view/:jo_number',
-          component: () => import('@/views/job_orders/ViewJobOrder.vue'),
+          path: 'review-data',
+          component: () => import('@/views/NeedsReview.vue'),
           meta: {
-            title: 'Job Orders - View',
-            breadcrumb: 'View Job Order',
-            breadcrumbParent: { label: 'Job Orders', to: '/job-orders' },
-            subtitle: 'See full information about a Job Order.'
+            title: 'Needs Review',
+            breadcrumb: 'Needs Review',
+            breadcrumbParent: { label: 'Needs Review', to: 'review-data' },
+            subtitle: 'See data that needs your attention.'
           }
         },
       ]

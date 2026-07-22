@@ -98,8 +98,7 @@ def seed_job_orders_from_csv(file_path: str = JOB_ORDERS_CSV_PATH) -> dict[str, 
                 is_unlogged=is_unlogged,
                 date_received=date_received,
                 customer_id=customer.id,
-                for_review=(row.get("for_review", "").strip() or None)
-                or (f"Unlogged — sheet label: {label}" if is_unlogged else None),
+                for_review=bool(row.get("for_review", "").strip()),
                 overall_job_status=JobStatus.RELEASED,
             )
             session.add(job_order)
@@ -152,7 +151,7 @@ def seed_job_items_from_csv(
                     void = VoidJobOrder(
                         jo_number=jo_number,
                         date=datetime.now(timezone.utc),
-                        reason="Imported from file, listed as cancelled.",
+                        reason="Imported from file, either cancelled or missing paper.",
                     )
                     session.add(void)
                     continue

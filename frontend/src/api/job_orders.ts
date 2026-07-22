@@ -26,8 +26,12 @@ export const getJobOrderCount = async (params: {
 	return response.data
 }
 
-
 export async function getJobOrder(jo_number: number) {
 	const res = await http.get(`/job-orders/${jo_number}`)
+	return res.data
+}
+
+export async function getForReview() {
+	const res = await http.get('/job-orders/for-review')
 	return res.data
 }

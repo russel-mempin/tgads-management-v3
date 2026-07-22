@@ -173,7 +173,7 @@ class JobOrderBase(SQLModel):
     is_active: bool = Field(default=True)
     is_unlogged: bool = Field(default=False)
     is_walk_in: bool = Field(default=False)
-    for_review: str | None = Field(default=None)
+    for_review: bool = Field(default=False)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

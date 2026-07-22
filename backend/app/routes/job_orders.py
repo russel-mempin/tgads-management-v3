@@ -5,6 +5,7 @@ from sqlmodel import Session
 from app.database import get_session
 from app.crud.job_order import (
     get_all_job_orders,
+    get_job_order_for_review,
     get_job_order,
     get_price,
     create_job_order,
@@ -118,6 +119,11 @@ def compute_unit_price(
     return get_price(
         db, height=height, width=width, service_name=service_name, size_unit=size_unit
     )
+    
+    
+@router.get("/for-review", response_model=list[JobOrderPublic])
+def read_for_review(db: Session = Depends(get_session)):
+    return get_job_order_for_review(db)
 
 
 @router.get("/{jo_number}", response_model=JobOrderPublic)
