@@ -11,9 +11,11 @@ from app.models import (
     ForReview,
     Service,
     ServiceOption,
+    JobItem,
+    ExtraService,
 )
-from app.enums import PricingStrategy, ReviewEntityType, SizeUnit, PriceUnit
-from app.utils.utils import to_float
+from app.enums import PricingStrategy, ReviewEntityType, SizeUnit, PriceUnit, JobStatus
+from app.utils.utils import to_float, to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders.csv")
@@ -22,10 +24,7 @@ JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
 
 VOID_REASONS = {
     "1": "No physical paper on Job pile",
-    "2": "Listed as cancelled",
-    "3": "Duplicate",
-    "4": "Conflicting info on job summary excel and physical paper",
-    "5": "Other",
+    "2": "Listed as cancelled(either on paper or JO Summary) and no service info on physical paper",
 }
 TO_METERS = {
     SizeUnit.MILLIMETER: 0.001,
@@ -61,7 +60,6 @@ def get_or_create_customer(session: Session, customer_name: str) -> Customer:
 
 
 def unit_converter(source_unit: SizeUnit, value: float, target_unit: SizeUnit) -> float:
-    # Placeholder for actual unit conversion logic
     # This function should convert the value to a standard unit (e.g., meters)
     if source_unit == target_unit:
         return value
@@ -69,8 +67,13 @@ def unit_converter(source_unit: SizeUnit, value: float, target_unit: SizeUnit) -
     return value_in_meters / TO_METERS[target_unit]  # Convert to target unit
 
 
-def get_computed_unit_price_from_area(price_unit: PriceUnit, base_rate: float, height: float, width: float, size_unit: SizeUnit) -> float:
-    # Placeholder for actual logic to compute unit price
+def get_computed_unit_price_from_area(
+    price_unit: PriceUnit,
+    base_rate: float,
+    height: float,
+    width: float,
+    size_unit: SizeUnit,
+) -> float:
     # Only use if the service's pricing strategy is "Area"
     # Convert height and width to appropriate unit based on unit from Service
     # Then, compute for the area and multiply by the base_rate from ServiceOption
@@ -106,9 +109,10 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
             customer_name = (row["customer_name"] or "").strip()
             void_choice = row["void_choice"].strip()
             for_review = row["for_review"].strip().lower()
+            reason = row["for_review_reason"].strip()
 
-            # If no customer, inserts job data to void table and determines void reason.
-            if not customer_name:
+            # If no customer or has customer but has void choice, inserts job data to void table and determines void reason.
+            if not customer_name or void_choice:
                 existing_in_void = session.exec(
                     select(VoidJobOrder).where(VoidJobOrder.jo_number == jo_number)
                 ).first()
@@ -120,25 +124,6 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                         print(
                             f"JO {jo_number} has been inserted to void job orders table."
                         )
-                    else:
-                        while True:
-                            print(
-                                f"\n JO #{jo_number} has no customer name. This would be inserted in the Void Job Orders table."
-                            )
-                            print("\n Select a reason:")
-
-                            for key, value in VOID_REASONS.items():
-                                print(f"[{key}] {value}")
-
-                            choice = input("> ").strip()
-
-                            if choice in VOID_REASONS:
-                                if choice == "5":
-                                    reason = input("Enter custom reason: ").strip()
-                                else:
-                                    reason = VOID_REASONS[choice]
-                                break
-                            print("Invalid choice. Try again.")
                     session.add(
                         VoidJobOrder(
                             jo_number=jo_number, job_date=date_received, reason=reason
@@ -164,7 +149,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                     ForReview(
                         entity_type=ReviewEntityType.JOB_ORDER,
                         entity_id=job_order.id,
-                        reason="Marked for review in spreadsheet (Make column in spreadsheet for accuracy.)",
+                        reason=reason,
                     )
                 )
                 print(f"JO {jo_number} has been marked for review.")
@@ -172,23 +157,38 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
 
 
 def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
+    item_sequence_by_jo_and_abbr: dict[tuple[int, str], int] = {}
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            jo_number = int(row["jo_number"].strip())
-
-            job_order = session.exec(
-                select(JobOrder).where(JobOrder.jo_number == jo_number)
-            ).first()
-            if not job_order:
-                print(f"Job Order {jo_number} not found. Skipping job item.")
-                continue
-
+            # First, determine service and get other info needed for data validation
             service = session.exec(
                 select(Service).where(Service.name == row["service"].strip())
             ).first()
             if not service:
                 print(f"Service {row['service']} not found. Skipping job item.")
+                continue
+            service_requires_size = service.pricing_strategy == PricingStrategy.AREA
+
+            # If any of these are missing, skip. Because they are essential data on most cases.
+            jo_number = int(row["jo_number"].strip())
+            height = to_float(row["height"]) if service_requires_size else None
+            width = to_float(row["width"]) if service_requires_size else None
+            size_unit = SizeUnit(row["size_unit"]) if service_requires_size else None
+            quantity = to_int(row["quantity"])
+
+            # Getting fields from csv that have a use other than insertion
+            csv_unit_price = to_float(row["unit_price"])
+            cancelled = row["cancelled"].strip().upper() == "TRUE"
+            extra_service = row["extra_service"].strip()
+            extra_quantity = to_int(row["extra_quantity"])
+
+            # Dependency checks, find the data that matches from the database and get it. If none, skip and report.
+            job_order = session.exec(
+                select(JobOrder).where(JobOrder.jo_number == jo_number)
+            ).first()
+            if not job_order:
+                print(f"Job Order {jo_number} not found. Skipping job item.")
                 continue
 
             option = session.exec(
@@ -203,11 +203,15 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 )
                 continue
 
-            service_requires_size = service.pricing_strategy == PricingStrategy.AREA
-            height = to_float(row["height"]) if service_requires_size else None
-            width = to_float(row["width"]) if service_requires_size else None
-            size_unit = SizeUnit(row["size_unit"]) if service_requires_size else None
+            extra = session.exec(
+                select(ExtraService).where(
+                    ExtraService.name == row["extra_service"].strip()
+                )
+            ).first()
+            if extra is None:
+                print("Invalid extra service. Please double check data.")
 
+            # Compute pricing and generate item_id before insertion
             if service_requires_size:
                 if height is None or width is None or size_unit is None:
                     print(
@@ -228,5 +232,59 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                     base_rate=option.base_rate,
                     height=height,
                     width=width,
-                    size_unit=size_unit
+                    size_unit=size_unit,
                 )
+                if computed_unit_price > csv_unit_price:
+                    discount = computed_unit_price - csv_unit_price
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ORDER,
+                            entity_id=job_order.id,
+                            reason="Automatically computed discount based on listed unit price on JO Summary excel.",
+                        )
+                    )
+                elif computed_unit_price < csv_unit_price:
+                    extra_charge = csv_unit_price - computed_unit_price
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ORDER,
+                            entity_id=job_order.id,
+                            reason="Automatically computed extra charge based on listed unit price on JO Summary excel.",
+                        )
+                    )
+
+            sequence = (
+                item_sequence_by_jo_and_abbr.get((jo_number, service.abbreviation), 0)
+                + 1
+            )
+            item_sequence_by_jo_and_abbr[(jo_number, service.abbreviation)] = sequence
+            if sequence > 999:
+                print(
+                    f"JO {jo_number}: more than 999 of '{service.name}. Item_id may be invalid."
+                )
+                continue
+            item_id = f"{jo_number}-{service.abbreviation}-{sequence}"
+
+            item = JobItem(
+                item_id=item_id,
+                description=row["description"].strip() or None,
+                height=height,
+                width=width,
+                size_unit=size_unit,
+                quantity=quantity,
+                job_status=JobStatus.CANCELLED if cancelled else JobStatus.RELEASED,
+                due_date=job_order.date_received,
+                notes=None,
+                unit_price=csv_unit_price,
+                discount_amount=discount,
+                extra_charge=extra_charge,
+                service_name_snapshot=service.name,
+                service_option_snapshot=option.name,
+                service_abbreviation_snapshot=service.abbreviation,
+                job_order=job_order,
+                service_id=service.id,
+                service_option_id=option.id,
+            )
+            
+            session.add(item)
+            session.flush

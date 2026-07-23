@@ -283,7 +283,7 @@ class JobOrder(JobOrderBase, table=True):
         )
 
 
-# ====================== JOB ITEMS =========================
+# ====================== JOB ITEM EXTRAS =========================
 class JobItemExtra(SQLModel, table=True):
     __tablename__ = "job_item_extras"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -301,6 +301,7 @@ class JobItemExtra(SQLModel, table=True):
     extra_service: "ExtraService" = Relationship(back_populates="job_item_extras")
 
 
+# ====================== JOB ITEMS =========================
 class JobItemBase(SQLModel):
     item_id: str = Field(unique=True, index=True)
 
@@ -318,9 +319,10 @@ class JobItemBase(SQLModel):
     notes: str | None = Field(default=None)
 
     # Pricing data
+    # extra_charge is used for rounding up, discount can also be used to round down
     unit_price: float = Field(default=0.0)
     discount_amount: float = Field(default=0.0)
-    extra_total: float = Field(default=0.0)
+    extra_charge: float = Field(default=0.0)
     subtotal: float = Field(default=0.0)
 
     service_name_snapshot: str
@@ -484,9 +486,8 @@ class AccountTransaction(SQLModel, table=True):
 
 
 # ====================== VOID JOB ORDERS =========================
-# For JO numbers that were assigned but never became a real order — e.g. a
-# historical row where both Customer and Service literally say "Cancelled", not a real order that later got cancelled.
-# This table exists purely so you can verify every JO number is accounted for
+# For Jobs that are either cancelled or the physical paper is missing
+# This table exists purely so the users can verify every JO number is accounted for
 class VoidJobOrder(SQLModel, table=True):
     __tablename__ = "void_job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
