@@ -73,3 +73,10 @@ class AccountType(str, Enum):
     CASH_ON_HAND = "Cash"
     BANK = "Bank"
     EWALLET = "E-Wallet"
+    
+
+class ReviewEntityType(str, Enum):
+    JOB_ORDER = "Job Order"
+    PAYMENT = "Payment"
+    EXPENSE = "Expense"
+    MISC_SALE = "Misc Sale"

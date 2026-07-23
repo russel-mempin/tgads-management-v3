@@ -13,6 +13,7 @@ from app.enums import (
     TransactionSource,
     PricingStrategy,
     PriceUnit,
+    ReviewEntityType
 )
 
 
@@ -82,7 +83,7 @@ class ServiceOption(SQLModel, table=True):
     service_id: uuid.UUID = Field(foreign_key="services.id")
 
     name: str
-    base_rate: float | None = Field(default=None)
+    base_rate: float
     is_active: bool = Field(default=True)
     minimum_consumption: float | None = Field(default=None)
     # For AREA services whose stock only comes in whole-unit increments along
@@ -171,7 +172,6 @@ class JobOrderBase(SQLModel):
     date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
-    for_review: bool = Field(default=False)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -514,3 +514,17 @@ class UnlinkedPayment(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     account: "Account" = Relationship(back_populates="unlinked_payments")
+
+
+# ====================== FOR REVIEW =========================
+# For any records that have missing or inconsistent data, so they can be reviewed by a human.
+# It would use their tables and just link here by ID so that the human can see the record in its original table and fix it, then remove it from this table.
+class ForReview(SQLModel, table=True):
+    __tablename__ = "for_review"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    entity_type: ReviewEntityType
+    entity_id: uuid.UUID = Field()
+    reason: str = Field()
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    resolved_at: datetime | None = Field(default=None)
+    resolved_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")

@@ -1,6 +1,6 @@
 {
 	"python-envs.pythonProjects": [],
-  	"python.defaultInterpreterPath": ".venv/bin/python",
+  	"python.defaultInterpreterPath": "backend/.venv/bin/python",
 	"files.associations": {
 		"*.css": "tailwindcss"
 	},
