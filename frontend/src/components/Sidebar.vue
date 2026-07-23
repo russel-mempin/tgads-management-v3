@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useColorMode } from '@vueuse/core'
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 import { useAuthStore } from '@/stores/auth'
+import logo from '@/assets/Logo.png'
 
 const open = defineModel<boolean>('open', { default: true })
 const colorMode = useColorMode()
@@ -18,8 +19,8 @@ type NavItem = NavigationMenuItem & {
 const allItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard', category: 'None' },
   { to: '/job-orders', label: 'Job Orders', icon: 'i-lucide-briefcase-business', category: 'Operations' },
-  { to: '/review-data', label: 'Needs Review', icon: 'i-lucide-scan-eye', category: 'Operations', ownerOnly: true},
-  { to: '/job-orders/voided', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true},
+  { to: '/review-data', label: 'Needs Review', icon: 'i-lucide-scan-eye', category: 'Operations', ownerOnly: true },
+  { to: '/job-orders/voided', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
   // { to: '/customers', label: 'Customers', icon: 'i-lucide-book-user', category: 'Operations' },
   // { to: '/sales', label: authStore.isOwner ? 'Sales' : 'Daily Sales', icon: 'i-lucide-banknote-arrow-up', category: 'Finance' },
   // { to: '/expenses', label: authStore.isOwner ? 'Expenses' : 'Daily Expenses', icon: 'i-lucide-banknote-arrow-down', category: 'Finance' },
@@ -100,8 +101,8 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
     <template #header="{ state }">
       <div class="flex items-center gap-2 px-1.5 py-1 w-full"
         :class="state === 'collapsed' ? 'justify-center px-0' : ''">
-        <div class="flex items-center justify-center size-8 rounded-md bg-primary shrink-0">
-          <UIcon name="i-lucide-building-2" class="size-5 text-inverted" />
+        <div class="flex items-center justify-center size-8 shrink-0">
+          <img :src="logo" alt="Team Graphics ADS" class="size-8 object-contain" />
         </div>
         <div v-if="state === 'expanded'" class="flex flex-col overflow-hidden">
           <span class="font-montserrat font-semibold text-highlighted truncate">Team Graphics ADS</span>

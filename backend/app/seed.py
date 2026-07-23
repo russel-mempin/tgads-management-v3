@@ -8,7 +8,7 @@ from app.seed_code.seed_services import seed_services_data
 from app.seed_code.seed_extra_services import seed_extra_services_from_csv
 from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
-from app.seed_code.seed_job_orders_from_csv import seed_job_orders
+from app.seed_code.seed_job_orders import seed_job_orders_and_items
 from app.seed_code.seed_expenses import seed_expenses_from_csv
 from app.seed_code.seed_accounts import seed_accounts
 
@@ -33,10 +33,10 @@ def seed_dev_data():
         print("Seeded extra services.")
         seed_accounts()
         print("Seeded accounts.")
-        seed_job_orders()
-        print("Seeded job orders.")
-        # seed_payments_from_csv()
-        # print("Seeded payments.")
+        seed_job_orders_and_items()
+        print("Seeded job orders and items.")
+        seed_payments_from_csv()
+        print("Seeded payments.")
         # seed_claiming_history_from_csv()
         # print("Seeded claiming history.")
         # seed_expenses_from_csv()
@@ -57,14 +57,14 @@ def seed_dev_data():
         print("No data found, seeding...")
         seed_users_from_csv()
         print("Seeded users.")
-        seed_service_types_from_csv()
-        print("Seeded service types.")
-        seed_extra_types_from_csv()
-        print("Seeded extra types.")
+        seed_services_data()
+        print("Seeded services.")
+        seed_extra_services_from_csv()
+        print("Seeded extra services.")
         seed_accounts()
         print("Seeded accounts.")
-        seed_complete_job_order_info()
-        print("Seeded job orders.")
+        seed_job_orders_and_items()
+        print("Seeded job orders and items.")
         seed_payments_from_csv()
         print("Seeded payments.")
         seed_claiming_history_from_csv()
@@ -85,9 +85,9 @@ def seed_prod_data():
     print("Created tables.")
     seed_users_from_csv()
     print("Seeded users.")
-    seed_service_types_from_csv()
-    print("Seeded service types.")
-    seed_extra_types_from_csv()
-    print("Seeded extra types.")
+    seed_services_data()
+    print("Seeded services.")
+    seed_extra_services_from_csv()
+    print("Seeded extra services.")
     seed_accounts()
     print("Seeded accounts.")

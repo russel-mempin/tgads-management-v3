@@ -51,7 +51,8 @@ class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     audit_logs: list["AuditLog"] = Relationship(back_populates="user")
-    void_job_orders: list["VoidJobOrder"] = Relationship(back_populates="created_by")
+    void_job_orders: list["VoidJobOrder"] = Relationship(back_populates="voided_by")
+    resolved_for_reviews: list["ForReview"] = Relationship(back_populates="resolved_by")
     hashed_password: str = Field()
 
 
@@ -235,8 +236,7 @@ class JobOrder(JobOrderBase, table=True):
     @property
     def computed_overall_job_status(self) -> JobStatus:
         if not self.job_items:
-            print("NO JOB ITEMS FOUND FOR ", self.jo_number)
-            return JobStatus.FOR_LAYOUT
+            return JobStatus.CANCELLED
 
         priorities = {
             JobStatus.CANCELLED: 0,
@@ -495,10 +495,13 @@ class VoidJobOrder(SQLModel, table=True):
     job_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     voided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reason: str
-    created_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
+    created_by_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
 
-    created_by: "User" = Relationship(back_populates="void_job_orders")
+    voided_by: "User" = Relationship(back_populates="void_job_orders")
 
+    @property
+    def voided_by_name(self) -> str:
+        return self.voided_by.username if self.voided_by else "N/A"
 
 # ====================== UNLINKED PAYMENTS =========================
 # For payments known to be for a real job order, but where that job order
@@ -525,7 +528,14 @@ class ForReview(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     entity_type: ReviewEntityType
     entity_id: uuid.UUID = Field()
+    entity_reference: str = Field()
     reason: str = Field()
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     resolved_at: datetime | None = Field(default=None)
     resolved_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
+
+    resolved_by: "User" = Relationship(back_populates="resolved_for_reviews")
+
+    @property
+    def resolved_by_name(self) -> str | None:
+        return self.resolved_by.username if self.resolved_by else None
