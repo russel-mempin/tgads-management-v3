@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, h, resolveComponent } from 'vue'
-import { getAllVoidedJobs } from '@/api/voided_jobs';
-import type { VoidedJobs } from '@/types/voided_jobsTypes';
+import { getAllVoidedJobs } from '@/api/voidedJobs';
+import type { VoidedJobs } from '@/types/voidedJob';
 import type { TableColumn } from '@nuxt/ui';
 import { formatDate } from '@/utils/formatters';
 

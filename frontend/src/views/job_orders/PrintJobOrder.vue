@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import type { JobOrder } from '@/types/job_ordersTypes'
-import { getJobOrder } from '@/api/job_orders'
+import type { JobOrder } from '@/types/jobOrder'
+import { getJobOrder } from '@/api/jobOrders'
 import { formatDate, formatCurrency, nowInManila } from '@/utils/formatters'
 
 const route = useRoute()

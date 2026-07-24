@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, resolveComponent, h, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { getJobOrderKpis, getAllJobOrders, getJobOrderCount } from '@/api/job_orders'
-import type { JobOrder } from '@/types/job_ordersTypes'
+import { getJobOrderKpis, getAllJobOrders, getJobOrderCount } from '@/api/jobOrders'
+import type { JobOrder } from '@/types/jobOrder'
 import type { TableColumn } from '@nuxt/ui'
 import { formatDate, formatCurrency } from '@/utils/formatters'
 import { useRouter } from 'vue-router'

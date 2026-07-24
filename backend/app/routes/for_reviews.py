@@ -4,7 +4,7 @@ from app.services.dependencies import get_current_active_user
 from sqlmodel import Session
 from app.database import get_session
 from app.schemas.for_review import ForReviewPublic
-from app.crud.for_review import get_all_for_review_items
+from app.crud.for_review import get_all_for_review_items, get_count_of_for_reviews
 
 
 router = APIRouter(prefix="/for-reviews", tags=["for-reviews"], dependencies=[Depends(get_current_active_user)])
@@ -16,4 +16,4 @@ def read_all_for_review_items(offset: int = 0, limit: Annotated[int, Query(le=10
 
 @router.get("/count", response_model=int)
 def read_count_of_for_review_items(db: Session = Depends(get_session)):
-    return get_count_of_for_review(db)
+    return get_count_of_for_reviews(db)

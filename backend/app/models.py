@@ -532,13 +532,14 @@ class UnlinkedPayment(SQLModel, table=True):
 # For any records that have missing or inconsistent data, so they can be reviewed by a human.
 # It would use their tables and just link here by ID so that the human can see the record in its original table and fix it, then remove it from this table.
 class ForReview(SQLModel, table=True):
-    __tablename__ = "for_review"  # type: ignore
+    __tablename__ = "for_reviews"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     entity_type: ReviewEntityType
     entity_id: uuid.UUID = Field()
     entity_reference: str = Field()
     reason_category: ReasonCategory
     reason: str = Field()
+    resolution_note: str | None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by_id: uuid.UUID | None = Field(foreign_key="users.id")
     resolved_at: datetime | None = Field(default=None)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, h, resolveComponent } from 'vue'
-import { getAllForReview } from '@/api/for_reviews';
-import type { ForReview } from '@/types/for_reviewTypes';
+import { getAllForReview } from '@/api/forReviews';
+import type { ForReview } from '@/types/forReview';
 import type { TableColumn } from '@nuxt/ui';
 import { useRouter } from 'vue-router';
 
