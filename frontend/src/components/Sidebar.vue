@@ -5,11 +5,13 @@ import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 import { useAuthStore } from '@/stores/auth'
 import logo from '@/assets/Logo.png'
 import { useForReviewCount } from '@/stores/forReviewCounter'
+import { useRoute } from 'vue-router'
 
 const open = defineModel<boolean>('open', { default: true })
 const colorMode = useColorMode()
 const authStore = useAuthStore()
 const forReviewStore = useForReviewCount()
+const route = useRoute()
 
 type NavItem = NavigationMenuItem & {
   category: string
@@ -40,13 +42,14 @@ const allItems = computed<NavItem[]>(() => [
     to: '/dashboard',
     label: 'Dashboard',
     icon: 'i-lucide-layout-dashboard',
-    category: 'None'
+    category: 'None',
   },
   {
     to: '/job-orders',
     label: 'Job Orders',
     icon: 'i-lucide-briefcase-business',
-    category: 'Operations'
+    category: 'Operations',
+    active: route.path.startsWith("/job-orders")
   },
   {
     to: '/review-data',
