@@ -85,6 +85,16 @@ const router = createRouter({
             subtitle: 'See data that needs your attention.'
           }
         },
+        {
+          path: 'voided-jobs',
+          component: () => import('@/views/VoidedJobs.vue'),
+          meta: {
+            title: 'Voided Jobs',
+            breadcrumb: 'Voided Jobs',
+            breadcrumbParent: { label: 'Voided Jobs', to: 'voided-jobs' },
+            subtitle: 'View and verify job orders that have been voided to ensure all JO numbers are accounted for.'
+          }
+        },
       ]
     }
   ],

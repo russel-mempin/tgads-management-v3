@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.enums import SizeUnit
+from app.models import User
 
 if TYPE_CHECKING:
     from app.models import Service, JobOrder
@@ -20,6 +21,19 @@ def to_int(v: str) -> int:
         return int(v)
     except (TypeError, ValueError):
         return 0
+    
+
+def get_system_admin(session: Session) -> User:
+    sysadmin = session.exec(
+		select(User).where(User.username == "system.admin")
+	).first()
+    
+    if sysadmin is None:
+        raise ValueError(
+			"System admin user not found. Please seed users first."
+		)
+        
+    return sysadmin
     
     
 def compute_unit_price(height: float, width: float, service_type: Service, size_unit: SizeUnit) -> float:

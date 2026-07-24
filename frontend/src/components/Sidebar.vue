@@ -20,7 +20,7 @@ const allItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard', category: 'None' },
   { to: '/job-orders', label: 'Job Orders', icon: 'i-lucide-briefcase-business', category: 'Operations' },
   { to: '/review-data', label: 'Needs Review', icon: 'i-lucide-scan-eye', category: 'Operations', ownerOnly: true },
-  { to: '/job-orders/voided', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
+  { to: '/voided-jobs', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
   // { to: '/customers', label: 'Customers', icon: 'i-lucide-book-user', category: 'Operations' },
   // { to: '/sales', label: authStore.isOwner ? 'Sales' : 'Daily Sales', icon: 'i-lucide-banknote-arrow-up', category: 'Finance' },
   // { to: '/expenses', label: authStore.isOwner ? 'Expenses' : 'Daily Expenses', icon: 'i-lucide-banknote-arrow-down', category: 'Finance' },

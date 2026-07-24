@@ -7,7 +7,7 @@ from app.schemas.void_job import VoidJobOrderPublic
 from app.crud.void_job import get_all_voided_jobs
 
 
-router = APIRouter(prefix="/void-jobs", tags=["void-jobs"], dependencies=[Depends(get_current_active_user)])
+router = APIRouter(prefix="/voided-jobs", tags=["voided-jobs"], dependencies=[Depends(get_current_active_user)])
 
 
 @router.get("/", response_model=list[VoidJobOrderPublic])

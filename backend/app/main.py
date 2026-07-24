@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine  # noqa: F401
-from app.routes import users, job_orders, void_jobs, customers, services, expenses, sales, reports, accounts
+from app.routes import users, job_orders, for_reviews, void_jobs, customers, services, expenses, sales, reports, accounts
 import os
 
 app = FastAPI()
@@ -27,6 +27,7 @@ elif os.getenv("APP_ENV") == "prod":
 
 app.include_router(users.router)
 app.include_router(job_orders.router)
+app.include_router(for_reviews.router)
 app.include_router(void_jobs.router)
 app.include_router(customers.router)
 app.include_router(services.router)

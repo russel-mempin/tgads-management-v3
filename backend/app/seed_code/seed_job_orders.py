@@ -4,7 +4,6 @@ from sqlmodel import Session, select
 from app.database import engine
 from datetime import datetime, timezone
 from app.models import (
-    User,
     Customer,
     VoidJobOrder,
     JobOrder,
@@ -15,8 +14,15 @@ from app.models import (
     ExtraService,
     JobItemExtra,
 )
-from app.enums import PricingStrategy, ReviewEntityType, SizeUnit, PriceUnit, JobStatus
-from app.utils.utils import to_float, to_int
+from app.enums import (
+    PricingStrategy,
+    ReviewEntityType,
+    SizeUnit,
+    PriceUnit,
+    JobStatus,
+    ReasonCategory,
+)
+from app.utils.utils import to_float, to_int, get_system_admin
 from sqlalchemy import event
 from uuid import UUID
 from app.services.event_listeners import sync_job_order_on_payment_or_item_change
@@ -102,11 +108,7 @@ def get_computed_unit_price_from_area(
 def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
-        sysadmin = session.exec(
-            select(User).where(User.username == "system.admin")
-        ).first()
-        if not sysadmin:
-            raise ValueError("System admin user not found. Please seed users first.")
+        sysadmin = get_system_admin(session)
         for row in reader:
             date_received = parse_date(row["date"])
             jo_number = int(row["jo_number"].strip())
@@ -130,7 +132,10 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                         )
                     session.add(
                         VoidJobOrder(
-                            jo_number=jo_number, job_date=date_received, reason=reason, created_by_id=sysadmin.id
+                            jo_number=jo_number,
+                            job_date=date_received,
+                            reason=reason,
+                            created_by_id=sysadmin.id,
                         )
                     )
                     session.commit()
@@ -154,8 +159,10 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                     ForReview(
                         entity_type=ReviewEntityType.JOB_ORDER,
                         entity_id=job_order.id,
+                        created_by_id=sysadmin.id,
                         entity_reference=row["jo_number"].strip(),
                         reason=reason,
+                        reason_category=ReasonCategory(row["review_category"].strip()),
                     )
                 )
                 print(f"JO {jo_number} has been marked for review.")
@@ -168,6 +175,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
     event.remove(Session, "before_flush", sync_job_order_on_payment_or_item_change)
     try:
         with Session(engine) as session, open(file_path, newline="") as f:
+            sysadmin = get_system_admin(session)
             reader = csv.DictReader(f)
             for row in reader:
                 # First, determine service and get other info needed for data validation
@@ -177,20 +185,29 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 ).first()
                 if not service:
                     if not cancelled:
-                        print(f"Service for Job {row["jo_number"]} {row['service']} not found. Skipping job item.")    
+                        print(
+                            f"Service for Job {row['jo_number']} {row['service']} not found. Skipping job item."
+                        )
                     continue
                 service_requires_size = service.pricing_strategy == PricingStrategy.AREA
 
                 # If any of these are missing, skip. Because they are essential data on most cases.
                 jo_number = int(row["jo_number"].strip())
-                height = to_float(row["height"].strip()) if service_requires_size else None
-                width = to_float(row["width"].strip()) if service_requires_size else None
+                height = (
+                    to_float(row["height"].strip()) if service_requires_size else None
+                )
+                width = (
+                    to_float(row["width"].strip()) if service_requires_size else None
+                )
                 size_unit = (
-                    SizeUnit(row["unit"].strip()) if row.get("unit", "").strip() else None
+                    SizeUnit(row["unit"].strip())
+                    if row.get("unit", "").strip()
+                    else None
                 )
                 quantity = to_int(row["quantity"].strip())
 
                 # Getting fields from csv that have a use other than insertion
+                review_reason = (row.get("review_category") or "").strip()
                 csv_unit_price = to_float(row["unit_price"].strip())
                 extra_service = row["extra_service"].strip()
                 extra_quantity = to_int(row["extra_quantity"])
@@ -237,8 +254,14 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                             ForReview(
                                 entity_type=ReviewEntityType.JOB_ORDER,
                                 entity_id=job_order.id,
+                                created_by_id=sysadmin.id,
                                 entity_reference=row["jo_number"].strip(),
                                 reason="Missing size information for job item.",
+                                reason_category=ReasonCategory(
+                                    review_reason
+                                    if review_reason
+                                    else "Missing Data"
+                                ),
                             )
                         )
                         continue
@@ -256,8 +279,14 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                             ForReview(
                                 entity_type=ReviewEntityType.JOB_ORDER,
                                 entity_id=job_order.id,
+                                created_by_id=sysadmin.id,
                                 entity_reference=row["jo_number"].strip(),
                                 reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
+                                reason_category=ReasonCategory(
+                                    review_reason
+                                    if review_reason
+                                    else "Pricing Discrepancy"
+                                ),
                             )
                         )
                     elif (computed_unit_price + extra_service_price) < csv_unit_price:
@@ -265,16 +294,26 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                             ForReview(
                                 entity_type=ReviewEntityType.JOB_ORDER,
                                 entity_id=job_order.id,
+                                created_by_id=sysadmin.id,
                                 entity_reference=row["jo_number"].strip(),
                                 reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
+                                reason_category=ReasonCategory(
+                                    review_reason
+                                    if review_reason
+                                    else "Pricing Discrepancy"
+                                ),
                             )
                         )
 
                 sequence = (
-                    item_sequence_by_jo_and_abbr.get((jo_number, service.abbreviation), 0)
+                    item_sequence_by_jo_and_abbr.get(
+                        (jo_number, service.abbreviation), 0
+                    )
                     + 1
                 )
-                item_sequence_by_jo_and_abbr[(jo_number, service.abbreviation)] = sequence
+                item_sequence_by_jo_and_abbr[(jo_number, service.abbreviation)] = (
+                    sequence
+                )
                 if sequence > 999:
                     print(
                         f"JO {jo_number}: more than 999 of '{service.name}. Item_id may be invalid."
@@ -295,7 +334,9 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                     unit_price=csv_unit_price,
                     discount_amount=discount,
                     extra_charge=extra_charge,
-                    subtotal=(csv_unit_price * quantity) - discount + (extra_charge * quantity),
+                    subtotal=(csv_unit_price * quantity)
+                    - discount
+                    + (extra_charge * quantity),
                     service_name_snapshot=service.name,
                     service_option_name_snapshot=option.name,
                     service_abbreviation_snapshot=service.abbreviation,

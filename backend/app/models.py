@@ -13,7 +13,8 @@ from app.enums import (
     TransactionSource,
     PricingStrategy,
     PriceUnit,
-    ReviewEntityType
+    ReviewEntityType,
+    ReasonCategory
 )
 
 
@@ -52,7 +53,14 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     audit_logs: list["AuditLog"] = Relationship(back_populates="user")
     void_job_orders: list["VoidJobOrder"] = Relationship(back_populates="voided_by")
-    resolved_for_reviews: list["ForReview"] = Relationship(back_populates="resolved_by")
+    created_for_reviews: list["ForReview"] = Relationship(
+        back_populates="created_by",
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
+    )
+    resolved_for_reviews: list["ForReview"] = Relationship(
+        back_populates="resolved_by",
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
+    )
     hashed_password: str = Field()
 
 
@@ -529,12 +537,25 @@ class ForReview(SQLModel, table=True):
     entity_type: ReviewEntityType
     entity_id: uuid.UUID = Field()
     entity_reference: str = Field()
+    reason_category: ReasonCategory
     reason: str = Field()
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by_id: uuid.UUID | None = Field(foreign_key="users.id")
     resolved_at: datetime | None = Field(default=None)
     resolved_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
 
-    resolved_by: "User" = Relationship(back_populates="resolved_for_reviews")
+    created_by: "User" = Relationship(
+        back_populates="created_for_reviews",
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
+    )
+    resolved_by: "User" = Relationship(
+        back_populates="resolved_for_reviews",
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
+    )
+
+    @property
+    def created_by_name(self) -> str:
+        return self.created_by.username
 
     @property
     def resolved_by_name(self) -> str | None:

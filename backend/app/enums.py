@@ -80,3 +80,10 @@ class ReviewEntityType(str, Enum):
     PAYMENT = "Payment"
     EXPENSE = "Expense"
     MISC_SALE = "Misc Sale"
+    
+
+class ReasonCategory(str, Enum):
+    PRICING_DISCREPANCY = "Pricing Discrepancy"
+    MISSING_DATA = "Missing Data"
+    STATUS_ISSUE = "Status Issue"
+    NEEDS_VERIFICATION = "Needs Verification"
