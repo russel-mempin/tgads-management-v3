@@ -256,7 +256,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                                 entity_id=job_order.id,
                                 created_by_id=sysadmin.id,
                                 entity_reference=row["jo_number"].strip(),
-                                reason="Missing size information for job item.",
+                                reason=f"Missing size information for job item ({service.name}). Item data has been skipped.",
                                 reason_category=ReasonCategory(
                                     review_reason
                                     if review_reason
