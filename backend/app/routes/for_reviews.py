@@ -13,3 +13,7 @@ router = APIRouter(prefix="/for-reviews", tags=["for-reviews"], dependencies=[De
 @router.get("/", response_model=list[ForReviewPublic])
 def read_all_for_review_items(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_for_review_items(db, offset=offset, limit=limit)
+
+@router.get("/count", response_model=int)
+def read_count_of_for_review_items(db: Session = Depends(get_session)):
+    return get_count_of_for_review(db)
