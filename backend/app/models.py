@@ -1,20 +1,22 @@
-from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Column, ForeignKey
-from datetime import datetime, timezone
 import uuid
+from datetime import UTC, datetime
+
 from pydantic import EmailStr
+from sqlalchemy import Column, ForeignKey
+from sqlmodel import Field, Relationship, SQLModel
+
 from app.enums import (
-    UserRoles,
-    SizeUnit,
-    PaymentStatus,
-    JobStatus,
-    ExpenseCategory,
     AccountType,
-    TransactionSource,
-    PricingStrategy,
+    ExpenseCategory,
+    JobStatus,
+    PaymentStatus,
     PriceUnit,
+    PricingStrategy,
+    ReasonCategory,
     ReviewEntityType,
-    ReasonCategory
+    SizeUnit,
+    TransactionSource,
+    UserRoles,
 )
 
 
@@ -26,9 +28,9 @@ class AuditLog(SQLModel, table=True):
     user_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     )
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    user: "User" = Relationship(back_populates="audit_logs")
+    user: User = Relationship(back_populates="audit_logs")
 
     @property
     def user_name(self) -> str | None:
@@ -51,13 +53,13 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    audit_logs: list["AuditLog"] = Relationship(back_populates="user")
-    void_job_orders: list["VoidJobOrder"] = Relationship(back_populates="voided_by")
-    created_for_reviews: list["ForReview"] = Relationship(
+    audit_logs: list[AuditLog] = Relationship(back_populates="user")
+    void_job_orders: list[VoidJobOrder] = Relationship(back_populates="voided_by")
+    created_for_reviews: list[ForReview] = Relationship(
         back_populates="created_by",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
     )
-    resolved_for_reviews: list["ForReview"] = Relationship(
+    resolved_for_reviews: list[ForReview] = Relationship(
         back_populates="resolved_by",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
     )
@@ -77,7 +79,7 @@ class Customer(CustomerBase, table=True):
     __tablename__ = "customers"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    job_orders: list["JobOrder"] = Relationship(
+    job_orders: list[JobOrder] = Relationship(
         back_populates="customer",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -99,12 +101,12 @@ class ServiceOption(SQLModel, table=True):
     # one axis (e.g. tarpaulin rolls: only whole feet available, no 2.5ft).
     stock_increment: float | None = Field(default=None)
 
-    service: "Service" = Relationship(back_populates="options")
-    price_tiers: list["ServicePriceTier"] = Relationship(
+    service: Service = Relationship(back_populates="options")
+    price_tiers: list[ServicePriceTier] = Relationship(
         back_populates="service_option",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    job_items: list["JobItem"] = Relationship(back_populates="service_option")
+    job_items: list[JobItem] = Relationship(back_populates="service_option")
 
     @property
     def full_service_name(self) -> str:
@@ -125,16 +127,16 @@ class ServiceBase(SQLModel):
     pricing_strategy: PricingStrategy
     unit: PriceUnit
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Service(ServiceBase, table=True):
     __tablename__ = "services"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    job_items: list["JobItem"] = Relationship(back_populates="service")
-    options: list["ServiceOption"] = Relationship(
+    job_items: list[JobItem] = Relationship(back_populates="service")
+    options: list[ServiceOption] = Relationship(
         back_populates="service",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -153,12 +155,12 @@ class ServicePriceTier(SQLModel, table=True):
     min_threshold: float
     max_threshold: float | None = None
 
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     rate: float = Field(default=0.0)
 
-    service_option: "ServiceOption" = Relationship(back_populates="price_tiers")
+    service_option: ServiceOption = Relationship(back_populates="price_tiers")
 
 
 # ====================== EXTRA SERVICES =========================
@@ -169,22 +171,22 @@ class ExtraService(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     price: float = Field(default=0.0)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    job_item_extras: list["JobItemExtra"] = Relationship(back_populates="extra_service")
+    job_item_extras: list[JobItemExtra] = Relationship(back_populates="extra_service")
 
 
 # ====================== JOB ORDERS =========================
 class JobOrderBase(SQLModel):
     jo_number: int = Field(unique=True, index=True)
-    date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date_received: datetime = Field(default_factory=lambda: datetime.now(UTC))
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class JobOrder(JobOrderBase, table=True):
@@ -200,22 +202,22 @@ class JobOrder(JobOrderBase, table=True):
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     )
 
-    created_by: "User" = Relationship(
+    created_by: User = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.created_by_id]"}
     )
-    updated_by: "User" = Relationship(
+    updated_by: User = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
     )
-    customer: "Customer" = Relationship(back_populates="job_orders")
-    job_items: list["JobItem"] = Relationship(
+    customer: Customer = Relationship(back_populates="job_orders")
+    job_items: list[JobItem] = Relationship(
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    payments: list["Payment"] = Relationship(
+    payments: list[Payment] = Relationship(
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    claims: list["ClaimingHistory"] = Relationship(
+    claims: list[ClaimingHistory] = Relationship(
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -304,9 +306,9 @@ class JobItemExtra(SQLModel, table=True):
     price_snapshot: float
     name_snapshot: str
 
-    job_item: "JobItem" = Relationship(back_populates="extras")
+    job_item: JobItem = Relationship(back_populates="extras")
 
-    extra_service: "ExtraService" = Relationship(back_populates="job_item_extras")
+    extra_service: ExtraService = Relationship(back_populates="job_item_extras")
 
 
 # ====================== JOB ITEMS =========================
@@ -323,7 +325,7 @@ class JobItemBase(SQLModel):
 
     # Workflow related
     job_status: JobStatus
-    due_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    due_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
     notes: str | None = Field(default=None)
 
     # Pricing data
@@ -349,11 +351,11 @@ class JobItem(JobItemBase, table=True):
     )
     service_id: uuid.UUID = Field(foreign_key="services.id")
     service_option_id: uuid.UUID = Field(foreign_key="service_options.id")
-    job_order: "JobOrder" = Relationship(back_populates="job_items")
-    service: "Service" = Relationship(back_populates="job_items")
-    service_option: "ServiceOption" = Relationship(back_populates="job_items")
-    claims: list["ClaimingHistory"] = Relationship(back_populates="job_item")
-    extras: list["JobItemExtra"] = Relationship(
+    job_order: JobOrder = Relationship(back_populates="job_items")
+    service: Service = Relationship(back_populates="job_items")
+    service_option: ServiceOption = Relationship(back_populates="job_items")
+    claims: list[ClaimingHistory] = Relationship(back_populates="job_item")
+    extras: list[JobItemExtra] = Relationship(
         back_populates="job_item",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -377,7 +379,7 @@ class JobItem(JobItemBase, table=True):
 
 # ====================== PAYMENTS =========================
 class PaymentBase(SQLModel):
-    date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date_received: datetime = Field(default_factory=lambda: datetime.now(UTC))
     reference_number: str | None = Field(default=None)
     amount: float = Field(default=0.0)
     notes: str | None = Field(default=None)
@@ -391,10 +393,10 @@ class Payment(PaymentBase, table=True):
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
         )
     )
-    account: "Account" = Relationship(back_populates="payments")
+    account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
 
-    job_order: "JobOrder" = Relationship(back_populates="payments")
+    job_order: JobOrder = Relationship(back_populates="payments")
 
     @property
     def account_name(self) -> str:
@@ -403,7 +405,7 @@ class Payment(PaymentBase, table=True):
 
 # ====================== CLAIMING HISTORY =========================
 class ClaimingHistoryBase(SQLModel):
-    date_claimed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date_claimed: datetime = Field(default_factory=lambda: datetime.now(UTC))
     name: str = Field()
     pcs_claimed: int = Field(default=0)
     claimed_item_id: str = Field()
@@ -421,13 +423,13 @@ class ClaimingHistory(ClaimingHistoryBase, table=True):
         sa_column=Column(ForeignKey("job_items.id", ondelete="CASCADE"), nullable=False)
     )
 
-    job_order: "JobOrder" = Relationship(back_populates="claims")
-    job_item: "JobItem" = Relationship(back_populates="claims")
+    job_order: JobOrder = Relationship(back_populates="claims")
+    job_item: JobItem = Relationship(back_populates="claims")
 
 
 # ====================== EXPENSES =========================
 class ExpenseBase(SQLModel):
-    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date: datetime = Field(default_factory=lambda: datetime.now(UTC))
     category: ExpenseCategory
     amount: float = Field()
     description: str = Field()
@@ -439,7 +441,7 @@ class Expense(ExpenseBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
 
-    account: "Account" = Relationship(back_populates="expenses")
+    account: Account = Relationship(back_populates="expenses")
 
     @property
     def account_name(self) -> str:
@@ -448,7 +450,7 @@ class Expense(ExpenseBase, table=True):
 
 # ====================== MISC SALES =========================
 class MiscSaleBase(SQLModel):
-    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date: datetime = Field(default_factory=lambda: datetime.now(UTC))
     description: str = Field()
     amount: float = Field()
     is_archived: bool = Field(default=False)
@@ -467,30 +469,30 @@ class Account(SQLModel, table=True):
     type: AccountType = Field()
     beginning_balance: float = Field(default=0.0)
     beginning_balance_date: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+        default_factory=lambda: datetime.now(UTC)
     )
     current_balance: float = Field(default=0.0)
     is_active: bool = Field(default=True)
 
-    payments: list["Payment"] = Relationship(back_populates="account")
-    unlinked_payments: list["UnlinkedPayment"] = Relationship(back_populates="account")
-    transactions: list["AccountTransaction"] = Relationship(back_populates="account")
-    expenses: list["Expense"] = Relationship(back_populates="account")
+    payments: list[Payment] = Relationship(back_populates="account")
+    unlinked_payments: list[UnlinkedPayment] = Relationship(back_populates="account")
+    transactions: list[AccountTransaction] = Relationship(back_populates="account")
+    expenses: list[Expense] = Relationship(back_populates="account")
 
 
 class AccountTransaction(SQLModel, table=True):
     __tablename__ = "account_transactions"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id")
-    date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date: datetime = Field(default_factory=lambda: datetime.now(UTC))
     description: str = Field()
     amount: float = Field()  # positive = in, negative = out
     running_balance: float = Field()
     source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    account: "Account" = Relationship(back_populates="transactions")
+    account: Account = Relationship(back_populates="transactions")
 
 
 # ====================== VOID JOB ORDERS =========================
@@ -500,12 +502,12 @@ class VoidJobOrder(SQLModel, table=True):
     __tablename__ = "void_job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     jo_number: int = Field(unique=True, index=True)
-    job_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    voided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    job_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    voided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     reason: str
     created_by_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
 
-    voided_by: "User" = Relationship(back_populates="void_job_orders")
+    voided_by: User = Relationship(back_populates="void_job_orders")
 
     @property
     def voided_by_name(self) -> str:
@@ -517,15 +519,15 @@ class VoidJobOrder(SQLModel, table=True):
 class UnlinkedPayment(SQLModel, table=True):
     __tablename__ = "unlinked_payments"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    date_received: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    date_received: datetime = Field(default_factory=lambda: datetime.now(UTC))
     reference_number: str | None = Field(default=None)
     amount: float = Field(default=0.0)
     customer_name: str | None = Field(default=None)
     description: str | None = Field(default=None)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    account: "Account" = Relationship(back_populates="unlinked_payments")
+    account: Account = Relationship(back_populates="unlinked_payments")
 
 
 # ====================== FOR REVIEW =========================
@@ -540,16 +542,16 @@ class ForReview(SQLModel, table=True):
     reason_category: ReasonCategory
     reason: str = Field()
     resolution_note: str | None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by_id: uuid.UUID | None = Field(foreign_key="users.id")
     resolved_at: datetime | None = Field(default=None)
     resolved_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
 
-    created_by: "User" = Relationship(
+    created_by: User = Relationship(
         back_populates="created_for_reviews",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
     )
-    resolved_by: "User" = Relationship(
+    resolved_by: User = Relationship(
         back_populates="resolved_for_reviews",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
     )

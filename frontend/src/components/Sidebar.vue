@@ -159,8 +159,18 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
               ? 'justify-center px-0 py-3 overflow-hidden'
               : 'px-4 py-3 overflow-hidden gap-4'
           }">
+            <template #item-leading="{ item }" v-if="state === 'collapsed'">
+              <div class="relative inline-flex">
+                <UIcon :name="item.icon" class="size-5" />
+                <span v-if="item.badge"
+                  class="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 flex items-center justify-center rounded-full bg-error text-inverted text-[10px] font-bold leading-none">
+                  {{ item.badge }}
+                </span>
+              </div>
+            </template>
             <template #item-trailing="{ item }">
-              <UBadge v-if="item.badge" color="error" variant="solid" size="sm" class="font-semibold text-xs">
+              <UBadge v-if="item.badge && state === 'expanded'" color="error" variant="solid" size="sm"
+                class="font-semibold text-xs">
                 {{ item.badge }}
               </UBadge>
             </template>
