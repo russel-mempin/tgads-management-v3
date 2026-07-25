@@ -16,7 +16,7 @@ const subtitle = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-1 overflow-x-hidden">
+    <div class="flex flex-1">
         <Sidebar v-model:open="open" />
         <div class="flex-1 flex flex-col">
             <div
@@ -29,7 +29,7 @@ const subtitle = computed(() => {
                 class="sticky top-(--ui-header-height) z-10 bg-elevated border-b border-default text-muted py-2 px-4">
                 {{ subtitle }}
             </p>
-            <div class="flex-1 p-4">
+            <div class="flex-1">
                 <RouterView />
             </div>
         </div>

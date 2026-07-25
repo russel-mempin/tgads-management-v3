@@ -1,31 +1,33 @@
 import csv
 import os
-from sqlmodel import Session, select
-from app.database import engine
 from datetime import datetime, timezone
-from app.models import (
-    Customer,
-    VoidJobOrder,
-    JobOrder,
-    ForReview,
-    Service,
-    ServiceOption,
-    JobItem,
-    ExtraService,
-    JobItemExtra,
-)
+from uuid import UUID
+
+from sqlalchemy import event
+from sqlmodel import Session, select
+
+from app.database import engine
 from app.enums import (
+    JobStatus,
+    PriceUnit,
     PricingStrategy,
+    ReasonCategory,
     ReviewEntityType,
     SizeUnit,
-    PriceUnit,
-    JobStatus,
-    ReasonCategory,
 )
-from app.utils.utils import to_float, to_int, get_system_admin
-from sqlalchemy import event
-from uuid import UUID
+from app.models import (
+    Customer,
+    ExtraService,
+    ForReview,
+    JobItem,
+    JobItemExtra,
+    JobOrder,
+    Service,
+    ServiceOption,
+    VoidJobOrder,
+)
 from app.services.event_listeners import sync_job_order_on_payment_or_item_change
+from app.utils.utils import get_system_admin, to_float, to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders.csv")
@@ -52,12 +54,13 @@ PRICE_UNIT_TO_SIZE_UNIT = {
 
 # Helper functions
 def parse_date(value: str) -> datetime:
-    dt = datetime.strptime(value.strip(), "%m/%d/%y")
-    return dt.replace(tzinfo=timezone.utc)
+    return datetime.strptime(value.strip(), "%m/%d/%y").replace(tzinfo=timezone.utc)  # noqa: UP017
 
 
 def get_or_create_customer(session: Session, customer_name: str) -> Customer:
     customer_name = customer_name.strip()
+    if not customer_name:
+        return None        
     existing = session.exec(
         select(Customer).where(Customer.name == customer_name)
     ).first()
@@ -117,8 +120,8 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
             for_review = row["for_review"].strip().lower()
             reason = row["for_review_reason"].strip()
 
-            # If no customer or has customer but has void choice, inserts job data to void table and determines void reason.
-            if not customer_name or void_choice:
+            # If no customer and has void choice, inserts job data to void table and determines void reason.                                
+            if void_choice:
                 existing_in_void = session.exec(
                     select(VoidJobOrder).where(VoidJobOrder.jo_number == jo_number)
                 ).first()
@@ -146,7 +149,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
             job_order = JobOrder(
                 date_received=date_received,
                 jo_number=jo_number,
-                customer_id=customer.id,
+                customer_id=customer.id if customer else None,
                 created_by_id=sysadmin.id,
                 updated_by_id=sysadmin.id,
                 overall_job_status=JobStatus.RELEASED,

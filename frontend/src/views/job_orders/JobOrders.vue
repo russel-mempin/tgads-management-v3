@@ -125,7 +125,7 @@ const columns: TableColumn<JobOrder>[] = [
     },
     {
         accessorKey: 'overall_job_status',
-        header: 'Job Status',
+        header: 'Status',
         cell: ({ row }) => {
             const color = {
                 'Pending': 'warning' as const,

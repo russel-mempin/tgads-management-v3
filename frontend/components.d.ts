@@ -22,6 +22,7 @@ declare module 'vue' {
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UDropdownMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
     UFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
+    UHeader: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
     UIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     UInputMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/InputMenu.vue')['default']
@@ -30,6 +31,7 @@ declare module 'vue' {
     UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
     USelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USidebar: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Sidebar.vue')['default']
+    USwitch: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
     UTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }
