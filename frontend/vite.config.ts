@@ -18,7 +18,7 @@ export default defineConfig({
         },
         input: {
           slots: {
-            base: 'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-slate-500 dark:placeholder:text-slate-400'
+            base: 'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-800 placeholder:text-slate-500 dark:placeholder:text-slate-400'
           }
         },
         select: {

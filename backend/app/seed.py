@@ -6,6 +6,7 @@ from app.models import JobOrder, User
 from app.seed_code.seed_users import seed_users_from_csv
 from app.seed_code.seed_services import seed_services_data
 from app.seed_code.seed_extra_services import seed_extra_services_from_csv
+from app.seed_code.seed_customers import seed_customers_from_csv
 from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
 from app.seed_code.seed_job_orders import seed_job_orders_and_items
@@ -33,6 +34,8 @@ def seed_dev_data():
         print("Seeded extra services.")
         seed_accounts()
         print("Seeded accounts.")
+        seed_customers_from_csv()
+        print("Seeded customers.")
         seed_job_orders_and_items()
         print("Seeded job orders and items.")
         seed_payments_from_csv()

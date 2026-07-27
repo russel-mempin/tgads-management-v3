@@ -49,7 +49,7 @@ const printJobOrder = () => {
         <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
     </div>
 
-    <div v-else-if="jobOrder" class="flex flex-col gap-6">
+    <div v-else-if="jobOrder" class="m-6 flex flex-col gap-6">
         <!-- Back + Title -->
         <div class="flex items-center justify-between">
             <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="ghost"
@@ -58,7 +58,7 @@ const printJobOrder = () => {
                 @click="printJobOrder" />
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
             <h1 class="text-2xl font-semibold text-highlighted">JO-{{ jobOrder.jo_number }}</h1>
             <UBadge :color="jobStatusColor" variant="soft" size="lg" class="font-semibold">{{
                 jobOrder.overall_job_status }}</UBadge>
@@ -67,7 +67,7 @@ const printJobOrder = () => {
         </div>
 
         <!-- Summary -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-6">
             <div class="border border-default bg-default rounded-md p-4">
                 <p class="text-sm text-muted uppercase font-semibold">Total Due</p>
                 <p class="text-2xl font-bold text-highlighted mt-1">{{ formatCurrency(jobOrder.total_due) }}</p>
@@ -90,7 +90,7 @@ const printJobOrder = () => {
         <!-- Customer Information -->
         <section>
             <h2 class="text-lg font-semibold text-highlighted mb-3">Customer Information</h2>
-            <div class="border border-default rounded-md p-4 grid grid-cols-3 gap-4">
+            <div class="border border-default rounded-md p-4 grid grid-cols-3 gap-6">
                 <div>
                     <p class="text-sm text-muted">Name</p>
                     <p class="text-base text-highlighted">{{ jobOrder.customer_name }}</p>

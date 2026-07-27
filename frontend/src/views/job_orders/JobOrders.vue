@@ -186,7 +186,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
 
 <template>
     <!-- Operation KPI's -->
-    <section v-if="authStore.isLoggedIn" class="grid grid-cols-4 gap-4">
+    <section v-if="authStore.isLoggedIn" class="m-6 grid grid-cols-4 gap-6">
         <div @click="setFilter('overdue')"
             class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
             :class="activeFilter === 'overdue'
@@ -245,7 +245,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
         </div>
     </section>
     <!-- Controls -->
-    <section class="mt-4 flex gap-4">
+    <section class="mx-6 mt-6 flex gap-6">
         <UInput size="lg" class="flex-1" v-model="joNumberSearch"
             placeholder="Search by customer name or JO Number..." />
         <USelect size="lg" class="w-50" v-model="paymentStatus" :items="paymentStatusOptions"
@@ -256,14 +256,14 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             @click="clearFilters" />
         <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner" label="Add Job Order" color="primary" variant="solid" />
     </section>
-    <section class="mt-4 border border-default rounded-md">
+    <section class="mx-6 mt-6 border border-default rounded-md">
         <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()" :ui="{
             th: 'text-muted font-semibold uppercase',
             td: 'text-base text-highlighted',
             tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
         }">
             <template #expanded="{ row }">
-                <div class="p-2 flex flex-col gap-4">
+                <div class="p-2 flex flex-col gap-6">
                     <!-- Job Items -->
                     <div>
                         <p class="text-sm font-semibold text-muted uppercase mb-2">
@@ -342,7 +342,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             </template>
         </UTable>
     </section>
-    <section class="mt-4 flex items-center justify-between">
+    <section class="mx-6 my-6 flex items-center justify-between">
         <p class="text-muted text-sm">
             Showing {{ job_orders.length ? currentOffset + 1 : 0 }}–{{ Math.min(currentOffset + rows, totalRecords) }}
             of {{ totalRecords }}

@@ -52,7 +52,7 @@ const columns: TableColumn<VoidedJobs>[] = [
 </script>
 
 <template>
-    <section class="border border-default rounded-md">
+    <section class="m-6 border border-default rounded-md">
         <UTable :data="data" :columns="columns" :loading="loading" :ui="{
             th: 'text-muted font-semibold uppercase',
             td: 'text-base text-highlighted',

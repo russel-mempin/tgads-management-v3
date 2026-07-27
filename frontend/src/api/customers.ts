@@ -6,6 +6,6 @@ export const getCustomerNames = async() => {
 }
 
 export const getCustomerInfo = async(name: string) => {
-    const res = await http.get(`/customer/${name}`)
+    const res = await http.get(`/customers/${name}`)
     return res.data
 }
