@@ -3,5 +3,5 @@ export interface Customer {
     address: string
     contact_no: string
     email: string
-    id: string
+    id?: string
 }

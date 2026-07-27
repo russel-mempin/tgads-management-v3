@@ -12,6 +12,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
+    JobItemForm: typeof import('./src/components/JobItemForm.vue')['default']
+    JobItemTable: typeof import('./src/components/JobItemTable.vue')['default']
     JobOrderList: typeof import('./src/components/JobOrderList.vue')['default']
     JobOrderTable: typeof import('./src/components/JobOrderTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
@@ -30,6 +32,7 @@ declare module 'vue' {
     UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     UInputMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/InputMenu.vue')['default']
     UMain: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Main.vue')['default']
+    UModal: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
     USelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
