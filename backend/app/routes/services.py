@@ -1,12 +1,29 @@
-from fastapi import APIRouter, Query, Depends
-from typing import Annotated
-from sqlmodel import Session
-from app.database import get_session
-from app.crud.service import get_all_services, get_all_extras, create_service, update_service, archive_service, create_extra, update_extra, archive_extra
-from app.schemas.service import ServicePublic, ServiceCreate, ServiceUpdate, ExtraCreate, ExtraPublic
-from app.models import ExtraService, User
-from app.services.dependencies import get_current_active_user
 import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
+from sqlmodel import Session
+
+from app.crud.service import (
+    archive_extra,
+    archive_service,
+    create_extra,
+    create_service,
+    get_all_extras,
+    get_all_services,
+    update_extra,
+    update_service,
+)
+from app.database import get_session
+from app.models import ExtraService, User
+from app.schemas.service import (
+    ExtraCreate,
+    ExtraPublic,
+    ServiceCreate,
+    ServicePublic,
+    ServiceUpdate,
+)
+from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/services", tags=["services"], dependencies=[Depends(get_current_active_user)])
 

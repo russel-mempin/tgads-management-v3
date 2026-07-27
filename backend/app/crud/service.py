@@ -1,9 +1,15 @@
-from sqlmodel import Session, select
-from app.models import Service, ExtraService, AuditLog
-from app.schemas.service import ServiceCreate, ServiceUpdate, ExtraCreate
 import uuid
+
 from fastapi import HTTPException
 from sqlalchemy import func
+from sqlmodel import Session, select
+
+from app.models import AuditLog, ExtraService, Service
+from app.schemas.service import (
+    ExtraCreate,
+    ServiceCreate,
+    ServiceUpdate,
+)
 
 
 def get_all_services(
