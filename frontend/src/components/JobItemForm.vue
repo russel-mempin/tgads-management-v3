@@ -4,10 +4,11 @@ import { getAllServices } from '@/api/services';
 import type { Service } from '@/types/service';
 
 // Data variables
-const selectedService = ref('')
-const selectedOption = ref('')
+const selectedService = ref('Tarpaulin')
+const selectedOption = ref('Regular')
 const width = ref(0)
 const height = ref(0)
+const unit = ref('ft')
 const quantity = ref(0)
 
 
@@ -22,6 +23,7 @@ const applicableOptions = computed(() =>
 const isAreaBased = computed(() =>
   selectedServiceData.value?.pricing_strategy === 'Area'
 )
+const unitOptions = ["ft.", "in.", "cm.", "mm.", "meter"]
 const isOpen = defineModel<boolean>('isOpen', { required: true })
 
 // Functions
@@ -58,7 +60,7 @@ onMounted(async () => {
               <UInputNumber v-model="height" value-key="id" label-key="name" :items="applicableOptions" />
             </UFormField>
             <UFormField label="Unit" required>
-              <UInputMenu v-model="selectedService" value-key="id" label-key="name" :items="serviceList" />
+              <UInputMenu v-model="unit" value-key="id" label-key="name" :items="unitOptions" />
             </UFormField>
             <UFormField label="Quantity" required>
               <UInputNumber v-model="quantity" value-key="id" label-key="name" :items="applicableOptions" />
