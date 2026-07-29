@@ -1,21 +1,24 @@
-from sqlmodel import Session, select, col
-from sqlalchemy import or_, cast, String, func
-from app.models import (
-    JobOrder,
-    JobItem,
-    Service,
-    Customer,
-    ExtraService,
-    Payment,
-    ClaimingHistory,
-    AuditLog,
-)
-from fastapi import HTTPException
-from app.utils.utils import compute_unit_price
-from app.schemas.job_order import JobOrderCreate
-from app.enums import SizeUnit, PaymentStatus, JobStatus
 import uuid
 from datetime import datetime, timedelta, timezone
+
+from fastapi import HTTPException
+from sqlalchemy import String, cast, func, or_
+from sqlmodel import Session, col, select
+
+from app.enums import JobStatus, PaymentStatus, SizeUnit
+from app.models import (
+    AuditLog,
+    ClaimingHistory,
+    Customer,
+    ExtraService,
+    JobItem,
+    JobOrder,
+    Payment,
+    Service,
+    ServiceOption,
+)
+from app.schemas.job_order import JobOrderCreate
+from app.utils.utils import compute_unit_price
 
 
 def get_all_job_orders(
@@ -86,10 +89,12 @@ def get_job_order_count(
 
     return db.exec(query).one()
 
+
 def get_job_order_for_review(db: Session):
     return list(db.exec(
         select(JobOrder).where(JobOrder.for_review)
     ).all())
+
 
 def get_job_order(db: Session, jo_number: int) -> JobOrder:
     job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
@@ -102,16 +107,23 @@ def get_job_order(db: Session, jo_number: int) -> JobOrder:
 
 
 def get_price(
-    db: Session, height: float, width: float, service_name: str, size_unit: SizeUnit
+    db: Session, height: float | None, width: float | None, service_id: uuid.UUID, option: uuid.UUID, size_unit: SizeUnit, quantity: int
 ) -> float:
     service = db.exec(
-        select(Service).where(Service.name == service_name)
+        select(Service).where(Service.id == service_id)
     ).first()
 
     if service is None:
-        raise HTTPException(status_code=404, detail="Service type not found")
+        raise HTTPException(status_code=404, detail="Service not found")
 
-    return compute_unit_price(height, width, service, size_unit)
+    service_option = db.exec(
+        select(ServiceOption).where(ServiceOption.id == option)
+    ).first()
+
+    if service_option is None:
+        raise HTTPException(status_code=404, detail="Service option not found")
+
+    return compute_unit_price(height, width, service, service_option, size_unit, quantity)
 
 
 def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UUID):

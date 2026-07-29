@@ -1,11 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from sqlmodel import Session, select
-from app.enums import SizeUnit
-from app.models import User
 
-if TYPE_CHECKING:
-    from app.models import Service, JobOrder
+from sqlmodel import Session, select
+
+from app.enums import PriceUnit, PricingStrategy, SizeUnit
+from app.models import Service, ServiceOption, User
+
+PRICE_UNIT_TO_SIZE_UNIT = {
+    PriceUnit.SQIN: SizeUnit.INCHES,
+    PriceUnit.SQFT: SizeUnit.FEET,
+    PriceUnit.SQM: SizeUnit.METER,
+}
 
 def to_float(value: str) -> float:
     if not value:
@@ -15,6 +19,7 @@ def to_float(value: str) -> float:
         return float(cleaned)
     except ValueError:
         return 0.0
+   
     
 def to_int(v: str) -> int:
     try:
@@ -36,33 +41,61 @@ def get_system_admin(session: Session) -> User:
     return sysadmin
     
     
-def compute_unit_price(height: float, width: float, service_type: Service, size_unit: SizeUnit) -> float:
+def compute_unit_price(height: float, width: float, service_type: Service, option: ServiceOption, size_unit: SizeUnit, quantity: int) -> float:
 	if service_type is None:
-		return 0.0
+		raise ValueError("Service type cannot be blank.")
+	if option is None:
+		raise ValueError("Service option/variant cannot be blank.")
+	if quantity is None:
+		raise ValueError("Quantity cannot be blank.")
 
-	area_in2 = 0.0
+	if service_type.pricing_strategy == PricingStrategy.AREA:
+		if height is None or width is None or size_unit is None:
+			raise ValueError("Dimension data cannot be incomplete.")
+		
+		# Convert to square inches first as base unit
+		if size_unit == SizeUnit.INCHES:
+			area_in2 = height * width
+		elif size_unit == SizeUnit.FEET:
+			area_in2 = (height * 12) * (width * 12)
+		elif size_unit == SizeUnit.METER:
+			area_in2 = (height * width) / 0.00064516
+		else:
+			raise ValueError(f"Unsupported size unit: {size_unit}")
 
-	if size_unit == SizeUnit.INCHES:
-		area_in2 = height * width
-	elif size_unit == SizeUnit.FEET:
-		area_in2 = (height * 12) * (width * 12)
-	elif size_unit == SizeUnit.CENTIMETER:
-		area_in2 = (height * width) / 6.4516
-	elif size_unit == SizeUnit.MILLIMETER:
-		area_in2 = (height * width) / 645.16
-
-	areas = {
-		"sqin": area_in2,
-		"sqft": area_in2 / 144,
-		"sqm": area_in2 / 1550.0031,
-	}
-
-	if not service_type.is_area_based:
-		return service_type.price
-
-	unit_key = service_type.unit.strip().rstrip(".")  # "sqft." → "sqft"
-
-	if unit_key not in areas:
-		return 0.0
-
-	return areas[unit_key] * service_type.price
+		# Convert to the unit the service needs for pricing
+		area_conversions = {
+            PriceUnit.SQIN: area_in2,
+            PriceUnit.SQFT: area_in2 / 144,
+            PriceUnit.SQM: area_in2 / 1550.0031,
+        }
+  
+		needed_unit = service_type.unit
+		if needed_unit not in area_conversions:
+			raise ValueError(f"Unsupported price unit: {needed_unit}")
+		area = area_conversions[needed_unit]
+		consumption = area * quantity
+  
+		# Determine tier
+		tiers = sorted(
+			[t for t in option.price_tiers if t.min_threshold is not None],
+			key=lambda t: t.min_threshold
+		)
+		print(f"consumption: {consumption}")
+		applicable_tier = None
+		for tier in tiers:
+			if tier.max_threshold is None:
+				if consumption >= tier.min_threshold:
+					applicable_tier = tier
+					break
+			else:
+				if tier.min_threshold <= consumption < tier.max_threshold:
+					applicable_tier = tier
+					break
+		if applicable_tier:
+			rate = applicable_tier.rate
+		else:
+			rate = option.base_rate
+		return area * rate
+	else:
+		return option.base_rate * quantity

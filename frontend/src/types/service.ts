@@ -1,5 +1,5 @@
 interface ServicePriceTier {
-	min_treshold: number
+	min_threshold: number
 	max_threshold: number
 	rate: number
 }

@@ -1,32 +1,34 @@
-from fastapi import APIRouter, Query, Depends
-from app.schemas.job_order import JobOrderPublic
+import uuid
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
-from app.database import get_session
+
 from app.crud.job_order import (
-    get_all_job_orders,
-    get_job_order_for_review,
-    get_job_order,
-    get_price,
-    create_job_order,
     archive_job_order,
-    update_job_order,
-    get_job_order_count,
+    create_job_order,
+    get_all_job_orders,
     get_business_kpis,
-    get_operation_kpis,
-    get_unpaid_job_orders,
-    get_overdue_job_orders,
+    get_job_order,
+    get_job_order_count,
+    get_job_order_for_review,
+    get_jobs_due_today,
+    get_jobs_in_progress,
+    get_jobs_ready_for_pickup,
     get_jobs_with_outstanding_balance,
     get_jobs_with_payments_this_week,
+    get_operation_kpis,
+    get_overdue_job_orders,
     get_overdue_jobs,
-    get_jobs_in_progress,
-    get_jobs_due_today,
-    get_jobs_ready_for_pickup,
+    get_price,
+    get_unpaid_job_orders,
+    update_job_order,
 )
-from app.schemas.job_order import JobOrderCreate
-from app.services.dependencies import get_current_active_user
+from app.database import get_session
+from app.enums import JobStatus, PaymentStatus, SizeUnit, UserRoles
 from app.models import User
-from app.enums import UserRoles, SizeUnit, PaymentStatus, JobStatus
+from app.schemas.job_order import JobOrderCreate, JobOrderPublic
+from app.services.dependencies import get_current_active_user
 
 router = APIRouter(
     prefix="/job-orders",
@@ -110,14 +112,16 @@ def read_kpis(
 
 @router.get("/compute-unit-price", response_model=float)
 def compute_unit_price(
-    height: float,
-    width: float,
-    service_name: str,
-    size_unit: SizeUnit,
+    height: float | None,
+    width: float | None,
+    service_id: uuid.UUID,
+    option: uuid.UUID,
+    size_unit: SizeUnit | None,
+    quantity: int,
     db: Session = Depends(get_session),
 ):
     return get_price(
-        db, height=height, width=width, service_name=service_name, size_unit=size_unit
+        db, height=height, width=width, service_id=service_id, option=option, size_unit=size_unit, quantity=quantity
     )
     
     
