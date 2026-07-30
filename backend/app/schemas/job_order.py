@@ -1,9 +1,19 @@
-from app.models import JobItemBase, PaymentBase, ClaimingHistoryBase, JobOrderBase
-from app.enums import PaymentStatus
-from sqlmodel import Field, SQLModel
 import uuid
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
+from sqlmodel import Field, SQLModel
+
+from app.enums import PaymentStatus, PriceUnit
+from app.models import ClaimingHistoryBase, JobItemBase, JobOrderBase, PaymentBase
+
+
+class PricingData(SQLModel):
+    consumption: float
+    consumption_unit: PriceUnit
+    rate: float
+    unit_price: float
+
 
 class JobItemExtraPublic(SQLModel):
     id: uuid.UUID

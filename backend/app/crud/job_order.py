@@ -17,7 +17,7 @@ from app.models import (
     Service,
     ServiceOption,
 )
-from app.schemas.job_order import JobOrderCreate
+from app.schemas.job_order import JobOrderCreate, PricingData
 from app.utils.utils import compute_unit_price
 
 
@@ -107,8 +107,8 @@ def get_job_order(db: Session, jo_number: int) -> JobOrder:
 
 
 def get_price(
-    db: Session, height: float | None, width: float | None, service_id: uuid.UUID, option: uuid.UUID, size_unit: SizeUnit, quantity: int
-) -> float:
+    db: Session, height: float | None, width: float | None, service_id: uuid.UUID, option_id: uuid.UUID, size_unit: SizeUnit, quantity: int
+) -> PricingData:
     service = db.exec(
         select(Service).where(Service.id == service_id)
     ).first()
@@ -117,7 +117,7 @@ def get_price(
         raise HTTPException(status_code=404, detail="Service not found")
 
     service_option = db.exec(
-        select(ServiceOption).where(ServiceOption.id == option)
+        select(ServiceOption).where(ServiceOption.id == option_id)
     ).first()
 
     if service_option is None:

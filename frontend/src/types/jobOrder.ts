@@ -1,3 +1,10 @@
+export interface PricingData {
+  consumption: number
+  consumption_unit: string
+  rate: number
+  unit_price: number
+}
+
 interface JobItemExtra {
   id: string
   extra_service_id: string

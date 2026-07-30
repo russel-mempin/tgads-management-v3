@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 from sqlmodel import Session, select
 
 from app.enums import PriceUnit, PricingStrategy, SizeUnit
 from app.models import Service, ServiceOption, User
+from app.schemas.job_order import PricingData
 
 PRICE_UNIT_TO_SIZE_UNIT = {
     PriceUnit.SQIN: SizeUnit.INCHES,
     PriceUnit.SQFT: SizeUnit.FEET,
     PriceUnit.SQM: SizeUnit.METER,
 }
+
+MANILA = ZoneInfo("Asia/Manila")
 
 def to_float(value: str) -> float:
     if not value:
@@ -28,6 +34,20 @@ def to_int(v: str) -> int:
         return 0
     
 
+def to_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=MANILA)
+
+    return dt.astimezone(UTC)
+
+
+def to_local(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt
+
+    return dt.astimezone(MANILA).replace(tzinfo=None)
+
+
 def get_system_admin(session: Session) -> User:
     sysadmin = session.exec(
 		select(User).where(User.username == "system.admin")
@@ -41,7 +61,7 @@ def get_system_admin(session: Session) -> User:
     return sysadmin
     
     
-def compute_unit_price(height: float, width: float, service_type: Service, option: ServiceOption, size_unit: SizeUnit, quantity: int) -> float:
+def compute_unit_price(height: float, width: float, service_type: Service, option: ServiceOption, size_unit: SizeUnit, quantity: int) -> PricingData:
 	if service_type is None:
 		raise ValueError("Service type cannot be blank.")
 	if option is None:
@@ -81,7 +101,6 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 			[t for t in option.price_tiers if t.min_threshold is not None],
 			key=lambda t: t.min_threshold
 		)
-		print(f"consumption: {consumption}")
 		applicable_tier = None
 		for tier in tiers:
 			if tier.max_threshold is None:
@@ -96,6 +115,6 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 			rate = applicable_tier.rate
 		else:
 			rate = option.base_rate
-		return area * rate
+		return PricingData(consumption=consumption, consumption_unit=service_type.unit, rate=rate, unit_price=area * rate)
 	else:
-		return option.base_rate * quantity
+		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate * quantity)

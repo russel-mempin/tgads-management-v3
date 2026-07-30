@@ -8,8 +8,20 @@ export const formatCurrency = (value: number | undefined) => {
     .replace('₱', '₱ ')
 }
 
-export const nowInManila = () => {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
+export function nowForInput(): string {
+  const date = new Date()
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 16)
+}
+
+export function utcToInput(value: string): string {
+  const date = new Date(value)
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 16)
+}
+
+export function inputToUtc(value: string): string {
+  return new Date(value).toISOString()
 }
 
 export const formatDate = (date: string | Date | undefined) => {

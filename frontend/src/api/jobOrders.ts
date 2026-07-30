@@ -35,3 +35,18 @@ export async function getForReview() {
 	const res = await http.get('/job-orders/for-review')
 	return res.data
 }
+
+export const getUnitPrice = async (params: {
+  height?: number
+  width?: number
+  service_id: string
+  option_id: string
+  size_unit?: string
+  quantity: number
+}) => {
+  const response = await http.get('/job-orders/compute-unit-price', {
+    params
+  })
+
+  return response.data
+}

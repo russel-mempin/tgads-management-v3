@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import type { JobOrderCreate } from '@/types/jobOrder'
+import { nowForInput } from '@/utils/formatters'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -20,7 +21,7 @@ const claiming_history = ref<any[]>([])
 
 // Input variables
 const joNumber = ref(0)
-const dateReceived = ref(new Date().toISOString().slice(0, 16))
+const dateReceived = ref(nowForInput())
 const customerNameToSearch = ref('')
 const customerInfo = ref<Customer>({
     name: '',

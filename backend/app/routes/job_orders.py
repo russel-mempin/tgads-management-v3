@@ -27,7 +27,7 @@ from app.crud.job_order import (
 from app.database import get_session
 from app.enums import JobStatus, PaymentStatus, SizeUnit, UserRoles
 from app.models import User
-from app.schemas.job_order import JobOrderCreate, JobOrderPublic
+from app.schemas.job_order import JobOrderCreate, JobOrderPublic, PricingData
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(
@@ -110,18 +110,18 @@ def read_kpis(
     return operational
 
 
-@router.get("/compute-unit-price", response_model=float)
-def compute_unit_price(
+@router.get("/compute-unit-price", response_model=PricingData)
+def compute_unit_price_route(
     height: float | None,
     width: float | None,
     service_id: uuid.UUID,
-    option: uuid.UUID,
+    option_id: uuid.UUID,
     size_unit: SizeUnit | None,
     quantity: int,
     db: Session = Depends(get_session),
 ):
     return get_price(
-        db, height=height, width=width, service_id=service_id, option=option, size_unit=size_unit, quantity=quantity
+        db, height=height, width=width, service_id=service_id, option_id=option_id, size_unit=size_unit, quantity=quantity
     )
     
     
