@@ -15,11 +15,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    addJobItem: [item: JobItemCreate]
-    removeJobItem: [item_id: string]
+  addJobItem: [item: JobItemCreate]
+  updateJobItem: [item: JobItemCreate]
+  removeJobItem: [item_id: string]
 }>()
 
 // UI Variables
+const itemPendingEdit = ref<JobItemCreate | null>(null)
 const itemPendingDelete = ref<JobItemCreate | null>(null)
 const isDeleteConfirmOpen = ref(false)
 
@@ -31,9 +33,15 @@ const generateItemId = (serviceAbbreviation: string): string => {
     return `${props.joNumber}-${serviceAbbreviation}-${existingCount + 1}`
 }
 
-const handleAddJobItem = (item: Omit<JobItemCreate, 'item_id'>) => {
-    const item_id = generateItemId(item.service_abbreviation_snapshot)
-    emit('addJobItem', { ...item, item_id } satisfies JobItemCreate)
+const handleAddOrUpdateJobItem = (item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }) => {
+    if (item.item_id) {
+        // Editing an existing item — item_id already present
+        emit('updateJobItem', item as JobItemCreate)
+    } else {
+        const item_id = generateItemId(item.service_abbreviation_snapshot)
+        emit('addJobItem', { ...item, item_id } satisfies JobItemCreate)
+    }
+    itemPendingEdit.value = null
 }
 
 // UI Functions
@@ -45,6 +53,11 @@ const hasExpandableContent = (item: JobItemCreate): boolean => {
         !!item.extra_charge ||
         !!item.discount
     )
+}
+
+const openEditForm = (item: JobItemCreate) => {
+    itemPendingEdit.value = item
+    isOpen.value = true
 }
 
 const requestRemoveJobItem = (item: JobItemCreate) => {
@@ -130,8 +143,9 @@ const columns: TableColumn<JobItemCreate>[] = [
                     variant: 'ghost',
                     icon: 'i-lucide-square-pen',
                     size: 'md',
-                    onClick: (event: Event) => {
-                        console.log("Hi")
+                    onClick: (e: Event) => {
+                        e.stopPropagation()
+                        openEditForm(row.original)
                     }
                 }),
                 h(UButton, {
@@ -163,7 +177,7 @@ const columns: TableColumn<JobItemCreate>[] = [
             </div>
         </template>
     </UModal>
-    <JobItemForm v-model:isOpen="isOpen" @save="handleAddJobItem" />
+    <JobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">

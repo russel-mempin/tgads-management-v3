@@ -31,6 +31,12 @@ export default defineConfig({
             placeholder: 'text-slate-500 dark:text-slate-400'
           }
         },
+        table: {
+          slots: {
+            th: 'text-muted font-semibold uppercase text-xs tracking-wide',
+            td: 'text-highlighted'
+          }
+        },
         navigationMenu: {
           variants: {
             active: {

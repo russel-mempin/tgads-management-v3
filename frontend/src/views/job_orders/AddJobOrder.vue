@@ -18,7 +18,7 @@ const jobItems = ref<JobItemCreate[]>([])
 const payments = ref<any[]>([])
 const claiming_history = ref<any[]>([])
 const totalDue = computed(() =>
-  jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
+    jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
 )
 
 
@@ -176,7 +176,11 @@ const handleSave = (payload: any) => {
     </Transition>
 
     <!-- Job Items -->
-    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)" @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" />
+    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)"
+        @update-job-item="(updated) => {
+            const index = jobItems.findIndex(i => i.item_id === updated.item_id)
+            if (index !== -1) jobItems[index] = updated
+        }" @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" />
 
     <!-- Payments -->
     <div class="bg-default border border-default rounded-md p-6 m-8">

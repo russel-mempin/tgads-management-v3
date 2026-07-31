@@ -4,7 +4,15 @@ import { getAllServices, getAllExtras } from '@/api/services';
 import { getUnitPrice } from '@/api/jobOrders';
 import type { Service, Extra } from '@/types/service';
 import type { JobItemCreate, JobItemExtra, PricingData } from '@/types/jobOrder';
-import { nowForInput } from '@/utils/formatters';
+import { nowForInput, utcToInput } from '@/utils/formatters';
+
+const props = defineProps<{
+  editingItem?: JobItemCreate | null
+}>()
+
+const emit = defineEmits<{
+  save: [item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }]
+}>()
 
 interface ExtraLineItem {
   extraId: string
@@ -28,10 +36,6 @@ const getInitialState = () => {
     discount: 0,
   }
 }
-
-const emit = defineEmits<{
-  save: [item: Omit<JobItemCreate, 'item_id'>]
-}>()
 
 // Data variables
 const initial = getInitialState()
@@ -121,11 +125,33 @@ watch([width, height, quantity, selectedService, selectedOption, unit], () => {
     })
   }, 400)
 })
+watch(() => props.editingItem, (item) => {
+  if (item) {
+    selectedService.value = item.service_id
+    selectedOption.value = item.option_id
+    extras.value = item.extras.map(e => ({ extraId: e.extra_service_id, quantity: e.quantity }))
+    width.value = item.width ?? 0
+    height.value = item.height ?? 0
+    unit.value = item.size_unit ?? 'ft.'
+    quantity.value = item.quantity
+    jobStatus.value = item.job_status
+    dueDate.value = utcToInput(item.due_date.toISOString())
+    description.value = item.description
+    notes.value = item.notes
+    extraCharge.value = item.extra_charge
+    discount.value = item.discount
+  }
+  else {
+    resetForm()
+  }
+}, { immediate: true })
+
 const handleSave = () => {
   if (!selectedService.value || !selectedOption.value || !quantity.value) return
   if (isAreaBased.value && (!width.value || !height.value)) return
 
-  const payload: Omit<JobItemCreate, 'item_id'> = {
+  const payload: Omit<JobItemCreate, 'item_id'> & { item_id?: string } = {
+    item_id: props.editingItem?.item_id,
     service_id: selectedService.value,
     option_id: selectedOption.value,
     height: isAreaBased.value ? height.value : undefined,
@@ -174,7 +200,7 @@ const getExtraPrice = (extra: ExtraLineItem) => {
 </script>
 
 <template>
-  <UModal title="Add Job Item" fullscreen description="Describe the item and click add to prepare it for saving."
+  <UModal :title="editingItem ? 'Edit Job Item' : 'Add Job Item'" fullscreen description="Describe the item and click add to prepare it for saving."
     v-model:open="isOpen" :close="{
       color: 'error',
       class: 'rounded-full'
@@ -299,7 +325,8 @@ const getExtraPrice = (extra: ExtraLineItem) => {
         </div>
         <div class="flex justify-end gap-4">
           <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28" />
-          <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold" @click="handleSave" />
+          <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold"
+            @click="handleSave" />
         </div>
       </div>
     </template>
