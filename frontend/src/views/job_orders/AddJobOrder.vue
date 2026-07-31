@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
-import type { JobOrderCreate } from '@/types/jobOrder'
+import type { JobOrderCreate, JobItemCreate } from '@/types/jobOrder'
 import { nowForInput } from '@/utils/formatters'
 
 // Components
@@ -14,7 +14,7 @@ const isNewCustomer = ref(false)
 const isSaving = ref(false)
 const customerList = ref<string[]>([''])
 const showSuggestions = ref(false)
-const jobItems = ref<any[]>([])
+const jobItems = ref<JobItemCreate[]>([])
 const payments = ref<any[]>([])
 const claiming_history = ref<any[]>([])
 
@@ -172,7 +172,7 @@ const handleSave = (payload: any) => {
     </Transition>
 
     <!-- Job Items -->
-    <JobItemTable :jo-number="joNumber" :job-items="jobItems" />
+    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)" />
 
     <!-- Payments -->
     <div class="bg-default border border-default rounded-md p-6 m-8">

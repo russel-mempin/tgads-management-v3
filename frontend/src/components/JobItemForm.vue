@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { getAllServices, getAllExtras } from '@/api/services';
 import { getUnitPrice } from '@/api/jobOrders';
 import type { Service, Extra } from '@/types/service';
-import type { PricingData } from '@/types/jobOrder';
+import type { JobItemCreate, JobItemExtra, PricingData } from '@/types/jobOrder';
 import { nowForInput } from '@/utils/formatters';
 
 interface ExtraLineItem {
@@ -11,20 +11,44 @@ interface ExtraLineItem {
   quantity: number
 }
 
+const getInitialState = () => {
+  return {
+    selectedService: '',
+    selectedOption: '',
+    extras: [] as ExtraLineItem[],
+    width: 0,
+    height: 0,
+    unit: 'ft.',
+    quantity: 1,
+    jobStatus: 'Pending',
+    dueDate: nowForInput(),
+    description: '',
+    notes: '',
+    extraCharge: 0,
+    discount: 0,
+  }
+}
+
+const emit = defineEmits<{
+  save: [item: Omit<JobItemCreate, 'item_id'>]
+}>()
+
 // Data variables
-const selectedService = ref('')
-const selectedOption = ref('')
-const extras = ref<ExtraLineItem[]>([])
-const width = ref(0)
-const height = ref(0)
-const unit = ref('ft.')
-const quantity = ref(1)
-const jobStatus = ref('Pending')
-const dueDate = ref(nowForInput())
-const description = ref('')
-const notes = ref('')
-const extraCharge = ref(0)
-const discount = ref(0)
+const initial = getInitialState()
+const selectedService = ref(initial.selectedService)
+const selectedOption = ref(initial.selectedOption)
+const extras = ref(initial.extras)
+const width = ref(initial.width)
+const height = ref(initial.height)
+const unit = ref(initial.unit)
+const quantity = ref(initial.quantity)
+const jobStatus = ref(initial.jobStatus)
+const dueDate = ref(initial.dueDate)
+const description = ref(initial.description)
+const notes = ref(initial.notes)
+const extraCharge = ref(initial.extraCharge)
+const discount = ref(initial.discount)
+const pricingData = ref<PricingData>()
 
 
 // UI Variables
@@ -42,33 +66,98 @@ const isAreaBased = computed(() =>
 )
 const unitOptions = ["ft.", "in.", "cm.", "mm.", "meter"]
 const statusOptions = ["Pending", "For Layout", "For Approval", "For Printing", "For Pickup", "Released"]
-const pricingData = ref<PricingData>()
 const extraTotal = computed(() =>
   extras.value.reduce((sum, e) => sum + getExtraPrice(e), 0)
 )
-const extraChargeTotal = computed(() => 
+const extraChargeTotal = computed(() =>
   extraCharge.value * quantity.value
 )
 const subtotal = computed(() =>
   ((pricingData.value?.unit_price ?? 0) * quantity.value) + extraTotal.value + extraChargeTotal.value - discount.value
 )
+const breakdownColumns = computed(() => {
+  let cols = 3
+  if (isAreaBased.value) cols += 2
+  if (extraCharge.value != 0) cols += 1
+  return cols
+})
+let debounceTimer: ReturnType<typeof setTimeout>
 
 // Data Functions
+const resetForm = () => {
+  const fresh = getInitialState()
+  selectedService.value = fresh.selectedService
+  selectedOption.value = fresh.selectedOption
+  extras.value = fresh.extras
+  width.value = fresh.width
+  height.value = fresh.height
+  unit.value = fresh.unit
+  quantity.value = fresh.quantity
+  jobStatus.value = fresh.jobStatus
+  dueDate.value = fresh.dueDate
+  description.value = fresh.description
+  notes.value = fresh.notes
+  extraCharge.value = fresh.extraCharge
+  discount.value = fresh.discount
+  pricingData.value = undefined
+}
 onMounted(async () => {
   serviceList.value = await getAllServices()
   extraList.value = await getAllExtras()
 })
-watchEffect(async () => {
-  if (!selectedService.value || !selectedOption.value || !width.value || !height.value || !quantity.value || !unit.value) return
-  pricingData.value = await getUnitPrice({
-    height: height.value,
-    width: width.value,
+watch([width, height, quantity, selectedService, selectedOption, unit], () => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
+    if (!selectedService.value || !selectedOption.value || !quantity.value) return
+    if (isAreaBased.value && (!width.value || !height.value || !unit.value)) return
+
+    pricingData.value = await getUnitPrice({
+      height: height.value,
+      width: width.value,
+      service_id: selectedService.value,
+      option_id: selectedOption.value,
+      size_unit: unit.value,
+      quantity: quantity.value
+    })
+  }, 400)
+})
+const handleSave = () => {
+  if (!selectedService.value || !selectedOption.value || !quantity.value) return
+  if (isAreaBased.value && (!width.value || !height.value)) return
+
+  const payload: Omit<JobItemCreate, 'item_id'> = {
     service_id: selectedService.value,
     option_id: selectedOption.value,
-    size_unit: unit.value,
-    quantity: quantity.value
-  })
-})
+    height: isAreaBased.value ? height.value : undefined,
+    width: isAreaBased.value ? width.value : undefined,
+    size_unit: isAreaBased.value ? unit.value : undefined,
+    quantity: quantity.value,
+    job_status: jobStatus.value,
+    due_date: new Date(dueDate.value),
+    description: description.value,
+    notes: notes.value,
+    extras: extras.value.map((e): JobItemExtra => {
+      const extraData = extraList.value.find(x => x.id === e.extraId)
+      return {
+        extra_service_id: e.extraId,
+        quantity: e.quantity,
+        price_snapshot: extraData?.price ?? 0,
+        name_snapshot: extraData?.name ?? '',
+      }
+    }),
+    extra_charge: extraCharge.value,
+    discount: discount.value,
+    unit_price: pricingData.value?.unit_price ?? 0,
+    subtotal: subtotal.value,
+    service_name_snapshot: selectedServiceData.value?.name ?? '',
+    service_option_name_snapshot: applicableOptions.value.find(o => o.id === selectedOption.value)?.name ?? '',
+    service_abbreviation_snapshot: selectedServiceData.value?.abbreviation ?? '',
+  }
+
+  emit('save', payload)
+  resetForm()
+  isOpen.value = false
+}
 
 // UI Functions
 const addExtra = () => {
@@ -140,7 +229,7 @@ const getExtraPrice = (extra: ExtraLineItem) => {
           <UFormField label="Job Status" class="w-full">
             <UInputMenu v-model="jobStatus" value-key="id" label-key="name" :items="statusOptions" class="w-full" />
           </UFormField>
-          <UFormField label="Date Received" required>
+          <UFormField label="Due Date" required>
             <UInput v-model="dueDate" type="datetime-local" class="w-full" />
           </UFormField>
           <UFormField label="Description" class="w-full">
@@ -188,8 +277,9 @@ const getExtraPrice = (extra: ExtraLineItem) => {
         <div class="border border-default rounded-md">
           <p class="bg-elevated p-4 border-b border-default rounded-tl-md rounded-tr-md uppercase font-bold text-sm">
             Pricing Breakdown</p>
-          <div class="bg-muted border-b  border-default grid grid-cols-3 px-4 py-2"
-            :class="isAreaBased && 'grid-cols-5'">
+
+          <div class="bg-muted border-b border-default px-4 py-2 grid"
+            :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
             <p v-if="isAreaBased" class="uppercase text-sm">Consumption</p>
             <p v-if="isAreaBased" class="uppercase text-sm">Rate (Based on consumption)</p>
             <p class="uppercase text-sm">Unit Price</p>
@@ -197,17 +287,19 @@ const getExtraPrice = (extra: ExtraLineItem) => {
             <p class="uppercase text-sm">Extra Total</p>
             <p class="uppercase text-sm">Subtotal</p>
           </div>
-          <div class="grid grid-cols-3 p-4" :class="isAreaBased && 'grid-cols-5'">
-            <p v-if="isAreaBased">{{ `${pricingData?.consumption} ${pricingData?.consumption_unit}.` }}</p>
-            <p v-if="isAreaBased">{{ `₱ ${pricingData?.rate}` }}</p>
-            <p>{{ `₱ ${pricingData?.unit_price}` }}</p>
+
+          <div class="p-4 grid" :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
+            <p v-if="isAreaBased">{{ `${pricingData?.consumption ?? 0} ${pricingData?.consumption_unit ?? unit}.` }}</p>
+            <p v-if="isAreaBased">{{ `₱ ${pricingData?.rate ?? 0}` }}</p>
+            <p>{{ `₱ ${pricingData?.unit_price ?? 0}` }}</p>
+            <p v-if="extraCharge != 0">{{ `₱ ${extraChargeTotal}` }}</p>
             <p>{{ `₱ ${extraTotal}` }}</p>
             <p>₱ {{ subtotal }}</p>
           </div>
         </div>
         <div class="flex justify-end gap-4">
-          <UButton label="Cancel" />
-          <UButton label="Add" />
+          <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28" />
+          <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold" @click="handleSave" />
         </div>
       </div>
     </template>

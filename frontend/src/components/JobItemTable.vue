@@ -1,20 +1,34 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { JobItemCreate } from '@/types/jobOrder.ts'
+import JobItemForm from './JobItemForm.vue'
 
-// Components
-import JobItemForm from './JobItemForm.vue';
-
-// UI Variables
 const isOpen = ref(false)
 
 const props = defineProps<{
-    joNumber: number
-    jobItems: any[]
+  joNumber: number
+  jobItems: JobItemCreate[]
 }>()
+
+const emit = defineEmits<{
+  addJobItem: [item: JobItemCreate]
+}>()
+
+const generateItemId = (serviceAbbreviation: string): string => {
+  const existingCount = props.jobItems.filter(
+    item => item.item_id.includes(`-${serviceAbbreviation}-`)
+  ).length
+  return `${props.joNumber}-${serviceAbbreviation}-${existingCount + 1}`
+}
+
+const handleAddJobItem = (item: Omit<JobItemCreate, 'item_id'>) => {
+  const item_id = generateItemId(item.service_abbreviation_snapshot)
+  emit('addJobItem', { ...item, item_id } satisfies JobItemCreate)
+}
 </script>
 
 <template>
-    <JobItemForm v-model:isOpen="isOpen" />
+    <JobItemForm v-model:isOpen="isOpen" @save="handleAddJobItem" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
@@ -32,6 +46,9 @@ const props = defineProps<{
             </div>
             <p class="font-medium text-highlighted mb-1">No items yet</p>
             <p class="text-sm text-muted">Click "Add Item" to start building this job order.</p>
+        </div>
+        <div>
+            
         </div>
     </div>
 </template>

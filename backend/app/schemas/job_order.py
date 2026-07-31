@@ -10,7 +10,7 @@ from app.models import ClaimingHistoryBase, JobItemBase, JobOrderBase, PaymentBa
 
 class PricingData(SQLModel):
     consumption: float
-    consumption_unit: PriceUnit
+    consumption_unit: PriceUnit | None = None
     rate: float
     unit_price: float
 

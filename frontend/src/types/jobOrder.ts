@@ -5,12 +5,34 @@ export interface PricingData {
   unit_price: number
 }
 
-interface JobItemExtra {
-  id: string
+export interface JobItemExtra {
+  id?: string
   extra_service_id: string
   quantity: number
   price_snapshot: number
   name_snapshot: string
+}
+
+export interface JobItemCreate {
+  item_id: string
+  service_id: string
+  option_id: string
+  height?: number
+  width?: number
+  size_unit?: string
+  quantity: number
+  job_status: string
+  due_date: Date
+  description: string
+  notes: string
+  extras: JobItemExtra[]
+  extra_charge: number
+  discount: number
+  unit_price: number
+  subtotal: number
+  service_name_snapshot: string
+  service_option_name_snapshot: string
+  service_abbreviation_snapshot: string
 }
 
 export interface JobItem {
