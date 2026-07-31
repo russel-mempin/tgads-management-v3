@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import type { JobOrderCreate, JobItemCreate } from '@/types/jobOrder'
-import { nowForInput } from '@/utils/formatters'
+import { formatCurrency, nowForInput } from '@/utils/formatters'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -17,6 +17,9 @@ const showSuggestions = ref(false)
 const jobItems = ref<JobItemCreate[]>([])
 const payments = ref<any[]>([])
 const claiming_history = ref<any[]>([])
+const totalDue = computed(() =>
+  jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
+)
 
 
 // Input variables
@@ -80,6 +83,7 @@ const buildPayload = () => {
         jo_number: joNumber.value,
         date_received: dateReceived.value,
         customerInfo: customerInfo.value,
+        job_items: jobItems.value
     }
     handleSave(payload)
 }
@@ -172,7 +176,7 @@ const handleSave = (payload: any) => {
     </Transition>
 
     <!-- Job Items -->
-    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)" />
+    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)" @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" />
 
     <!-- Payments -->
     <div class="bg-default border border-default rounded-md p-6 m-8">
@@ -202,7 +206,7 @@ const handleSave = (payload: any) => {
         <div class="flex gap-8 items-center">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Total Due</p>
-                <p class="text-lg font-bold text-highlighted">₱ 99,999.00</p>
+                <p class="text-lg font-bold text-highlighted">{{ formatCurrency(totalDue) }}</p>
             </div>
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Total Paid</p>
