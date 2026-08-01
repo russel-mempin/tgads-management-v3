@@ -200,7 +200,7 @@ const getExtraPrice = (extra: ExtraLineItem) => {
 </script>
 
 <template>
-  <UModal :title="editingItem ? 'Edit Job Item' : 'Add Job Item'" fullscreen description="Describe the item and click add to prepare it for saving."
+  <UModal :title="editingItem ? 'Edit Job Item' : 'Add Job Item'" fullscreen description="Describe the item and click save to prepare it for saving."
     v-model:open="isOpen" :close="{
       color: 'error',
       class: 'rounded-full'

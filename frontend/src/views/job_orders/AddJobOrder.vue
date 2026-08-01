@@ -2,11 +2,12 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
-import type { JobOrderCreate, JobItemCreate } from '@/types/jobOrder'
+import type { JobItemCreate, Payment } from '@/types/jobOrder'
 import { formatCurrency, nowForInput } from '@/utils/formatters'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
+import PaymentTable from '@/components/PaymentTable.vue'
 
 // UI Variables
 const isWalkIn = ref(false)
@@ -15,10 +16,16 @@ const isSaving = ref(false)
 const customerList = ref<string[]>([''])
 const showSuggestions = ref(false)
 const jobItems = ref<JobItemCreate[]>([])
-const payments = ref<any[]>([])
+const payments = ref<Payment[]>([])
 const claiming_history = ref<any[]>([])
 const totalDue = computed(() =>
     jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
+)
+const totalPaid = computed(() =>
+    payments.value.reduce((sum, item) => sum + item.amount, 0)
+)
+const balance = computed(() =>
+    totalDue.value - totalPaid.value
 )
 
 
@@ -176,22 +183,22 @@ const handleSave = (payload: any) => {
     </Transition>
 
     <!-- Job Items -->
-    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)"
+    <JobItemTable 
+        :jo-number="joNumber" 
+        :job-items="jobItems" 
+        @add-job-item="(item) => jobItems.push(item)"
         @update-job-item="(updated) => {
             const index = jobItems.findIndex(i => i.item_id === updated.item_id)
             if (index !== -1) jobItems[index] = updated
-        }" @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" />
+        }" 
+        @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" 
+    />
 
     <!-- Payments -->
-    <div class="bg-default border border-default rounded-md p-6 m-8">
-        <div class="flex items-center gap-2 mb-6">
-            <UIcon name="i-lucide-philippine-peso" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-            <p class="font-semibold text-highlighted">Payments</p>
-        </div>
-        <div v-if="!payments.length" class="text-sm text-muted text-center">
-            No payments recorded yet.
-        </div>
-    </div>
+    <PaymentTable 
+        :payments="payments"
+        @add-payment="(payment: Payment) => payments.push(payment)"
+    />
 
     <!-- Claiming History -->
     <div class="bg-default border border-default rounded-md p-6 m-8">
@@ -214,11 +221,11 @@ const handleSave = (payload: any) => {
             </div>
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Total Paid</p>
-                <p class="text-lg font-bold text-highlighted">₱ 99,999.00</p>
+                <p class="text-lg font-bold text-highlighted">{{ formatCurrency(totalPaid) }}</p>
             </div>
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Balance</p>
-                <p class="text-lg font-bold text-highlighted">₱ 99,999.00</p>
+                <p class="text-lg font-bold text-highlighted">{{ formatCurrency(balance) }}</p>
             </div>
         </div>
         <div class="flex gap-8 items-center justify-end">

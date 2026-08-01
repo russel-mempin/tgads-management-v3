@@ -369,10 +369,6 @@ class JobItem(JobItemBase, table=True):
         return self.quantity - self.total_claimed
 
     @property
-    def service_name(self):
-        return self.service_name_snapshot
-
-    @property
     def is_fully_claimed(self):
         return self.remaining_on_hand == 0
 
@@ -383,6 +379,7 @@ class PaymentBase(SQLModel):
     reference_number: str | None = Field(default=None)
     amount: float = Field(default=0.0)
     notes: str | None = Field(default=None)
+    account_name_snapshot: str
 
 
 class Payment(PaymentBase, table=True):
@@ -398,9 +395,6 @@ class Payment(PaymentBase, table=True):
 
     job_order: JobOrder = Relationship(back_populates="payments")
 
-    @property
-    def account_name(self) -> str:
-        return self.account.name
 
 
 # ====================== CLAIMING HISTORY =========================

@@ -1,7 +1,9 @@
 import csv
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlmodel import Session, select
+
 from app.database import engine
 from app.models import Account, JobOrder, Payment, UnlinkedPayment
 from app.utils.utils import to_float
@@ -26,7 +28,7 @@ def parse_date(value: str) -> datetime:
 
     for fmt in ("%m/%d/%Y", "%m/%d/%y"):
         try:
-            return datetime.strptime(value, fmt).replace(tzinfo=timezone.utc)
+            return datetime.strptime(value, fmt).replace(tzinfo=UTC)
         except ValueError:
             pass
 
@@ -86,6 +88,7 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             amount=amount,
                             account_id=account.id,
                             job_order=job_order,
+                            account_name_snapshot=account.name
                         )
                     )
                     touched_job_order_ids.add(job_order.id)

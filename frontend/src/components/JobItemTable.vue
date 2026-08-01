@@ -152,7 +152,7 @@ const columns: TableColumn<JobItemCreate>[] = [
                     icon: 'i-lucide-trash-2',
                     color: 'error',
                     variant: 'ghost',
-                    size: 'sm',
+                    size: 'md',
                     onClick: (e: Event) => {
                         e.stopPropagation()
                         requestRemoveJobItem(row.original)

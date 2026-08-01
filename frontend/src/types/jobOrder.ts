@@ -35,6 +35,15 @@ export interface JobItemCreate {
   service_abbreviation_snapshot: string
 }
 
+export interface Payment {
+  date_received: Date
+  reference_number: string
+  amount: number
+  notes: string
+  account_id?: string
+  account_name_snapshot: string
+}
+
 export interface JobItem {
   item_id: string
   description: string
@@ -55,13 +64,6 @@ export interface JobItem {
   total_claimed?: number        // optional since not needed in forms
   remaining_on_hand?: number    // optional since not needed in forms
   extras: JobItemExtra[]
-}
-
-export interface Payment {
-  date_received: Date
-  account_name: string
-  amount: number
-  reference_number: string
 }
 
 export interface ClaimingHistory {
