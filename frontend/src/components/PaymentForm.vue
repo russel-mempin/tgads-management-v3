@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { nowForInput, inputToUtc } from '@/utils/formatters'
@@ -7,8 +7,12 @@ import type { AccountOption } from '@/types/account'
 import { getAccountOptions } from '@/api/accounts'
 import type { Payment } from '@/types/jobOrder'
 
+const props = defineProps<{
+  editingPayment?: Payment | null
+}>()
+
 const emit = defineEmits<{
-    addPayment: [payment: Payment]
+    save: [payment: Payment]
 }>()
 
 // UI Variables
@@ -53,26 +57,38 @@ const handleCancel = () => {
 }
 
 // Data Functions
-const onSubmit = (event: FormSubmitEvent<Schema>) => {
-    const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
-
-    const payload: Payment = {
-        date_received: new Date(inputToUtc(event.data.dateReceived)),
-        reference_number: event.data.referenceNumber,
-        amount: event.data.amount,
-        notes: event.data.notes ?? '',
-        account_id: event.data.accountName,
-        account_name_snapshot: selectedAccount?.name ?? '',
-    }
-
-    emit('addPayment', payload)
+watch(() => props.editingPayment, (payment) => {
+  if (payment) {
+    state.dateReceived = inputToUtc(payment.date_received.toISOString())
+    state.referenceNumber = payment.reference_number
+    state.amount = payment.amount
+    state.notes = payment.notes
+    state.accountName = payment.account_id ?? ''
+  } else {
     resetForm()
-    isOpen.value = false
+  }
+}, { immediate: true })
+
+const onSubmit = (event: FormSubmitEvent<Schema>) => {
+  const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
+
+  const payload: Payment = {
+    date_received: new Date(inputToUtc(event.data.dateReceived)),
+    reference_number: event.data.referenceNumber,
+    amount: event.data.amount,
+    notes: event.data.notes ?? '',
+    account_id: event.data.accountName,
+    account_name_snapshot: selectedAccount?.name ?? '',
+  }
+
+  emit('save', payload)
+  resetForm()
+  isOpen.value = false
 }
 </script>
 
 <template>
-    <UModal title="Add Payment" v-model:open="isOpen" :close="{ color: 'error', class: 'rounded-full' }"
+    <UModal :title="editingPayment ? 'Edit Payment' : 'Add Payment'" v-model:open="isOpen" :close="{ color: 'error', class: 'rounded-full' }"
         description="Enter payment data and click save to prepare it for saving.">
         <template #body>
             <UForm :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSubmit">
@@ -91,7 +107,9 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
                             currency: 'PHP',
                             currencyDisplay: 'code',
                             currencySign: 'accounting'
-                        }" />
+                        }"
+                        @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
+                        />
                 </UFormField>
                 <UFormField label="Method" name="accountName" required class="w-full">
                     <UInputMenu v-model="state.accountName" class="w-full" value-key="id" label-key="name"

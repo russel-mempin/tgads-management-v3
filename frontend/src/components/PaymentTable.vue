@@ -10,8 +10,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  addPayment: [payment: Payment]
-  removePayment: [payment: number]
+    addPayment: [payment: Payment]
+    removePayment: [referenceNumber: string]
+    updatePayment: [index: number, payment: Payment]
 }>()
 
 // UI Variables
@@ -20,7 +21,17 @@ const UButton = resolveComponent('UButton')
 const isDeleteConfirmOpen = ref(false)
 const itemPendingDelete = ref<Payment | null>(null)
 
+// Data Variables
+const itemPendingEdit = ref<Payment | null>(null)
+const itemPendingEditIndex = ref<number | null>(null)
+
 // UI Functions
+const openAddForm = () => {
+    itemPendingEdit.value = null
+    itemPendingEditIndex.value = null
+    isOpen.value = true
+}
+
 const requestRemovePayment = (item: Payment) => {
     itemPendingDelete.value = item
     isDeleteConfirmOpen.value = true
@@ -38,9 +49,21 @@ const cancelRemovePayment = () => {
     itemPendingDelete.value = null
 }
 
+const requestEditPayment = (payment: Payment, index: number) => {
+    itemPendingEdit.value = payment
+    itemPendingEditIndex.value = index
+    isOpen.value = true
+}
+
 // Data functions
-const handleAddPayment = (payment: Payment) => {
-    emit('addPayment', payment)
+const handleSave = (payment: Payment) => {
+    if (itemPendingEditIndex.value !== null) {
+        emit('updatePayment', itemPendingEditIndex.value, payment)
+    } else {
+        emit('addPayment', payment)
+    }
+    itemPendingEdit.value = null
+    itemPendingEditIndex.value = null
 }
 
 // Table Display
@@ -70,7 +93,7 @@ const columns: TableColumn<Payment>[] = [
                     size: 'md',
                     onClick: (e: Event) => {
                         e.stopPropagation()
-                        // openEditForm(row.original)
+                        requestEditPayment(row.original, row.index)
                     }
                 }),
                 h(UButton, {
@@ -102,14 +125,14 @@ const columns: TableColumn<Payment>[] = [
             </div>
         </template>
     </UModal>
-    <PaymentForm v-model:isOpen="isOpen" @add-payment="handleAddPayment" />
+    <PaymentForm v-model:isOpen="isOpen" :editing-payment="itemPendingEdit" @save="handleSave" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <p class="font-semibold text-highlighted">Payments</p>
             </div>
-            <UButton @click="() => { isOpen = true }" label="Add Payment" icon="i-lucide-plus" />
+            <UButton @click="openAddForm" label="Add Payment" icon="i-lucide-plus" />
         </div>
         <!-- Empty state -->
         <div v-if="!payments.length" class="text-sm text-muted text-center">

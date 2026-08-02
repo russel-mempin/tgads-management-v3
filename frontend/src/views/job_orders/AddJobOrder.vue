@@ -198,6 +198,8 @@ const handleSave = (payload: any) => {
     <PaymentTable 
         :payments="payments"
         @add-payment="(payment: Payment) => payments.push(payment)"
+        @remove-payment="(ref) => payments = payments.filter(p => p.reference_number !== ref)"
+        @update-payment="(index: number, payment: Payment) => payments.splice(index, 1, payment)"
     />
 
     <!-- Claiming History -->
