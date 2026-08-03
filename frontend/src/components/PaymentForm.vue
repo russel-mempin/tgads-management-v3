@@ -8,7 +8,8 @@ import { getAccountOptions } from '@/api/accounts'
 import type { Payment } from '@/types/jobOrder'
 
 const props = defineProps<{
-  editingPayment?: Payment | null
+    balance: number
+    editingPayment?: Payment | null
 }>()
 
 const emit = defineEmits<{
@@ -37,7 +38,6 @@ const getInitialState = (): Schema => ({
     notes: '',
     accountName: '',
 })
-
 const state = reactive<Schema>(getInitialState())
 
 // UI Functions
@@ -58,37 +58,38 @@ const handleCancel = () => {
 
 // Data Functions
 watch(() => props.editingPayment, (payment) => {
-  if (payment) {
-    state.dateReceived = inputToUtc(payment.date_received.toISOString())
-    state.referenceNumber = payment.reference_number
-    state.amount = payment.amount
-    state.notes = payment.notes
-    state.accountName = payment.account_id ?? ''
-  } else {
-    resetForm()
-  }
+    if (payment) {
+        state.dateReceived = inputToUtc(payment.date_received.toISOString())
+        state.referenceNumber = payment.reference_number
+        state.amount = payment.amount
+        state.notes = payment.notes
+        state.accountName = payment.account_id ?? ''
+    } else {
+        resetForm()
+    }
 }, { immediate: true })
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
-  const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
+    const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
 
-  const payload: Payment = {
-    date_received: new Date(inputToUtc(event.data.dateReceived)),
-    reference_number: event.data.referenceNumber,
-    amount: event.data.amount,
-    notes: event.data.notes ?? '',
-    account_id: event.data.accountName,
-    account_name_snapshot: selectedAccount?.name ?? '',
-  }
+    const payload: Payment = {
+        date_received: new Date(inputToUtc(event.data.dateReceived)),
+        reference_number: event.data.referenceNumber,
+        amount: event.data.amount,
+        notes: event.data.notes ?? '',
+        account_id: event.data.accountName,
+        account_name_snapshot: selectedAccount?.name ?? '',
+    }
 
-  emit('save', payload)
-  resetForm()
-  isOpen.value = false
+    emit('save', payload)
+    resetForm()
+    isOpen.value = false
 }
 </script>
 
 <template>
-    <UModal :title="editingPayment ? 'Edit Payment' : 'Add Payment'" v-model:open="isOpen" :close="{ color: 'error', class: 'rounded-full' }"
+    <UModal :title="editingPayment ? 'Edit Payment' : 'Add Payment'" v-model:open="isOpen"
+        :close="{ color: 'error', class: 'rounded-full' }"
         description="Enter payment data and click save to prepare it for saving.">
         <template #body>
             <UForm :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSubmit">
@@ -101,18 +102,16 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
                     </UFormField>
                 </div>
                 <UFormField label="Amount" name="amount" required class="w-full">
-                    <UInputNumber v-model="state.amount" class="w-full" :increment="false" :decrement="false"
+                    <UInputNumber v-model="state.amount" :max="balance" class="w-full" :increment="false" :decrement="false"
                         :format-options="{
                             style: 'currency',
                             currency: 'PHP',
                             currencyDisplay: 'code',
                             currencySign: 'accounting'
-                        }"
-                        @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
-                        />
+                        }" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                 </UFormField>
                 <UFormField label="Method" name="accountName" required class="w-full">
-                    <UInputMenu v-model="state.accountName" class="w-full" value-key="id" label-key="name"
+                    <USelect v-model="state.accountName" class="w-full" value-key="id" label-key="name"
                         :items="accountsList" />
                 </UFormField>
                 <UFormField label="Notes" name="notes" class="w-full">

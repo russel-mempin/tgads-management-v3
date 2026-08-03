@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
-import type { JobItemCreate, Payment } from '@/types/jobOrder'
+import type { JobItemCreate, Payment, ClaimingHistory } from '@/types/jobOrder'
 import { formatCurrency, nowForInput } from '@/utils/formatters'
 
 // Components
@@ -17,7 +17,7 @@ const customerList = ref<string[]>([''])
 const showSuggestions = ref(false)
 const jobItems = ref<JobItemCreate[]>([])
 const payments = ref<Payment[]>([])
-const claiming_history = ref<any[]>([])
+const claimingHistory = ref<ClaimingHistory[]>([])
 const totalDue = computed(() =>
     jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
 )
@@ -90,7 +90,9 @@ const buildPayload = () => {
         jo_number: joNumber.value,
         date_received: dateReceived.value,
         customerInfo: customerInfo.value,
-        job_items: jobItems.value
+        job_items: jobItems.value,
+        payments: payments.value,
+        claiming_history: claimingHistory.value
     }
     handleSave(payload)
 }
@@ -131,7 +133,9 @@ const handleSave = (payload: any) => {
             <UFormField label="Job Order No." required>
                 <UInput v-model="joNumber" type="number" placeholder="e.g. 19291" size="lg" class="w-full"
                     :disabled="jobItems.length > 0"
-                    :hint="jobItems.length > 0 ? 'Clear all job items to change.' : ''" />
+                    :hint="jobItems.length > 0 ? 'Clear all job items to change.' : ''" 
+                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
+                />
             </UFormField>
             <UFormField label="Date Received" required>
                 <UInput v-model="dateReceived" type="datetime-local" size="lg" class="w-full" />
@@ -151,8 +155,7 @@ const handleSave = (payload: any) => {
             <UFormField label="Name" hint="Type to search existing customers, or enter a new name." required>
                 <div class="relative">
                     <UInput v-model="customerNameToSearch" placeholder="Search or enter customer name" size="lg"
-                        class="w-full" :disabled="jobItems.length > 0" @focus="showSuggestions = true"
-                        @blur="handleBlur" />
+                        class="w-full" @focus="showSuggestions = true" @blur="handleBlur" />
                     <div v-if="showSuggestions && filteredCustomers.length"
                         class="absolute z-20 mt-1 w-full bg-default border border-default rounded-md shadow-lg max-h-48 overflow-y-auto">
                         <button v-for="name in filteredCustomers" :key="name" type="button"
@@ -195,7 +198,8 @@ const handleSave = (payload: any) => {
     />
 
     <!-- Payments -->
-    <PaymentTable 
+    <PaymentTable
+        :balance="balance"
         :payments="payments"
         @add-payment="(payment: Payment) => payments.push(payment)"
         @remove-payment="(ref) => payments = payments.filter(p => p.reference_number !== ref)"
@@ -203,15 +207,11 @@ const handleSave = (payload: any) => {
     />
 
     <!-- Claiming History -->
-    <div class="bg-default border border-default rounded-md p-6 m-8">
-        <div class="flex items-center gap-2 mb-6">
-            <UIcon name="i-lucide-package-check" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-            <p class="font-semibold text-highlighted">Claiming History</p>
-        </div>
-        <div v-if="!claiming_history.length" class="text-sm text-muted text-center">
-            No claims recorded yet.
-        </div>
-    </div>
+    <ClaimTable
+        :job-items="jobItems"
+        :claiming-history="claimingHistory"
+        @add-claim="(claim: ClaimingHistory) => claimingHistory.push(claim)"
+    />
 
     <!-- Sticky Bottom Footer with Save & Running Totals -->
     <div

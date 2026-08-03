@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ClaimForm: typeof import('./src/components/ClaimForm.vue')['default']
+    ClaimTable: typeof import('./src/components/ClaimTable.vue')['default']
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
     JobItemForm: typeof import('./src/components/JobItemForm.vue')['default']
     JobItemTable: typeof import('./src/components/JobItemTable.vue')['default']

@@ -6,6 +6,7 @@ import { formatDate, formatCurrency } from '@/utils/formatters';
 import PaymentForm from './PaymentForm.vue';
 
 const props = defineProps<{
+    balance: number
     payments: Payment[]
 }>()
 
@@ -19,9 +20,10 @@ const emit = defineEmits<{
 const isOpen = ref(false)
 const UButton = resolveComponent('UButton')
 const isDeleteConfirmOpen = ref(false)
-const itemPendingDelete = ref<Payment | null>(null)
+
 
 // Data Variables
+const itemPendingDelete = ref<Payment | null>(null)
 const itemPendingEdit = ref<Payment | null>(null)
 const itemPendingEditIndex = ref<number | null>(null)
 
@@ -125,14 +127,16 @@ const columns: TableColumn<Payment>[] = [
             </div>
         </template>
     </UModal>
-    <PaymentForm v-model:isOpen="isOpen" :editing-payment="itemPendingEdit" @save="handleSave" />
+    <PaymentForm v-model:isOpen="isOpen" :balance="balance" :editing-payment="itemPendingEdit" @save="handleSave" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
-                <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                <UIcon name="i-lucide-philippine-peso" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <p class="font-semibold text-highlighted">Payments</p>
             </div>
-            <UButton @click="openAddForm" label="Add Payment" icon="i-lucide-plus" />
+            <UTooltip text="Balance is 0.">
+                <UButton @click="openAddForm" label="Add Payment" icon="i-lucide-plus" :disabled="balance <= 0" />
+            </UTooltip>
         </div>
         <!-- Empty state -->
         <div v-if="!payments.length" class="text-sm text-muted text-center">

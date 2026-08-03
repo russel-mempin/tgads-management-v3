@@ -213,7 +213,7 @@ const getExtraPrice = (extra: ExtraLineItem) => {
             <UInputMenu v-model="selectedService" value-key="id" label-key="name" :items="serviceList" class="w-full" />
           </UFormField>
           <UFormField label="Variant" required class="w-full">
-            <UInputMenu v-model="selectedOption" value-key="id" label-key="name" :items="applicableOptions"
+            <USelect v-model="selectedOption" value-key="id" label-key="name" :items="applicableOptions"
               class="w-full" />
           </UFormField>
         </div>
@@ -225,17 +225,17 @@ const getExtraPrice = (extra: ExtraLineItem) => {
           <div v-if="isAreaBased" class="grid grid-cols-4 gap-6">
             <UFormField label="Width" required class="w-full">
               <UInputNumber v-model="width" :increment="false" :decrement="false" :step="0.1" :step-snapping="false"
-                :format-options="{ minimumFractionDigits: 1 }" class="w-full" />
+                :format-options="{ minimumFractionDigits: 1 }" class="w-full" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
             <UFormField label="Height" required class="w-full">
               <UInputNumber v-model="height" :increment="false" :decrement="false" :step="0.1" :step-snapping="false"
-                :format-options="{ minimumFractionDigits: 1 }" class="w-full" />
+                :format-options="{ minimumFractionDigits: 1 }" class="w-full" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
             <UFormField label="Unit" required class="w-full">
               <UInputMenu v-model="unit" value-key="id" label-key="name" :items="unitOptions" class="w-full" />
             </UFormField>
             <UFormField label="Quantity" required class="w-full">
-              <UInputNumber v-model="quantity" :min="1" class="w-full" />
+              <UInputNumber v-model="quantity" :min="1" class="w-full" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
           </div>
         </Transition>
@@ -246,14 +246,14 @@ const getExtraPrice = (extra: ExtraLineItem) => {
           leave-to-class="opacity-0 -translate-y-2">
           <div v-if="!isAreaBased">
             <UFormField label="Quantity" required class="w-full">
-              <UInputNumber v-model="quantity" :min="1" class="w-full" />
+              <UInputNumber v-model="quantity" :min="1" class="w-full" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
           </div>
         </Transition>
         <!-- Workflow Input -->
         <div class="grid grid-cols-2 gap-6">
           <UFormField label="Job Status" class="w-full">
-            <UInputMenu v-model="jobStatus" value-key="id" label-key="name" :items="statusOptions" class="w-full" />
+            <USelect v-model="jobStatus" value-key="id" label-key="name" :items="statusOptions" class="w-full" />
           </UFormField>
           <UFormField label="Due Date" required>
             <UInput v-model="dueDate" type="datetime-local" class="w-full" />
@@ -277,7 +277,7 @@ const getExtraPrice = (extra: ExtraLineItem) => {
           <div v-for="(extra, index) in extras" :key="index"
             class="grid grid-cols-[1fr_1fr_auto_auto] gap-4 items-end p-4 border-b border-default last:border-b-0">
             <UFormField label="Extra">
-              <UInputMenu v-model="extra.extraId" value-key="id" label-key="name" :items="extraList" class="w-full" />
+              <USelect v-model="extra.extraId" value-key="id" label-key="name" :items="extraList" class="w-full" />
             </UFormField>
             <UFormField label="Quantity">
               <UInputNumber v-model="extra.quantity" :min="1" class="w-full" />

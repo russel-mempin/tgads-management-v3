@@ -93,6 +93,7 @@ const columns: TableColumn<JobItemCreate>[] = [
     {
         accessorKey: 'quantity',
         header: 'Qty',
+        cell: ({ row }) => `${row.original.quantity} pc(s)`
     },
     {
         id: 'size',
@@ -184,7 +185,7 @@ const columns: TableColumn<JobItemCreate>[] = [
                 <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <p class="font-semibold text-highlighted">Job Items</p>
             </div>
-            <UTooltip text="Input a JO Number first." :disabled="!!joNumber">
+            <UTooltip text="Input a JO Number first.">
                 <UButton @click="() => { isOpen = true }" :disabled="!joNumber" label="Add Item" icon="i-lucide-plus" />
             </UTooltip>
         </div>

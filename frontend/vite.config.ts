@@ -18,41 +18,46 @@ export default defineConfig({
         },
         input: {
           slots: {
-            base: 'disabled:cursor-not-allowed disabled:bg-elevated disabled:cursor-not-allowed disabled:text-gray-800 placeholder:text-slate-500 dark:placeholder:text-slate-400'
-          }
+            base: 'disabled:cursor-not-allowed disabled:bg-elevated disabled:cursor-not-allowed disabled:text-gray-800 placeholder:text-slate-500 dark:placeholder:text-slate-400',
+          },
+        },
+        inputMenu: {
+          slots: {
+            item: 'data-highlighted:not-data-disabled:before:bg-primary/15',
+          },
         },
         select: {
           slots: {
-            placeholder: 'text-slate-500 dark:text-slate-400'
-          }
+            placeholder: 'text-slate-500 dark:text-slate-400',
+          },
         },
         selectMenu: {
           slots: {
-            placeholder: 'text-slate-500 dark:text-slate-400'
-          }
+            placeholder: 'text-slate-500 dark:text-slate-400',
+          },
         },
         table: {
           slots: {
             th: 'text-muted font-semibold uppercase text-xs tracking-wide',
-            td: 'text-highlighted'
-          }
+            td: 'text-highlighted',
+          },
         },
         navigationMenu: {
           variants: {
             active: {
               true: {
                 link: 'font-semibold text-primary bg-primary-50 dark:bg-primary-950/40',
-                linkLeadingIcon: 'text-primary opacity-100'
+                linkLeadingIcon: 'text-primary opacity-100',
               },
               false: {
                 link: 'text-slate-700 dark:text-slate-300',
-                linkLeadingIcon: 'text-slate-500 dark:text-slate-400'
-              }
-            }
-          }
-        }
-      }
-    })
+                linkLeadingIcon: 'text-slate-500 dark:text-slate-400',
+              },
+            },
+          },
+        },
+      },
+    }),
   ],
   resolve: {
     alias: {
@@ -65,7 +70,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
-      }
-    }
-  }
+      },
+    },
+  },
 })
