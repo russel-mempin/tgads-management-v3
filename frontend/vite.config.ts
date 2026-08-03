@@ -29,11 +29,7 @@ export default defineConfig({
         select: {
           slots: {
             placeholder: 'text-slate-500 dark:text-slate-400',
-          },
-        },
-        selectMenu: {
-          slots: {
-            placeholder: 'text-slate-500 dark:text-slate-400',
+            item: 'data-highlighted:not-data-disabled:before:bg-primary/15',
           },
         },
         table: {

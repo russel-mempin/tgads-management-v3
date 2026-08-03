@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	addClaim: [claim: ClaimingHistory]
+	removeClaim: [index: number]
 }>()
 
 // UI Variables
@@ -41,9 +42,11 @@ const cancelRemoveClaim = () => {
 	itemPendingDelete.value = null
 }
 const confirmRemoveClaim = () => {
-    if (!itemPendingDelete.value) return
-    emit('removeClaim', itemPendingDelete.value)
-
+    if (itemPendingDeleteIndex.value === null) return
+    emit('removeClaim', itemPendingDeleteIndex.value)
+    isDeleteConfirmOpen.value = false
+    itemPendingDelete.value = null
+    itemPendingDeleteIndex.value = null
 }
 
 // Data Functions
@@ -93,7 +96,7 @@ const columns: TableColumn<ClaimingHistory>[] = [
 					size: 'md',
 					onClick: (e: Event) => {
 						e.stopPropagation()
-						requestRemoveClaim(row.original)
+						requestRemoveClaim(row.original, row.index)
 					},
 				}),
 			])

@@ -211,6 +211,7 @@ const handleSave = (payload: any) => {
         :job-items="jobItems"
         :claiming-history="claimingHistory"
         @add-claim="(claim: ClaimingHistory) => claimingHistory.push(claim)"
+        @remove-claim="(index: number) => claimingHistory.splice(index, 1)"
     />
 
     <!-- Sticky Bottom Footer with Save & Running Totals -->

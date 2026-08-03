@@ -21,8 +21,8 @@ const subtitle = computed(() => {
         <div class="flex-1 flex flex-col min-h-0">
             <div
                 class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default bg-default/60 backdrop-blur-md">
-                <UButton icon="i-lucide-panel-left" color="neutral" variant="ghost"
-                    :aria-label="open ? 'Close sidebar' : 'Open sidebar'" @click="() => { open = !open }" />
+                <UButton :icon="open ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left-open'" color="neutral"
+                    variant="ghost" :aria-label="open ? 'Close sidebar' : 'Open sidebar'" @click="() => { open = !open }" />
                 <h1 class="ml-4 text-lg font-semibold">{{ route.meta.breadcrumb }}</h1>
             </div>
             <p v-if="subtitle" class="sticky top-0 z-10 bg-elevated border-b border-default text-muted py-2 px-4">
