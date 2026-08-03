@@ -212,6 +212,7 @@ const handleSave = (payload: any) => {
         :claiming-history="claimingHistory"
         @add-claim="(claim: ClaimingHistory) => claimingHistory.push(claim)"
         @remove-claim="(index: number) => claimingHistory.splice(index, 1)"
+        @update-claim="(claim: ClaimingHistory, index: number) => claimingHistory.splice(index, 1, claim)"
     />
 
     <!-- Sticky Bottom Footer with Save & Running Totals -->

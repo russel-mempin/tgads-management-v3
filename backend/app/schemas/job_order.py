@@ -24,11 +24,8 @@ class JobItemExtraPublic(SQLModel):
 
 class JobItemPublic(JobItemBase):
     id: uuid.UUID
-    unit_price: float
-    subtotal: float
     total_claimed: int
     remaining_on_hand: int
-    service_name: str
     extras: list[JobItemExtraPublic] = Field(default_factory=list)
     
 class JobItemCreate(JobItemBase):
@@ -37,7 +34,7 @@ class JobItemCreate(JobItemBase):
     
 class PaymentPublic(PaymentBase):
     account_id: uuid.UUID
-    account_name: str
+    account_name_snapshot: str
     
 class PaymentCreate(PaymentBase):
     account_name: str

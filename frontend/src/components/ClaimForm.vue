@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { JobItemCreate, ClaimingHistory } from '@/types/jobOrder';
@@ -45,6 +45,21 @@ const handleCancel = () => {
 }
 
 // Data Functions
+watch([() => props.editingClaim, isOpen], ([claim, open]) => {
+    if (open && claim) {
+        Object.assign(state, {
+            claimed_item_id: claim.claimed_item_id,
+            pcs_claimed: claim.pcs_claimed,
+            date_claimed: claim.date_claimed instanceof Date
+                ? claim.date_claimed.toISOString().slice(0, 16)
+                : String(claim.date_claimed).slice(0, 16),
+            name: claim.name,
+        })
+    } else if (!open) {
+        resetForm()
+    }
+})
+
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
 	const payload: ClaimingHistory = {
 		claimed_item_id: event.data.claimed_item_id,

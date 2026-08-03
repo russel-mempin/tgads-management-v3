@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
 	addClaim: [claim: ClaimingHistory]
 	removeClaim: [index: number]
+	updateClaim: [claim: ClaimingHistory, index: number]
 }>()
 
 // UI Variables
@@ -49,10 +50,17 @@ const confirmRemoveClaim = () => {
     itemPendingDeleteIndex.value = null
 }
 
+const requestEditClaim = (claim: ClaimingHistory, index: number) => {
+	itemPendingEdit.value = claim
+	itemPendingEditIndex.value = index
+	isOpen.value = true
+}
+
+
 // Data Functions
 const handleSave = (claim: ClaimingHistory) => {
 	if (itemPendingEditIndex.value !== null) {
-		// emit('updateClaim', itemPendingEditIndex.value, claim)
+		emit('updateClaim', claim, itemPendingEditIndex.value)
 	} else {
 		emit('addClaim', claim)
 	}
@@ -86,7 +94,7 @@ const columns: TableColumn<ClaimingHistory>[] = [
 					size: 'md',
 					onClick: (e: Event) => {
 						e.stopPropagation()
-						// requestEditPayment(row.original, row.index)
+						requestEditClaim(row.original, row.index)
 					}
 				}),
 				h(UButton, {
@@ -118,7 +126,7 @@ const columns: TableColumn<ClaimingHistory>[] = [
 			</div>
 		</template>
 	</UModal>
-	<ClaimForm v-model:isOpen="isOpen" :jobItems="jobItems" :editing-payment="itemPendingEdit" @save="handleSave" />
+	<ClaimForm v-model:isOpen="isOpen" :jobItems="jobItems" :editing-claim="itemPendingEdit" @save="handleSave" />
 	<div class="bg-default border border-default rounded-md p-6 m-8">
 		<div class="flex justify-between items-center gap-2 mb-6">
 			<div class="flex items-center gap-2">
