@@ -9,27 +9,7 @@ import { formatCurrency, nowForInput } from '@/utils/formatters'
 import JobItemTable from '@/components/JobItemTable.vue'
 import PaymentTable from '@/components/PaymentTable.vue'
 
-// UI Variables
-const isWalkIn = ref(false)
-const isNewCustomer = ref(false)
-const isSaving = ref(false)
-const customerList = ref<string[]>([''])
-const showSuggestions = ref(false)
-const jobItems = ref<JobItemCreate[]>([])
-const payments = ref<Payment[]>([])
-const claimingHistory = ref<ClaimingHistory[]>([])
-const totalDue = computed(() =>
-    jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
-)
-const totalPaid = computed(() =>
-    payments.value.reduce((sum, item) => sum + item.amount, 0)
-)
-const balance = computed(() =>
-    totalDue.value - totalPaid.value
-)
-
-
-// Input variables
+// Data variables
 const joNumber = ref(0)
 const dateReceived = ref(nowForInput())
 const customerNameToSearch = ref('')
@@ -40,6 +20,67 @@ const customerInfo = ref<Customer>({
     address: '',
     id: '',
 })
+const jobItems = ref<JobItemCreate[]>([])
+const payments = ref<Payment[]>([])
+const claimingHistory = ref<ClaimingHistory[]>([])
+
+// UI Variables
+const isWalkIn = ref(false)
+const isNewCustomer = ref(false)
+const isSaving = ref(false)
+const customerList = ref<string[]>([''])
+const showSuggestions = ref(false)
+const totalDue = computed(() =>
+    jobItems.value.reduce((sum, item) => sum + item.subtotal, 0)
+)
+const totalPaid = computed(() =>
+    payments.value.reduce((sum, item) => sum + item.amount, 0)
+)
+const balance = computed(() =>
+    totalDue.value - totalPaid.value
+)
+const hasValidJoNumber = computed(() =>
+  joNumber.value > 0
+)
+
+const hasCustomer = computed(() =>
+  customerInfo.value.name.trim() !== ''
+)
+const hasJobItems = computed(() =>
+  jobItems.value.length > 0
+)
+
+const hasValidPayments = computed(() =>
+  payments.value.every(payment => payment.amount > 0)
+)
+const hasValidClaims = computed(() =>
+  claimingHistory.value.every(claim =>
+    claim.claimed_item_id &&
+    claim.pcs_claimed > 0 &&
+    claim.date_claimed
+  )
+)
+
+const hasCustomerDetails = computed(() => {
+  if (!isNewCustomer.value) return true
+
+  return (
+    customerInfo.value.contact_no.trim() !== '' &&
+    customerInfo.value.address.trim() !== ''
+  )
+})
+const canSave = computed(() =>
+  hasValidJoNumber.value &&
+  hasCustomer.value &&
+  hasCustomerDetails.value &&
+  hasJobItems.value &&
+  hasValidPayments.value &&
+  hasValidClaims.value
+)
+
+const isSavingDisabled = computed(() =>
+  isSaving.value || !canSave.value
+)
 
 // Functions
 onMounted(async () => {
@@ -236,7 +277,7 @@ const handleSave = (payload: any) => {
             <UButton icon="i-lucide-arrow-left" color="neutral" class="w-45 font-bold" variant="outline">Back to Job
                 Orders
             </UButton>
-            <UButton class="w-45 font-bold relative" @click="buildPayload" loading-auto>
+            <UButton class="w-45 font-bold relative" @click="buildPayload" :disabled="isSavingDisabled" loading-auto>
                 <template #leading>
                     <UIcon v-if="!isSaving" name="i-lucide-save" class="absolute left-3 size-5" />
                 </template>

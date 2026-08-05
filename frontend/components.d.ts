@@ -50,5 +50,6 @@ declare module 'vue' {
     USwitch: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
     UTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
+    ZJobItemForm: typeof import('./src/components/ZJobItemForm.vue')['default']
   }
 }

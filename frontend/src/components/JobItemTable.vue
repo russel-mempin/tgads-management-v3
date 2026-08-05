@@ -2,7 +2,7 @@
 import { ref, resolveComponent, h } from 'vue'
 import type { TableColumn } from '@nuxt/ui';
 import type { JobItemCreate } from '@/types/jobOrder.ts'
-import JobItemForm from './JobItemForm.vue'
+import ZJobItemForm from './ZJobItemForm.vue'
 import { formatDate } from '@/utils/formatters.ts';
 
 const isOpen = ref(false)
@@ -178,7 +178,7 @@ const columns: TableColumn<JobItemCreate>[] = [
             </div>
         </template>
     </UModal>
-    <JobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
+    <ZJobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
