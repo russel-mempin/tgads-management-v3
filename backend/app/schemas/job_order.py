@@ -1,6 +1,4 @@
 import uuid
-from datetime import datetime
-from typing import List, Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -21,6 +19,7 @@ class JobItemExtraPublic(SQLModel):
     quantity: int
     price_snapshot: float
     name_snapshot: str
+    
 
 class JobItemPublic(JobItemBase):
     id: uuid.UUID
@@ -28,22 +27,26 @@ class JobItemPublic(JobItemBase):
     remaining_on_hand: int
     extras: list[JobItemExtraPublic] = Field(default_factory=list)
     
+    
 class JobItemCreate(JobItemBase):
-    service_name: str
-    extra_service_name: str | None = None
+    pass
+    
     
 class PaymentPublic(PaymentBase):
-    account_id: uuid.UUID
-    account_name_snapshot: str
+    id: uuid.UUID
+    
     
 class PaymentCreate(PaymentBase):
-    account_name: str
+    pass
+
 
 class ClaimPublic(ClaimingHistoryBase):
     job_item_id: uuid.UUID
     
+    
 class ClaimCreate(ClaimingHistoryBase):
     pass
+
 
 class JobOrderPublic(JobOrderBase):
     id: uuid.UUID
@@ -52,20 +55,24 @@ class JobOrderPublic(JobOrderBase):
     claims: list[ClaimPublic] = Field(default_factory=list)
     total_due: float
     total_paid: float
-    customer_name: str
+    customer_name: str | None = None
     customer_email: str | None = None
     customer_contact_no: str | None = None
     created_by_name: str | None = None
     updated_by_name: str | None = None
     
-class JobOrderCreate(SQLModel):
-    jo_number: int
-    date_received: datetime
+
+class CustomerReference(SQLModel):
+    id: uuid.UUID | None = None
+    name: str | None = None
+    address: str | None = None
+    contact_no: str | None = None
+    email: str | None = None
+
+    
+class JobOrderCreate(JobOrderBase):
     override_payment_status: PaymentStatus | None = None
-    customer_name: str | None = None
-    customer_address: str | None = None
-    customer_contact_no: str | None = None
-    customer_email: str | None = None
-    job_items: list["JobItemCreate"] = Field(default_factory=list)
-    payments: Optional[List["PaymentCreate"]] = None
-    claims: Optional[List["ClaimCreate"]] = None
+    customer_info: CustomerReference | None = None
+    job_items: list[JobItemCreate] = Field(default_factory=list)
+    payments: list[PaymentCreate] | None = None
+    claims: list[ClaimCreate] | None = None

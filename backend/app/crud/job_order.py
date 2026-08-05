@@ -7,6 +7,7 @@ from sqlmodel import Session, col, select
 
 from app.enums import JobStatus, PaymentStatus, SizeUnit
 from app.models import (
+    Account,
     AuditLog,
     ClaimingHistory,
     Customer,
@@ -91,9 +92,7 @@ def get_job_order_count(
 
 
 def get_job_order_for_review(db: Session):
-    return list(db.exec(
-        select(JobOrder).where(JobOrder.for_review)
-    ).all())
+    return list(db.exec(select(JobOrder).where(JobOrder.for_review)).all())
 
 
 def get_job_order(db: Session, jo_number: int) -> JobOrder:
@@ -107,11 +106,15 @@ def get_job_order(db: Session, jo_number: int) -> JobOrder:
 
 
 def get_price(
-    db: Session, height: float | None, width: float | None, service_id: uuid.UUID, option_id: uuid.UUID, size_unit: SizeUnit, quantity: int
+    db: Session,
+    height: float | None,
+    width: float | None,
+    service_id: uuid.UUID,
+    option_id: uuid.UUID,
+    size_unit: SizeUnit,
+    quantity: int,
 ) -> PricingData:
-    service = db.exec(
-        select(Service).where(Service.id == service_id)
-    ).first()
+    service = db.exec(select(Service).where(Service.id == service_id)).first()
 
     if service is None:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -123,7 +126,9 @@ def get_price(
     if service_option is None:
         raise HTTPException(status_code=404, detail="Service option not found")
 
-    return compute_unit_price(height, width, service, service_option, size_unit, quantity)
+    return compute_unit_price(
+        height, width, service, service_option, size_unit, quantity
+    )
 
 
 def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UUID):
@@ -136,75 +141,98 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 status_code=409,
                 detail=f"Job with JO Number {data.jo_number} already exists.",
             )
-        if not data.customer_name:
-            raise HTTPException(
-                status_code=400,
-                detail="Customer name is required.",
-            )
-        customer = db.exec(
-            select(Customer).where(Customer.name == data.customer_name)
-        ).first()
-        if not customer:
-            assert data.customer_name
-            assert data.customer_address
-            assert data.customer_contact_no
-            assert data.customer_email
+        if data.customer_info is not None:
+            if data.customer_info.id is not None:
+                # Existing customer
+                customer = db.get(Customer, data.customer_info.id)
+                if customer is None:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Customer not found."
+                    )
 
-            customer = Customer(
-                name=data.customer_name,
-                address=data.customer_address,
-                contact_no=data.customer_contact_no,
-                email=data.customer_email,
-            )
-            db.add(customer)
-            db.flush()
+            elif data.customer_info.name:
+                # New customer
+                existing = db.exec(
+                    select(Customer).where(
+                        func.lower(Customer.name) == data.customer_info.name.strip().lower()
+                    )
+                ).first()
+                if existing:
+                    customer = existing
+                else:
+                    customer = Customer(
+                        name=data.customer_info.name.strip(),
+                        address=data.customer_info.address.strip(),
+                        contact_no=data.customer_info.contact_no.strip(),
+                        email=data.customer_info.email.strip()
+                    )
+                    db.add(customer)
+                    db.flush()
+        else:
+            customer = None
+            
         job_order = JobOrder(
             jo_number=data.jo_number,
             date_received=data.date_received,
-            customer_id=customer.id,
+            customer_id=customer.id if customer else None,
             created_by_id=current_user_id,
-            updated_by_id=current_user_id,
+            updated_by_id=current_user_id
         )
         db.add(job_order)
         db.flush()
 
         for item in data.job_items:
-            service_type = db.exec(
-                select(Service).where(Service.name == item.service_name)
+            service = db.exec(
+                select(Service).where(Service.id == item.service_id)
             ).first()
-            if not service_type:
-                raise HTTPException(status_code=404, detail="Service type not found")
-            extra_type = None
-            if item.extra_service_name:
-                extra_type = db.exec(
-                    select(ExtraService).where(ExtraService.name == item.extra_service_name)
-                ).first()
-                if not extra_type:
-                    raise HTTPException(status_code=404, detail="Extra type not found")
+            if not service:
+                raise HTTPException(status_code=404, detail="Service not found.")
+            option = db.exec(
+                select(ServiceOption).where(
+                    ServiceOption.service_id == service.id,
+                    ServiceOption.id == item.option_id
+                )
+            ).first()
+            if not option:
+                raise HTTPException(status_code=404, detail="Variant not found.")
             job_item = JobItem(
-                jo_number=data.jo_number,
-                item_id=item.item_id,
                 description=item.description,
-                height=item.height,
-                width=item.width,
-                size_unit=item.size_unit,
-                quantity=item.quantity,
-                job_status=item.job_status,
-                due_date=item.due_date,
                 discount=item.discount,
-                job_order_id=job_order.id,
-                service_type_id=service_type.id,
-                extra_type_id=extra_type.id if extra_type else None,
+                due_date=item.due_date,
+                extra_charge=item.extra_charge,
+                height=item.height,
+                item_id=item.item_id,
+                job_status=item.job_status,
+                notes=item.notes,
+                service_option_id=option.id,
+                quantity=item.quantity,
+                service_abbreviation_snapshot=service.abbreviation,
+                service_id=service.id,
+                service_name_snapshot=service.name,
+                size_unit=item.size_unit,
+                subtotal=item.subtotal,
+                unit_price=item.unit_price,
+                width=item.width
             )
             job_order.job_items.append(job_item)
             db.add(job_item)
             db.flush()
         if data.payments:
             for payment in data.payments:
+                account = db.exec(
+                    select(Account).where(Account.id == payment.account_id)
+                ).first()
+                if not account:
+                    raise HTTPException(status_code=404, detail="Payment method not found.")
                 paymentItem = Payment(
                     date_received=payment.date_received,
+                    reference_number=payment.reference_number,
                     amount=payment.amount,
+                    notes=payment.notes,
                     job_order_id=job_order.id,
+                    account_name_snapshot=account.name,
+                    account_id=account.id
                 )
                 job_order.payments.append(paymentItem)
                 db.add(paymentItem)
@@ -332,7 +360,9 @@ def update_job_order(
             extra_type = None
             if item.extra_service_name:
                 extra_type = db.exec(
-                    select(ExtraService).where(ExtraService.name == item.extra_service_name)
+                    select(ExtraService).where(
+                        ExtraService.name == item.extra_service_name
+                    )
                 ).first()
                 if not extra_type:
                     raise HTTPException(status_code=404, detail="Extra type not found")
@@ -421,9 +451,7 @@ def get_business_kpis(db: Session) -> dict:
     unpaid_count = db.exec(
         select(func.count())
         .select_from(JobOrder)
-        .where(
-            JobOrder.is_active, JobOrder.payment_status == PaymentStatus.UNPAID
-        )
+        .where(JobOrder.is_active, JobOrder.payment_status == PaymentStatus.UNPAID)
     ).one()
 
     # Count of overdue jobs — job items past due_date and not released/cancelled
@@ -662,9 +690,7 @@ def get_jobs_ready_for_pickup(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder)
             .join(JobItem, col(JobOrder.id) == col(JobItem.job_order_id))
-            .where(
-                JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.is_active
-            )
+            .where(JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.is_active)
             .distinct()
         ).all()
     )

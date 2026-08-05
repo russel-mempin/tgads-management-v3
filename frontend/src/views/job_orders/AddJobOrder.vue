@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import type { JobItemCreate, Payment, ClaimingHistory } from '@/types/jobOrder'
-import { formatCurrency, nowForInput } from '@/utils/formatters'
+import { formatCurrency, nowForInput, utcToInput } from '@/utils/formatters'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -43,9 +43,6 @@ const hasValidJoNumber = computed(() =>
   joNumber.value > 0
 )
 
-const hasCustomer = computed(() =>
-  customerInfo.value.name.trim() !== ''
-)
 const hasJobItems = computed(() =>
   jobItems.value.length > 0
 )
@@ -61,18 +58,8 @@ const hasValidClaims = computed(() =>
   )
 )
 
-const hasCustomerDetails = computed(() => {
-  if (!isNewCustomer.value) return true
-
-  return (
-    customerInfo.value.contact_no.trim() !== '' &&
-    customerInfo.value.address.trim() !== ''
-  )
-})
 const canSave = computed(() =>
   hasValidJoNumber.value &&
-  hasCustomer.value &&
-  hasCustomerDetails.value &&
   hasJobItems.value &&
   hasValidPayments.value &&
   hasValidClaims.value
@@ -129,8 +116,8 @@ const handleBlur = () => {
 const buildPayload = () => {
     const payload = {
         jo_number: joNumber.value,
-        date_received: dateReceived.value,
-        customerInfo: customerInfo.value,
+        date_received: utcToInput(dateReceived.value),
+        customer_info: customerInfo.value,
         job_items: jobItems.value,
         payments: payments.value,
         claiming_history: claimingHistory.value

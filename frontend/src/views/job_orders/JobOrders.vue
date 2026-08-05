@@ -329,7 +329,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                         class="border-t border-default">
                                         <td class="p-2.5 text-highlighted">{{ formatDate(payment.date_received) }}</td>
                                         <td class="p-2.5 text-highlighted">{{ payment.reference_number }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ payment.account_name }}</td>
+                                        <td class="p-2.5 text-highlighted">{{ payment.account_name_snapshot }}</td>
                                         <td class="p-2.5 font-semibold text-highlighted">{{
                                             formatCurrency(payment.amount) }}</td>
                                     </tr>
