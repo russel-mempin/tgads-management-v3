@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import type { JobItemCreate, Payment, ClaimingHistory } from '@/types/jobOrder'
-import { formatCurrency, nowForInput, utcToInput } from '@/utils/formatters'
+import { formatCurrency, inputToUtc, nowForInput, utcToInput } from '@/utils/formatters'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -116,8 +116,8 @@ const handleBlur = () => {
 const buildPayload = () => {
     const payload = {
         jo_number: joNumber.value,
-        date_received: utcToInput(dateReceived.value),
-        customer_info: customerInfo.value,
+        date_received: inputToUtc(dateReceived.value),
+        ...(isWalkIn.value ? {} : { customer_info: customerInfo.value }),
         job_items: jobItems.value,
         payments: payments.value,
         claiming_history: claimingHistory.value

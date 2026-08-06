@@ -13,6 +13,7 @@ from app.models import (
     Customer,
     ExtraService,
     JobItem,
+    JobItemExtra,
     JobOrder,
     Payment,
     Service,
@@ -142,7 +143,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 detail=f"Job with JO Number {data.jo_number} already exists.",
             )
         if data.customer_info is not None:
-            if data.customer_info.id is not None:
+            if data.customer_info.id is not None and data.customer_info.id != "":
                 # Existing customer
                 customer = db.get(Customer, data.customer_info.id)
                 if customer is None:
@@ -151,7 +152,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                         detail="Customer not found."
                     )
 
-            elif data.customer_info.name:
+            elif data.customer_info.name and data.customer_info.name.strip():
                 # New customer
                 existing = db.exec(
                     select(Customer).where(
@@ -183,20 +184,14 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.flush()
 
         for item in data.job_items:
-            service = db.exec(
-                select(Service).where(Service.id == item.service_id)
-            ).first()
-            if not service:
-                raise HTTPException(status_code=404, detail="Service not found.")
-            option = db.exec(
-                select(ServiceOption).where(
-                    ServiceOption.service_id == service.id,
-                    ServiceOption.id == item.option_id
-                )
-            ).first()
+            option = db.get(ServiceOption, item.option_id)
             if not option:
                 raise HTTPException(status_code=404, detail="Variant not found.")
+            service = option.service
+            if not service:
+                raise HTTPException(status_code=404, detail="Service not found.")
             job_item = JobItem(
+                job_order_id=job_order.id,
                 description=item.description,
                 discount=item.discount,
                 due_date=item.due_date,
@@ -215,9 +210,23 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 unit_price=item.unit_price,
                 width=item.width
             )
-            job_order.job_items.append(job_item)
             db.add(job_item)
             db.flush()
+            if item.extras:
+                for extra in item.extras:
+                    extra_service = db.exec(
+                        select(ExtraService).where(ExtraService.id == extra.extra_service_id)
+                    ).first()
+                    if not extra_service:
+                        raise HTTPException(status_code=404, detail="Extra service not found.")
+                    extra_item = JobItemExtra(
+                        job_item_id=job_item.id,
+                        extra_service_id=extra_service.id,
+                        quantity=extra.quantity,
+                        price_snapshot=extra_service.price,
+                        name_snapshot=extra_service.name
+                    )
+                    db.add(extra_item)
         if data.payments:
             for payment in data.payments:
                 account = db.exec(
@@ -225,7 +234,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 ).first()
                 if not account:
                     raise HTTPException(status_code=404, detail="Payment method not found.")
-                paymentItem = Payment(
+                payment_item = Payment(
                     date_received=payment.date_received,
                     reference_number=payment.reference_number,
                     amount=payment.amount,
@@ -234,16 +243,16 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                     account_name_snapshot=account.name,
                     account_id=account.id
                 )
-                job_order.payments.append(paymentItem)
-                db.add(paymentItem)
-        if data.claims:
-            for claim in data.claims:
+                job_order.payments.append(payment_item)
+                db.add(payment_item)
+        if data.claiming_history:
+            for claim in data.claiming_history:
                 job_item = db.exec(
                     select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
                 ).first()
                 if not job_item:
                     raise HTTPException(status_code=404, detail="Job Item ID not found")
-                claimItem = ClaimingHistory(
+                claim_item = ClaimingHistory(
                     date_claimed=claim.date_claimed,
                     name=claim.name,
                     pcs_claimed=claim.pcs_claimed,
@@ -251,8 +260,8 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                     job_item_id=job_item.id,
                     claimed_item_id=job_item.item_id,
                 )
-                job_order.claims.append(claimItem)
-                db.add(claimItem)
+                job_order.claims.append(claim_item)
+                db.add(claim_item)
         job_order.sync_computed_fields()
         db.add(job_order)
         db.commit()

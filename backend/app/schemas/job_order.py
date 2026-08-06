@@ -20,6 +20,13 @@ class JobItemExtraPublic(SQLModel):
     price_snapshot: float
     name_snapshot: str
     
+    
+class JobItemExtraCreate(SQLModel):
+    extra_service_id: uuid.UUID
+    name_snapshot: str
+    price_snapshot: float
+    quantity: int
+    
 
 class JobItemPublic(JobItemBase):
     id: uuid.UUID
@@ -29,7 +36,7 @@ class JobItemPublic(JobItemBase):
     
     
 class JobItemCreate(JobItemBase):
-    pass
+    extras: list[JobItemExtraPublic] = Field(default_factory=list)
     
     
 class PaymentPublic(PaymentBase):
@@ -52,7 +59,7 @@ class JobOrderPublic(JobOrderBase):
     id: uuid.UUID
     job_items: list[JobItemPublic] = Field(default_factory=list)
     payments: list[PaymentPublic] = Field(default_factory=list)
-    claims: list[ClaimPublic] = Field(default_factory=list)
+    claiming_history: list[ClaimPublic] = Field(default_factory=list)
     total_due: float
     total_paid: float
     customer_name: str | None = None
@@ -75,4 +82,4 @@ class JobOrderCreate(JobOrderBase):
     customer_info: CustomerReference | None = None
     job_items: list[JobItemCreate] = Field(default_factory=list)
     payments: list[PaymentCreate] | None = None
-    claims: list[ClaimCreate] | None = None
+    claiming_history: list[ClaimCreate] | None = None
