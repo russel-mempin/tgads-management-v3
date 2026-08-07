@@ -98,7 +98,7 @@ const columns: TableColumn<JobOrder>[] = [
     {
         accessorKey: 'customer_name',
         header: 'Customer',
-        cell: ({ row }) => `${row.getValue('customer_name')}`
+        cell: ({ row }) => row.getValue('customer_name') ?? 'Walk-in'
     },
     {
         accessorKey: 'date_received',
@@ -254,7 +254,8 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             showClear />
         <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="soft"
             @click="clearFilters" />
-        <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner" label="Add Job Order" color="primary" variant="solid" />
+        <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner"
+            label="Add Job Order" color="primary" variant="solid" />
     </section>
     <section class="mx-6 mt-6 border border-default rounded-md">
         <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()" :ui="{
@@ -292,7 +293,8 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                             <span v-if="item.service_option_name_snapshot" class="text-muted"> — {{
                                                 item.service_option_name_snapshot }}</span>
                                         </td>
-                                        <td class="p-2.5 text-highlighted">{{ item.height && item.width ? `${item.height} × ${item.width} ${item.size_unit}` : '—' }}</td>
+                                        <td class="p-2.5 text-highlighted">{{ item.height && item.width ?
+                                            `${item.height} × ${item.width} ${item.size_unit}` : '—' }}</td>
                                         <td class="p-2.5 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
                                         <td class="p-2.5 text-highlighted">{{ item.quantity }}</td>
                                         <td class="p-2.5 font-semibold text-highlighted">{{

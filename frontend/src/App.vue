@@ -10,7 +10,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="{ position: 'top-center' }">
     <RouterView />
   </UApp>
 </template>

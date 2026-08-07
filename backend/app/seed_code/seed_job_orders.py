@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import event
 from sqlmodel import Session, select
 
 from app.database import engine
@@ -26,7 +25,6 @@ from app.models import (
     ServiceOption,
     VoidJobOrder,
 )
-from app.services.event_listeners import sync_job_order_on_payment_or_item_change
 from app.utils.utils import get_system_admin, to_float, to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -60,7 +58,7 @@ def parse_date(value: str) -> datetime:
 def get_or_create_customer(session: Session, customer_name: str) -> Customer:
     customer_name = customer_name.strip()
     if not customer_name:
-        return None        
+        return None
     existing = session.exec(
         select(Customer).where(Customer.name == customer_name)
     ).first()
@@ -120,7 +118,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
             for_review = row["for_review"].strip().lower()
             reason = row["for_review_reason"].strip()
 
-            # If no customer and has void choice, inserts job data to void table and determines void reason.                                
+            # If no customer and has void choice, inserts job data to void table and determines void reason.
             if void_choice:
                 existing_in_void = session.exec(
                     select(VoidJobOrder).where(VoidJobOrder.jo_number == jo_number)
@@ -175,204 +173,188 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
 def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
     item_sequence_by_jo_and_abbr: dict[tuple[int, str], int] = {}
     touched_job_order_ids: set[UUID] = set()
-    event.remove(Session, "before_flush", sync_job_order_on_payment_or_item_change)
-    try:
-        with Session(engine) as session, open(file_path, newline="") as f:
-            sysadmin = get_system_admin(session)
-            reader = csv.DictReader(f)
-            for row in reader:
-                # First, determine service and get other info needed for data validation
-                cancelled = row["cancelled"].strip().upper() == "TRUE"
-                service = session.exec(
-                    select(Service).where(Service.name == row["service"].strip())
-                ).first()
-                if not service:
-                    if not cancelled:
-                        print(
-                            f"Service for Job {row['jo_number']} {row['service']} not found. Skipping job item."
-                        )
-                    continue
-                service_requires_size = service.pricing_strategy == PricingStrategy.AREA
-
-                # If any of these are missing, skip. Because they are essential data on most cases.
-                jo_number = int(row["jo_number"].strip())
-                height = (
-                    to_float(row["height"].strip()) if service_requires_size else None
-                )
-                width = (
-                    to_float(row["width"].strip()) if service_requires_size else None
-                )
-                size_unit = (
-                    SizeUnit(row["unit"].strip())
-                    if row.get("unit", "").strip()
-                    else None
-                )
-                quantity = to_int(row["quantity"].strip())
-
-                # Getting fields from csv that have a use other than insertion
-                review_reason = (row.get("review_category") or "").strip()
-                csv_unit_price = to_float(row["unit_price"].strip())
-                extra_service = row["extra_service"].strip()
-                extra_quantity = to_int(row["extra_quantity"])
-                discount = to_float(row.get("discount", 0.0))
-                extra_charge = to_float(row.get("extra_charge", 0.0))
-
-                # Initialize variables for use
-                extra_service_price = 0.0
-                computed_unit_price = 0.0
-
-                # Dependency checks for job items, find the data that matches from the database and get it. If none, skip and report.
-                job_order = session.exec(
-                    select(JobOrder).where(JobOrder.jo_number == jo_number)
-                ).first()
-                if not job_order:
-                    if not cancelled:
-                        print(f"Job Order {jo_number} not found. Skipping job item.")
-                    continue
-
-                option = session.exec(
-                    select(ServiceOption).where(
-                        ServiceOption.service_id == service.id,
-                        ServiceOption.name == row["option"].strip(),
-                    )
-                ).first()
-                if option is None:
+    with Session(engine) as session, open(file_path, newline="") as f:
+        sysadmin = get_system_admin(session)
+        reader = csv.DictReader(f)
+        for row in reader:
+            # First, determine service and get other info needed for data validation
+            cancelled = row["cancelled"].strip().upper() == "TRUE"
+            service = session.exec(
+                select(Service).where(Service.name == row["service"].strip())
+            ).first()
+            if not service:
+                if not cancelled:
                     print(
-                        f"Service Option {row['option']} for Service {service.name} not found. Skipping job item."
+                        f"Service for Job {row['jo_number']} {row['service']} not found. Skipping job item."
                     )
-                    continue
-                extra = session.exec(
-                    select(ExtraService).where(ExtraService.name == extra_service)
-                ).first()
-                if extra:
-                    extra_service_price = extra.price
+                continue
+            service_requires_size = service.pricing_strategy == PricingStrategy.AREA
 
-                # Compute pricing and generate item_id before insertion
-                if service_requires_size:
-                    if height is None or width is None or size_unit is None:
-                        print(
-                            f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
-                        )
-                        session.add(
-                            ForReview(
-                                entity_type=ReviewEntityType.JOB_ORDER,
-                                entity_id=job_order.id,
-                                created_by_id=sysadmin.id,
-                                entity_reference=row["jo_number"].strip(),
-                                reason=f"Missing size information for job item ({service.name}). Item data has been skipped.",
-                                reason_category=ReasonCategory(
-                                    review_reason
-                                    if review_reason
-                                    else "Missing Data"
-                                ),
-                            )
-                        )
-                        continue
-                    # After validating data, compute unit price and check if the listed price is different
-                    # If the computed unit price is different, mark job for review.
-                    computed_unit_price = get_computed_unit_price_from_area(
-                        price_unit=service.unit,
-                        base_rate=option.base_rate,
-                        height=height,
-                        width=width,
-                        size_unit=size_unit,
-                    )
-                    if (computed_unit_price + extra_service_price) > csv_unit_price:
-                        session.add(
-                            ForReview(
-                                entity_type=ReviewEntityType.JOB_ORDER,
-                                entity_id=job_order.id,
-                                created_by_id=sysadmin.id,
-                                entity_reference=row["jo_number"].strip(),
-                                reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
-                                reason_category=ReasonCategory(
-                                    review_reason
-                                    if review_reason
-                                    else "Pricing Discrepancy"
-                                ),
-                            )
-                        )
-                    elif (computed_unit_price + extra_service_price) < csv_unit_price:
-                        session.add(
-                            ForReview(
-                                entity_type=ReviewEntityType.JOB_ORDER,
-                                entity_id=job_order.id,
-                                created_by_id=sysadmin.id,
-                                entity_reference=row["jo_number"].strip(),
-                                reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
-                                reason_category=ReasonCategory(
-                                    review_reason
-                                    if review_reason
-                                    else "Pricing Discrepancy"
-                                ),
-                            )
-                        )
+            # If any of these are missing, skip. Because they are essential data on most cases.
+            jo_number = int(row["jo_number"].strip())
+            height = to_float(row["height"].strip()) if service_requires_size else None
+            width = to_float(row["width"].strip()) if service_requires_size else None
+            size_unit = (
+                SizeUnit(row["unit"].strip()) if row.get("unit", "").strip() else None
+            )
+            quantity = to_int(row["quantity"].strip())
 
-                sequence = (
-                    item_sequence_by_jo_and_abbr.get(
-                        (jo_number, service.abbreviation), 0
-                    )
-                    + 1
+            # Getting fields from csv that have a use other than insertion
+            review_reason = (row.get("review_category") or "").strip()
+            csv_unit_price = to_float(row["unit_price"].strip())
+            extra_service = row["extra_service"].strip()
+            extra_quantity = to_int(row["extra_quantity"])
+            discount = to_float(row.get("discount", 0.0))
+            extra_charge = to_float(row.get("extra_charge", 0.0))
+
+            # Initialize variables for use
+            extra_service_price = 0.0
+            computed_unit_price = 0.0
+
+            # Dependency checks for job items, find the data that matches from the database and get it. If none, skip and report.
+            job_order = session.exec(
+                select(JobOrder).where(JobOrder.jo_number == jo_number)
+            ).first()
+            if not job_order:
+                if not cancelled:
+                    print(f"Job Order {jo_number} not found. Skipping job item.")
+                continue
+
+            option = session.exec(
+                select(ServiceOption).where(
+                    ServiceOption.service_id == service.id,
+                    ServiceOption.name == row["option"].strip(),
                 )
-                item_sequence_by_jo_and_abbr[(jo_number, service.abbreviation)] = (
-                    sequence
+            ).first()
+            if option is None:
+                print(
+                    f"Service Option {row['option']} for Service {service.name} not found. Skipping job item."
                 )
-                if sequence > 999:
+                continue
+            extra = session.exec(
+                select(ExtraService).where(ExtraService.name == extra_service)
+            ).first()
+            if extra:
+                extra_service_price = extra.price
+
+            # Compute pricing and generate item_id before insertion
+            if service_requires_size:
+                if height is None or width is None or size_unit is None:
                     print(
-                        f"JO {jo_number}: more than 999 of '{service.name}. Item_id may be invalid."
+                        f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
+                    )
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ORDER,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=row["jo_number"].strip(),
+                            reason=f"Missing size information for job item ({service.name}). Item data has been skipped.",
+                            reason_category=ReasonCategory(
+                                review_reason if review_reason else "Missing Data"
+                            ),
+                        )
                     )
                     continue
-                item_id = f"{jo_number}-{service.abbreviation}-{sequence}"
-
-                item = JobItem(
-                    item_id=item_id,
-                    description=row["description"].strip() or None,
+                # After validating data, compute unit price and check if the listed price is different
+                # If the computed unit price is different, mark job for review.
+                computed_unit_price = get_computed_unit_price_from_area(
+                    price_unit=service.unit,
+                    base_rate=option.base_rate,
                     height=height,
                     width=width,
                     size_unit=size_unit,
-                    quantity=quantity,
-                    job_status=JobStatus.CANCELLED if cancelled else JobStatus.RELEASED,
-                    due_date=job_order.date_received,
-                    notes=None,
-                    unit_price=csv_unit_price,
-                    discount_amount=discount,
-                    extra_charge=extra_charge,
-                    subtotal=(csv_unit_price * quantity)
-                    - discount
-                    + (extra_charge * quantity),
-                    service_name_snapshot=service.name,
-                    service_option_name_snapshot=option.name,
-                    service_abbreviation_snapshot=service.abbreviation,
-                    job_order_id=job_order.id,
-                    job_order=job_order,
-                    service_id=service.id,
-                    service_option_id=option.id,
                 )
-
-                session.add(item)
-                session.flush()
-                touched_job_order_ids.add(job_order.id)
-
-                # After inserting the job item, determine extra service (if any) and insert to db
-                if extra and extra_quantity > 0:
+                if (computed_unit_price + extra_service_price) > csv_unit_price:
                     session.add(
-                        JobItemExtra(
-                            job_item_id=item.id,
-                            extra_service_id=extra.id,
-                            quantity=extra_quantity,
-                            price_snapshot=extra.price,
-                            name_snapshot=extra.name,
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ORDER,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=row["jo_number"].strip(),
+                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
                         )
                     )
-            # Recompute each touched job order exactly once, with the full,
-            # final set of items in place.
-            for jo_id in touched_job_order_ids:
-                jo = session.get(JobOrder, jo_id)
-                if jo is not None:
-                    jo.sync_computed_fields()
-            session.commit()
-    finally:
-        event.listen(Session, "before_flush", sync_job_order_on_payment_or_item_change)
+                elif (computed_unit_price + extra_service_price) < csv_unit_price:
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ORDER,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=row["jo_number"].strip(),
+                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
+                        )
+                    )
+
+            sequence = (
+                item_sequence_by_jo_and_abbr.get((jo_number, service.abbreviation), 0)
+                + 1
+            )
+            item_sequence_by_jo_and_abbr[(jo_number, service.abbreviation)] = sequence
+            if sequence > 999:
+                print(
+                    f"JO {jo_number}: more than 999 of '{service.name}. Item_id may be invalid."
+                )
+                continue
+            item_id = f"{jo_number}-{service.abbreviation}-{sequence}"
+
+            item = JobItem(
+                item_id=item_id,
+                description=row["description"].strip() or None,
+                height=height,
+                width=width,
+                size_unit=size_unit,
+                quantity=quantity,
+                job_status=JobStatus.CANCELLED if cancelled else JobStatus.RELEASED,
+                due_date=job_order.date_received,
+                notes=None,
+                unit_price=csv_unit_price,
+                discount_amount=discount,
+                extra_charge=extra_charge,
+                subtotal=(csv_unit_price * quantity)
+                - discount
+                + (extra_charge * quantity),
+                service_name_snapshot=service.name,
+                service_option_name_snapshot=option.name,
+                service_abbreviation_snapshot=service.abbreviation,
+                job_order_id=job_order.id,
+                job_order=job_order,
+                service_id=service.id,
+                service_option_id=option.id,
+            )
+
+            session.add(item)
+            session.flush()
+            touched_job_order_ids.add(job_order.id)
+
+            # After inserting the job item, determine extra service (if any) and insert to db
+            if extra and extra_quantity > 0:
+                session.add(
+                    JobItemExtra(
+                        job_item_id=item.id,
+                        extra_service_id=extra.id,
+                        quantity=extra_quantity,
+                        price_snapshot=extra.price,
+                        name_snapshot=extra.name,
+                    )
+                )
+        # Recompute each touched job order exactly once, with the full,
+        # final set of items in place.
+        for jo_id in touched_job_order_ids:
+            jo = session.get(JobOrder, jo_id)
+            if jo is not None:
+                jo.sync_computed_fields()
+        session.commit()
 
 
 def seed_job_orders_and_items():

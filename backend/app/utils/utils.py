@@ -15,6 +15,14 @@ PRICE_UNIT_TO_SIZE_UNIT = {
     PriceUnit.SQM: SizeUnit.METER,
 }
 
+AREA_TO_SQIN = {
+    SizeUnit.INCHES: 1,
+    SizeUnit.FEET: 144,
+    SizeUnit.METER: 1 / 0.00064516,
+    SizeUnit.CENTIMETER: 1 / 6.4516,
+    SizeUnit.MILLIMETER: 1 / 645.16,
+}
+
 MANILA = ZoneInfo("Asia/Manila")
 
 def to_float(value: str) -> float:
@@ -74,13 +82,9 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 			raise ValueError("Dimension data cannot be incomplete.")
 		
 		# Convert to square inches first as base unit
-		if size_unit == SizeUnit.INCHES:
-			area_in2 = height * width
-		elif size_unit == SizeUnit.FEET:
-			area_in2 = (height * 12) * (width * 12)
-		elif size_unit == SizeUnit.METER:
-			area_in2 = (height * width) / 0.00064516
-		else:
+		try:
+			area_in2 = height * width * AREA_TO_SQIN[size_unit]
+		except KeyError:
 			raise ValueError(f"Unsupported size unit: {size_unit}")
 
 		# Convert to the unit the service needs for pricing
@@ -93,8 +97,8 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 		needed_unit = service_type.unit
 		if needed_unit not in area_conversions:
 			raise ValueError(f"Unsupported price unit: {needed_unit}")
-		area = area_conversions[needed_unit]
-		consumption = area * quantity
+		billable_area = area_conversions[needed_unit]
+		consumption = billable_area * quantity
   
 		# Determine tier
 		tiers = sorted(
@@ -115,6 +119,6 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 			rate = applicable_tier.rate
 		else:
 			rate = option.base_rate
-		return PricingData(consumption=consumption, consumption_unit=service_type.unit, rate=rate, unit_price=area * rate)
+		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate=round(rate, 2), unit_price=round(billable_area * rate, 2))
 	else:
 		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate * quantity)

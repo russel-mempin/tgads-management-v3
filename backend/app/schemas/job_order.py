@@ -36,7 +36,9 @@ class JobItemPublic(JobItemBase):
     
     
 class JobItemCreate(JobItemBase):
-    extras: list[JobItemExtraPublic] = Field(default_factory=list)
+    service_id: uuid.UUID
+    service_option_id: uuid.UUID
+    extras: list[JobItemExtraCreate] = Field(default_factory=list)
     
     
 class PaymentPublic(PaymentBase):
@@ -44,7 +46,7 @@ class PaymentPublic(PaymentBase):
     
     
 class PaymentCreate(PaymentBase):
-    pass
+    account_id: uuid.UUID
 
 
 class ClaimPublic(ClaimingHistoryBase):

@@ -246,15 +246,16 @@ class JobOrder(JobOrderBase, table=True):
     @property
     def computed_overall_job_status(self) -> JobStatus:
         if not self.job_items:
-            return JobStatus.CANCELLED
+            return JobStatus.PENDING
 
         priorities = {
             JobStatus.CANCELLED: 0,
-            JobStatus.RELEASED: 1,
-            JobStatus.FOR_PICKUP: 2,
-            JobStatus.FOR_PRINTING: 3,
-            JobStatus.FOR_APPROVAL: 4,
-            JobStatus.FOR_LAYOUT: 5,
+            JobStatus.PENDING: 1,
+            JobStatus.RELEASED: 2,
+            JobStatus.FOR_PICKUP: 3,
+            JobStatus.FOR_PRINTING: 4,
+            JobStatus.FOR_APPROVAL: 5,
+            JobStatus.FOR_LAYOUT: 6,
         }
         return max(
             self.job_items, key=lambda item: priorities.get(item.job_status, -1)

@@ -2,7 +2,7 @@
 import { ref, resolveComponent, h } from 'vue'
 import type { TableColumn } from '@nuxt/ui';
 import type { JobItemCreate } from '@/types/jobOrder.ts'
-import ZJobItemForm from './ZJobItemForm.vue'
+import JobItemForm from './JobItemForm.vue'
 import { formatDate } from '@/utils/formatters.ts';
 
 const isOpen = ref(false)
@@ -51,7 +51,7 @@ const hasExpandableContent = (item: JobItemCreate): boolean => {
         !!item.notes ||
         !!item.description ||
         !!item.extra_charge ||
-        !!item.discount
+        !!item.discount_amount
     )
 }
 
@@ -178,7 +178,7 @@ const columns: TableColumn<JobItemCreate>[] = [
             </div>
         </template>
     </UModal>
-    <ZJobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
+    <JobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
@@ -223,9 +223,9 @@ const columns: TableColumn<JobItemCreate>[] = [
                         <p class="text-xs uppercase text-muted font-semibold mb-1">Extra Charge</p>
                         <p class="text-sm">{{ row.original.extra_charge }}</p>
                     </div>
-                    <div v-if="row.original.discount">
+                    <div v-if="row.original.discount_amount">
                         <p class="text-xs uppercase text-muted font-semibold mb-1">Discount</p>
-                        <p class="text-sm">{{ row.original.discount }}</p>
+                        <p class="text-sm">{{ row.original.discount_amount }}</p>
                     </div>
                 </div>
             </template>

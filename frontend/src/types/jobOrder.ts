@@ -16,7 +16,7 @@ export interface JobItemExtra {
 export interface JobItemCreate {
   item_id: string
   service_id: string
-  option_id: string
+  service_option_id: string
   height?: number
   width?: number
   size_unit?: string
@@ -27,7 +27,7 @@ export interface JobItemCreate {
   notes: string
   extras: JobItemExtra[]
   extra_charge: number
-  discount: number
+  discount_amount: number
   unit_price: number
   subtotal: number
   service_name_snapshot: string
@@ -96,14 +96,14 @@ export interface JobOrder {
 
 export interface JobOrderCreate {
   jo_number: number
-  date_received: Date
+  date_received: string
   override_payment_status?: string
   customer_id?: string
   customer_name?: string
   customer_address?: string
   customer_contact_no?: string
   customer_email?: string
-  job_items: JobItem[]
+  job_items: JobItemCreate[]
   payments?: Payment[]
   claims?: ClaimingHistory[]
 }

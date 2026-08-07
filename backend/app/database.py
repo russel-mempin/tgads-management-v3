@@ -1,7 +1,7 @@
 import os
+
 from dotenv import load_dotenv
-from sqlmodel import Session, SQLModel, create_engine  # noqa: F401
-from app.services.event_listeners import sync_job_order_on_payment_or_item_change  # noqa: F401
+from sqlmodel import Session, create_engine
 
 load_dotenv()
 DATABASE_URL = os.getenv("DB_PATH")

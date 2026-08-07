@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Customer } from '@/types/customer'
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import type { JobItemCreate, Payment, ClaimingHistory } from '@/types/jobOrder'
 import { formatCurrency, inputToUtc, nowForInput, utcToInput } from '@/utils/formatters'
+import { createJobOrder } from '@/api/jobOrders'
 
 // Components
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -25,6 +27,8 @@ const payments = ref<Payment[]>([])
 const claimingHistory = ref<ClaimingHistory[]>([])
 
 // UI Variables
+const toast = useToast()
+const router = useRouter()
 const isWalkIn = ref(false)
 const isNewCustomer = ref(false)
 const isSaving = ref(false)
@@ -40,33 +44,33 @@ const balance = computed(() =>
     totalDue.value - totalPaid.value
 )
 const hasValidJoNumber = computed(() =>
-  joNumber.value > 0
+    joNumber.value > 0
 )
 
 const hasJobItems = computed(() =>
-  jobItems.value.length > 0
+    jobItems.value.length > 0
 )
 
 const hasValidPayments = computed(() =>
-  payments.value.every(payment => payment.amount > 0)
+    payments.value.every(payment => payment.amount > 0)
 )
 const hasValidClaims = computed(() =>
-  claimingHistory.value.every(claim =>
-    claim.claimed_item_id &&
-    claim.pcs_claimed > 0 &&
-    claim.date_claimed
-  )
+    claimingHistory.value.every(claim =>
+        claim.claimed_item_id &&
+        claim.pcs_claimed > 0 &&
+        claim.date_claimed
+    )
 )
 
 const canSave = computed(() =>
-  hasValidJoNumber.value &&
-  hasJobItems.value &&
-  hasValidPayments.value &&
-  hasValidClaims.value
+    hasValidJoNumber.value &&
+    hasJobItems.value &&
+    hasValidPayments.value &&
+    hasValidClaims.value
 )
 
 const isSavingDisabled = computed(() =>
-  isSaving.value || !canSave.value
+    isSaving.value || !canSave.value
 )
 
 // Functions
@@ -113,7 +117,7 @@ const handleBlur = () => {
     }, 150)
 }
 
-const buildPayload = () => {
+const handleSave = async () => {
     const payload = {
         jo_number: joNumber.value,
         date_received: inputToUtc(dateReceived.value),
@@ -122,11 +126,30 @@ const buildPayload = () => {
         payments: payments.value,
         claiming_history: claimingHistory.value
     }
-    handleSave(payload)
-}
+    try {
+        isSaving.value = true
+        await createJobOrder(payload)
+        toast.add({
+            title: 'Job Order Saved',
+            description: `Job Order #${joNumber.value} was created successfully.`,
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
 
-const handleSave = (payload: any) => {
-    console.log(payload)
+        await router.push('/job-orders')
+    }
+    catch (error: any) {
+        console.error(error.response?.data || error)
+        toast.add({
+            title: 'Failed to Save',
+            description: error.response?.data?.detail ?? 'An unexpected error occurred.',
+            color: 'error',
+            icon: 'i-lucide-circle-x'
+        })
+    }
+    finally {
+        isSaving.value = false
+    }
 }
 </script>
 
@@ -160,10 +183,8 @@ const handleSave = (payload: any) => {
         <div class="grid grid-cols-2 gap-6">
             <UFormField label="Job Order No." required>
                 <UInput v-model="joNumber" type="number" placeholder="e.g. 19291" size="lg" class="w-full"
-                    :disabled="jobItems.length > 0"
-                    :hint="jobItems.length > 0 ? 'Clear all job items to change.' : ''" 
-                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
-                />
+                    :disabled="jobItems.length > 0" :hint="jobItems.length > 0 ? 'Clear all job items to change.' : ''"
+                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
             <UFormField label="Date Received" required>
                 <UInput v-model="dateReceived" type="datetime-local" size="lg" class="w-full" />
@@ -214,34 +235,22 @@ const handleSave = (payload: any) => {
     </Transition>
 
     <!-- Job Items -->
-    <JobItemTable 
-        :jo-number="joNumber" 
-        :job-items="jobItems" 
-        @add-job-item="(item) => jobItems.push(item)"
+    <JobItemTable :jo-number="joNumber" :job-items="jobItems" @add-job-item="(item) => jobItems.push(item)"
         @update-job-item="(updated) => {
             const index = jobItems.findIndex(i => i.item_id === updated.item_id)
             if (index !== -1) jobItems[index] = updated
-        }" 
-        @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" 
-    />
+        }" @remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" />
 
     <!-- Payments -->
-    <PaymentTable
-        :balance="balance"
-        :payments="payments"
-        @add-payment="(payment: Payment) => payments.push(payment)"
+    <PaymentTable :balance="balance" :payments="payments" @add-payment="(payment: Payment) => payments.push(payment)"
         @remove-payment="(ref) => payments = payments.filter(p => p.reference_number !== ref)"
-        @update-payment="(index: number, payment: Payment) => payments.splice(index, 1, payment)"
-    />
+        @update-payment="(index: number, payment: Payment) => payments.splice(index, 1, payment)" />
 
     <!-- Claiming History -->
-    <ClaimTable
-        :job-items="jobItems"
-        :claiming-history="claimingHistory"
+    <ClaimTable :job-items="jobItems" :claiming-history="claimingHistory"
         @add-claim="(claim: ClaimingHistory) => claimingHistory.push(claim)"
         @remove-claim="(index: number) => claimingHistory.splice(index, 1)"
-        @update-claim="(claim: ClaimingHistory, index: number) => claimingHistory.splice(index, 1, claim)"
-    />
+        @update-claim="(claim: ClaimingHistory, index: number) => claimingHistory.splice(index, 1, claim)" />
 
     <!-- Sticky Bottom Footer with Save & Running Totals -->
     <div
@@ -264,7 +273,7 @@ const handleSave = (payload: any) => {
             <UButton icon="i-lucide-arrow-left" color="neutral" class="w-45 font-bold" variant="outline">Back to Job
                 Orders
             </UButton>
-            <UButton class="w-45 font-bold relative" @click="buildPayload" :disabled="isSavingDisabled" loading-auto>
+            <UButton class="w-45 font-bold relative" @click="handleSave" :disabled="isSavingDisabled" loading-auto>
                 <template #leading>
                     <UIcon v-if="!isSaving" name="i-lucide-save" class="absolute left-3 size-5" />
                 </template>

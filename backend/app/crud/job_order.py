@@ -23,6 +23,14 @@ from app.schemas.job_order import JobOrderCreate, PricingData
 from app.utils.utils import compute_unit_price
 
 
+def sync_job_order(db: Session, job_order: JobOrder) -> None:
+    db.flush()
+    print(len(job_order.job_items))
+    print(len(job_order.payments))
+    db.refresh(job_order)
+    job_order.sync_computed_fields()
+
+
 def get_all_job_orders(
     db: Session,
     offset: int = 0,
@@ -147,16 +155,14 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 # Existing customer
                 customer = db.get(Customer, data.customer_info.id)
                 if customer is None:
-                    raise HTTPException(
-                        status_code=404,
-                        detail="Customer not found."
-                    )
+                    raise HTTPException(status_code=404, detail="Customer not found.")
 
             elif data.customer_info.name and data.customer_info.name.strip():
                 # New customer
                 existing = db.exec(
                     select(Customer).where(
-                        func.lower(Customer.name) == data.customer_info.name.strip().lower()
+                        func.lower(Customer.name)
+                        == data.customer_info.name.strip().lower()
                     )
                 ).first()
                 if existing:
@@ -166,113 +172,118 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                         name=data.customer_info.name.strip(),
                         address=data.customer_info.address.strip(),
                         contact_no=data.customer_info.contact_no.strip(),
-                        email=data.customer_info.email.strip()
+                        email=data.customer_info.email.strip(),
                     )
                     db.add(customer)
                     db.flush()
+            else:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Customer info must include either an existing customer ID or a name for a new customer.",
+                )
         else:
             customer = None
-            
+
         job_order = JobOrder(
             jo_number=data.jo_number,
             date_received=data.date_received,
             customer_id=customer.id if customer else None,
             created_by_id=current_user_id,
-            updated_by_id=current_user_id
+            updated_by_id=current_user_id,
         )
         db.add(job_order)
         db.flush()
 
         for item in data.job_items:
-            option = db.get(ServiceOption, item.option_id)
+            option = db.get(ServiceOption, item.service_option_id)
             if not option:
                 raise HTTPException(status_code=404, detail="Variant not found.")
             service = option.service
             if not service:
                 raise HTTPException(status_code=404, detail="Service not found.")
             job_item = JobItem(
-                job_order_id=job_order.id,
+                job_order=job_order,
                 description=item.description,
-                discount=item.discount,
+                discount_amount=item.discount_amount,
                 due_date=item.due_date,
                 extra_charge=item.extra_charge,
                 height=item.height,
                 item_id=item.item_id,
                 job_status=item.job_status,
                 notes=item.notes,
-                service_option_id=option.id,
+                service_option=option,
                 quantity=item.quantity,
                 service_abbreviation_snapshot=service.abbreviation,
-                service_id=service.id,
+                service_option_name_snapshot=option.name,
+                service=service,
                 service_name_snapshot=service.name,
                 size_unit=item.size_unit,
                 subtotal=item.subtotal,
                 unit_price=item.unit_price,
-                width=item.width
+                width=item.width,
             )
             db.add(job_item)
-            db.flush()
             if item.extras:
                 for extra in item.extras:
                     extra_service = db.exec(
-                        select(ExtraService).where(ExtraService.id == extra.extra_service_id)
+                        select(ExtraService).where(
+                            ExtraService.id == extra.extra_service_id
+                        )
                     ).first()
                     if not extra_service:
-                        raise HTTPException(status_code=404, detail="Extra service not found.")
-                    extra_item = JobItemExtra(
-                        job_item_id=job_item.id,
-                        extra_service_id=extra_service.id,
-                        quantity=extra.quantity,
-                        price_snapshot=extra_service.price,
-                        name_snapshot=extra_service.name
+                        raise HTTPException(
+                            status_code=404, detail="Extra service not found."
+                        )
+                    db.add(
+                        JobItemExtra(
+                            job_item=job_item,
+                            extra_service_id=extra_service.id,
+                            quantity=extra.quantity,
+                            price_snapshot=extra_service.price,
+                            name_snapshot=extra_service.name,
+                        )
                     )
-                    db.add(extra_item)
         if data.payments:
             for payment in data.payments:
                 account = db.exec(
                     select(Account).where(Account.id == payment.account_id)
                 ).first()
                 if not account:
-                    raise HTTPException(status_code=404, detail="Payment method not found.")
-                payment_item = Payment(
-                    date_received=payment.date_received,
-                    reference_number=payment.reference_number,
-                    amount=payment.amount,
-                    notes=payment.notes,
-                    job_order_id=job_order.id,
-                    account_name_snapshot=account.name,
-                    account_id=account.id
+                    raise HTTPException(
+                        status_code=404, detail="Payment method not found."
+                    )
+                db.add(
+                    Payment(
+                        date_received=payment.date_received,
+                        reference_number=payment.reference_number,
+                        amount=payment.amount,
+                        notes=payment.notes,
+                        account_name_snapshot=account.name,
+                        account_id=account.id,
+                        job_order=job_order,
+                    )
                 )
-                job_order.payments.append(payment_item)
-                db.add(payment_item)
         if data.claiming_history:
             for claim in data.claiming_history:
-                job_item = db.exec(
-                    select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
-                ).first()
-                if not job_item:
-                    raise HTTPException(status_code=404, detail="Job Item ID not found")
-                claim_item = ClaimingHistory(
-                    date_claimed=claim.date_claimed,
-                    name=claim.name,
-                    pcs_claimed=claim.pcs_claimed,
-                    job_order_id=job_order.id,
-                    job_item_id=job_item.id,
-                    claimed_item_id=job_item.item_id,
+                db.add(
+                    ClaimingHistory(
+                        date_claimed=claim.date_claimed,
+                        name=claim.name,
+                        pcs_claimed=claim.pcs_claimed,
+                        job_order=job_order,
+                        job_item=job_item,
+                        claimed_item_id=job_item.item_id,
+                    )
                 )
-                job_order.claims.append(claim_item)
-                db.add(claim_item)
+        db.flush()
         job_order.sync_computed_fields()
-        db.add(job_order)
-        db.commit()
-        db.refresh(job_order)
 
         audit = AuditLog(
             action=f"Created job order {job_order.jo_number}", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
-
+        db.refresh(job_order)
         return job_order
     except Exception:
         db.rollback()
