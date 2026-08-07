@@ -41,7 +41,7 @@ const schema = z.object({
     discount: z.number().default(0),
 }).superRefine((data, ctx) => {
     // Conditionally require width/height/unit only for area-based services
-    // We'll check this at runtime since isAreaBased is a computed from outside the schema
+    if (!isAreaBased.value) return
     if (data.width !== undefined && data.width <= 0) {
         ctx.addIssue({ code: 'custom', path: ['width'], message: 'Width must be greater than 0' })
     }

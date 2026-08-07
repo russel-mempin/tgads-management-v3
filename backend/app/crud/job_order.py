@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import String, cast, func, or_
@@ -25,8 +25,6 @@ from app.utils.utils import compute_unit_price
 
 def sync_job_order(db: Session, job_order: JobOrder) -> None:
     db.flush()
-    print(len(job_order.job_items))
-    print(len(job_order.payments))
     db.refresh(job_order)
     job_order.sync_computed_fields()
 
@@ -100,10 +98,6 @@ def get_job_order_count(
     return db.exec(query).one()
 
 
-def get_job_order_for_review(db: Session):
-    return list(db.exec(select(JobOrder).where(JobOrder.for_review)).all())
-
-
 def get_job_order(db: Session, jo_number: int) -> JobOrder:
     job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
     if not job_order:
@@ -120,7 +114,7 @@ def get_price(
     width: float | None,
     service_id: uuid.UUID,
     option_id: uuid.UUID,
-    size_unit: SizeUnit,
+    size_unit: SizeUnit | None,
     quantity: int,
 ) -> PricingData:
     service = db.exec(select(Service).where(Service.id == service_id)).first()
@@ -170,9 +164,15 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 else:
                     customer = Customer(
                         name=data.customer_info.name.strip(),
-                        address=data.customer_info.address.strip(),
-                        contact_no=data.customer_info.contact_no.strip(),
-                        email=data.customer_info.email.strip(),
+                        address=data.customer_info.address.strip()
+                        if data.customer_info.address
+                        else None,
+                        contact_no=data.customer_info.contact_no.strip()
+                        if data.customer_info.contact_no
+                        else None,
+                        email=data.customer_info.email.strip()
+                        if data.customer_info.email
+                        else None,
                     )
                     db.add(customer)
                     db.flush()
@@ -202,7 +202,6 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
             if not service:
                 raise HTTPException(status_code=404, detail="Service not found.")
             job_item = JobItem(
-                job_order=job_order,
                 description=item.description,
                 discount_amount=item.discount_amount,
                 due_date=item.due_date,
@@ -211,16 +210,17 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 item_id=item.item_id,
                 job_status=item.job_status,
                 notes=item.notes,
-                service_option=option,
                 quantity=item.quantity,
                 service_abbreviation_snapshot=service.abbreviation,
                 service_option_name_snapshot=option.name,
-                service=service,
                 service_name_snapshot=service.name,
                 size_unit=item.size_unit,
                 subtotal=item.subtotal,
                 unit_price=item.unit_price,
                 width=item.width,
+                job_order_id=job_order.id,
+                service_id=service.id,
+                service_option_id=option.id,
             )
             db.add(job_item)
             if item.extras:
@@ -236,7 +236,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                         )
                     db.add(
                         JobItemExtra(
-                            job_item=job_item,
+                            job_item_id=job_item.id,
                             extra_service_id=extra_service.id,
                             quantity=extra.quantity,
                             price_snapshot=extra_service.price,
@@ -260,19 +260,26 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                         notes=payment.notes,
                         account_name_snapshot=account.name,
                         account_id=account.id,
-                        job_order=job_order,
+                        job_order_id=job_order.id,
                     )
                 )
         if data.claiming_history:
             for claim in data.claiming_history:
+                job_item = db.exec(
+                    select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
+                ).first()
+                if not job_item:
+                    raise HTTPException(
+                        status_code=404, detail="Job item not found."
+                    )
                 db.add(
                     ClaimingHistory(
                         date_claimed=claim.date_claimed,
                         name=claim.name,
                         pcs_claimed=claim.pcs_claimed,
-                        job_order=job_order,
-                        job_item=job_item,
-                        claimed_item_id=job_item.item_id,
+                        job_order_id=job_order.id,
+                        job_item_id=job_item.id,
+                        claimed_item_id=claim.claimed_item_id,
                     )
                 )
         db.flush()
@@ -321,138 +328,139 @@ def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
 def update_job_order(
     db: Session, jo_number: int, data: JobOrderCreate, current_user_id: uuid.UUID
 ):
-    try:
-        job_order = db.exec(
-            select(JobOrder).where(JobOrder.jo_number == jo_number)
-        ).first()
-        if not job_order:
-            raise HTTPException(status_code=404, detail="Job order not found")
+    print("Disabled")
+    # try:
+    #     job_order = db.exec(
+    #         select(JobOrder).where(JobOrder.jo_number == jo_number)
+    #     ).first()
+    #     if not job_order:
+    #         raise HTTPException(status_code=404, detail="Job order not found")
 
-        # Update basic fields
-        job_order.date_received = data.date_received
-        job_order.override_payment_status = data.override_payment_status
-        job_order.updated_at = datetime.now(timezone.utc)
-        job_order.updated_by_id = current_user_id
+    #     # Update basic fields
+    #     job_order.date_received = data.date_received
+    #     job_order.override_payment_status = data.override_payment_status
+    #     job_order.updated_at = datetime.now(timezone.utc)
+    #     job_order.updated_by_id = current_user_id
 
-        # Customer lookup by name (same as create)
-        if not data.customer_name:
-            raise HTTPException(status_code=400, detail="Customer name is required.")
-        customer = db.exec(
-            select(Customer).where(Customer.name == data.customer_name)
-        ).first()
-        if not customer:
-            assert data.customer_name
-            assert data.customer_address
-            assert data.customer_contact_no
-            assert data.customer_email
-            customer = Customer(
-                name=data.customer_name,
-                address=data.customer_address,
-                contact_no=data.customer_contact_no,
-                email=data.customer_email,
-            )
-            db.add(customer)
-            db.flush()
-        job_order.customer_id = customer.id
-        db.add(job_order)
-        db.flush()
+    #     # Customer lookup by name (same as create)
+    #     if not data.customer_name:
+    #         raise HTTPException(status_code=400, detail="Customer name is required.")
+    #     customer = db.exec(
+    #         select(Customer).where(Customer.name == data.customer_name)
+    #     ).first()
+    #     if not customer:
+    #         assert data.customer_name
+    #         assert data.customer_address
+    #         assert data.customer_contact_no
+    #         assert data.customer_email
+    #         customer = Customer(
+    #             name=data.customer_name,
+    #             address=data.customer_address,
+    #             contact_no=data.customer_contact_no,
+    #             email=data.customer_email,
+    #         )
+    #         db.add(customer)
+    #         db.flush()
+    #     job_order.customer_id = customer.id
+    #     db.add(job_order)
+    #     db.flush()
 
-        # 1. Delete everything first
-        for existing_claim in job_order.claims:
-            db.delete(existing_claim)
-        db.flush()
+    #     # 1. Delete everything first
+    #     for existing_claim in job_order.claims:
+    #         db.delete(existing_claim)
+    #     db.flush()
 
-        for existing_payment in job_order.payments:
-            db.delete(existing_payment)
-        db.flush()
+    #     for existing_payment in job_order.payments:
+    #         db.delete(existing_payment)
+    #     db.flush()
 
-        for existing_item in job_order.job_items:
-            db.delete(existing_item)
-        db.flush()
+    #     for existing_item in job_order.job_items:
+    #         db.delete(existing_item)
+    #     db.flush()
 
-        # 2. Insert job items first
-        for item in data.job_items:
-            service_type = db.exec(
-                select(Service).where(Service.name == item.service_name)
-            ).first()
-            if not service_type:
-                raise HTTPException(status_code=404, detail="Service type not found")
-            extra_type = None
-            if item.extra_service_name:
-                extra_type = db.exec(
-                    select(ExtraService).where(
-                        ExtraService.name == item.extra_service_name
-                    )
-                ).first()
-                if not extra_type:
-                    raise HTTPException(status_code=404, detail="Extra type not found")
-            job_item = JobItem(
-                jo_number=data.jo_number,
-                item_id=item.item_id,
-                description=item.description,
-                height=item.height,
-                width=item.width,
-                size_unit=item.size_unit,
-                quantity=item.quantity,
-                job_status=item.job_status,
-                due_date=item.due_date,
-                discount=item.discount,
-                job_order_id=job_order.id,
-                service_type_id=service_type.id,
-                extra_type_id=extra_type.id if extra_type else None,
-            )
-            db.add(job_item)
-            db.flush()
+    #     # 2. Insert job items first
+    #     for item in data.job_items:
+    #         service_type = db.exec(
+    #             select(Service).where(Service.name == item.service_name)
+    #         ).first()
+    #         if not service_type:
+    #             raise HTTPException(status_code=404, detail="Service type not found")
+    #         extra_type = None
+    #         if item.extra_service_name:
+    #             extra_type = db.exec(
+    #                 select(ExtraService).where(
+    #                     ExtraService.name == item.extra_service_name
+    #                 )
+    #             ).first()
+    #             if not extra_type:
+    #                 raise HTTPException(status_code=404, detail="Extra type not found")
+    #         job_item = JobItem(
+    #             jo_number=data.jo_number,
+    #             item_id=item.item_id,
+    #             description=item.description,
+    #             height=item.height,
+    #             width=item.width,
+    #             size_unit=item.size_unit,
+    #             quantity=item.quantity,
+    #             job_status=item.job_status,
+    #             due_date=item.due_date,
+    #             discount=item.discount,
+    #             job_order_id=job_order.id,
+    #             service_type_id=service_type.id,
+    #             extra_type_id=extra_type.id if extra_type else None,
+    #         )
+    #         db.add(job_item)
+    #         db.flush()
 
-        # 3. Insert claims using the map instead of querying
-        if data.claims:
-            for claim in data.claims:
-                job_item = db.exec(
-                    select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
-                ).first()
-                if not job_item:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Job item ID {claim.claimed_item_id} not found",
-                    )
-                claim_item = ClaimingHistory(
-                    date_claimed=claim.date_claimed,
-                    name=claim.name,
-                    pcs_claimed=claim.pcs_claimed,
-                    job_order_id=job_order.id,
-                    job_item_id=job_item.id,
-                    claimed_item_id=job_item.item_id,
-                )
-                db.add(claim_item)
+    #     # 3. Insert claims using the map instead of querying
+    #     if data.claims:
+    #         for claim in data.claims:
+    #             job_item = db.exec(
+    #                 select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
+    #             ).first()
+    #             if not job_item:
+    #                 raise HTTPException(
+    #                     status_code=404,
+    #                     detail=f"Job item ID {claim.claimed_item_id} not found",
+    #                 )
+    #             claim_item = ClaimingHistory(
+    #                 date_claimed=claim.date_claimed,
+    #                 name=claim.name,
+    #                 pcs_claimed=claim.pcs_claimed,
+    #                 job_order_id=job_order.id,
+    #                 job_item_id=job_item.id,
+    #                 claimed_item_id=job_item.item_id,
+    #             )
+    #             db.add(claim_item)
 
-        # 4. Insert payments
-        if data.payments:
-            for payment in data.payments:
-                paymentItem = Payment(
-                    date_received=payment.date_received,
-                    method=payment.method,
-                    amount=payment.amount,
-                    job_order_id=job_order.id,
-                )
-                db.add(paymentItem)
-        db.flush()
-        db.refresh(job_order)
-        job_order.sync_computed_fields()
-        db.commit()
-        db.refresh(job_order)
+    #     # 4. Insert payments
+    #     if data.payments:
+    #         for payment in data.payments:
+    #             paymentItem = Payment(
+    #                 date_received=payment.date_received,
+    #                 method=payment.method,
+    #                 amount=payment.amount,
+    #                 job_order_id=job_order.id,
+    #             )
+    #             db.add(paymentItem)
+    #     db.flush()
+    #     db.refresh(job_order)
+    #     job_order.sync_computed_fields()
+    #     db.commit()
+    #     db.refresh(job_order)
 
-        audit = AuditLog(
-            action=f"Updated job order {job_order.jo_number}", user_id=current_user_id
-        )
-        db.add(audit)
-        db.commit()
+    #     audit = AuditLog(
+    #         action=f"Updated job order {job_order.jo_number}", user_id=current_user_id
+    #     )
+    #     db.add(audit)
+    #     db.commit()
 
-        return job_order
-    except HTTPException:
-        raise
-    except Exception:
-        db.rollback()
-        raise
+    #     return job_order
+    # except HTTPException:
+    #     raise
+    # except Exception:
+    #     db.rollback()
+    #     raise
 
 
 def get_business_kpis(db: Session) -> dict:
@@ -475,7 +483,7 @@ def get_business_kpis(db: Session) -> dict:
     ).one()
 
     # Count of overdue jobs — job items past due_date and not released/cancelled
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     overdue_count = db.exec(
         select(func.count())
         .select_from(JobItem)
@@ -501,7 +509,7 @@ def get_business_kpis(db: Session) -> dict:
 
 
 def get_operation_kpis(db: Session) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
 
@@ -601,7 +609,7 @@ def get_unpaid_job_orders(db: Session) -> list[JobOrder]:
 
 
 def get_overdue_job_orders(db: Session) -> list[JobOrder]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     overdue_job_order_ids = db.exec(
         select(JobItem.job_order_id).where(
             JobItem.due_date < now,
@@ -619,7 +627,7 @@ def get_overdue_job_orders(db: Session) -> list[JobOrder]:
 
 
 def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     week_start = now - timedelta(days=now.weekday())
     week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -637,7 +645,7 @@ def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
 
 
 def get_overdue_jobs(db: Session) -> list[JobOrder]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return list(
         db.exec(
             select(JobOrder)
@@ -679,7 +687,7 @@ def get_jobs_in_progress(db: Session) -> list[JobOrder]:
 
 
 def get_jobs_due_today(db: Session) -> list[JobOrder]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
 

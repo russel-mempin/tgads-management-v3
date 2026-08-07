@@ -69,7 +69,7 @@ def get_system_admin(session: Session) -> User:
     return sysadmin
     
     
-def compute_unit_price(height: float, width: float, service_type: Service, option: ServiceOption, size_unit: SizeUnit, quantity: int) -> PricingData:
+def compute_unit_price(height: float | None, width: float | None, service_type: Service, option: ServiceOption, size_unit: SizeUnit | None, quantity: int) -> PricingData:
 	if service_type is None:
 		raise ValueError("Service type cannot be blank.")
 	if option is None:
@@ -121,4 +121,5 @@ def compute_unit_price(height: float, width: float, service_type: Service, optio
 			rate = option.base_rate
 		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate=round(rate, 2), unit_price=round(billable_area * rate, 2))
 	else:
-		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate * quantity)
+		# For Fixed Pricing (Desktop Printing, Digital Print, Riso)
+		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate)

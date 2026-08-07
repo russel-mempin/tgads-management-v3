@@ -11,7 +11,6 @@ from app.crud.job_order import (
     get_business_kpis,
     get_job_order,
     get_job_order_count,
-    get_job_order_for_review,
     get_jobs_due_today,
     get_jobs_in_progress,
     get_jobs_ready_for_pickup,
@@ -124,11 +123,6 @@ def compute_unit_price_route(
         db, height=height, width=width, service_id=service_id, option_id=option_id, size_unit=size_unit, quantity=quantity
     )
     
-    
-@router.get("/for-review", response_model=list[JobOrderPublic])
-def read_for_review(db: Session = Depends(get_session)):
-    return get_job_order_for_review(db)
-
 
 @router.get("/{jo_number}", response_model=JobOrderPublic)
 def read_job_order(jo_number: int, db: Session = Depends(get_session)):
