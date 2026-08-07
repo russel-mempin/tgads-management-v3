@@ -81,7 +81,7 @@ export interface JobOrder {
   overall_job_status: string
   job_items: JobItem[]
   payments: Payment[]
-  claims: ClaimingHistory[]
+  claiming_history: ClaimingHistory[]
   payment_status: string
   total_due: number
   total_paid: number

@@ -140,7 +140,7 @@ const printJobOrder = () => {
                                     {{ item.service_name_snapshot }}
                                     <span class="text-muted" v-if="item.service_option_name_snapshot"> — {{
                                         item.service_option_name_snapshot }}</span>
-                                    <span class="text-muted" v-if="item.extras.name_snapshot"> — {{ item.extras.name_snapshot }}</span>
+                                    <span class="text-muted" v-if="item.extras"> — {{ item.extras }}</span>
                                 </td>
                                 <td class="p-3 text-highlighted">
                                     {{ item.width && item.height ? `${item.width} × ${item.height} ${item.size_unit}` :
@@ -159,18 +159,14 @@ const printJobOrder = () => {
                                 </td>
                             </tr>
                             <!-- Only rendered when there's something extra to show for this item -->
-                            <tr v-if="item.description || item.notes || item.discount > 0 || item.extra_total > 0"
+                            <tr v-if="item.description || item.notes || item.discount_amount > 0 || item.extra_total > 0"
                                 class="border-t border-default bg-elevated/40">
                                 <td colspan="9" class="px-3 py-2 text-sm text-muted flex flex-wrap gap-x-6 gap-y-1">
                                     <span v-if="item.description"><strong class="text-highlighted">Description:</strong>
                                         {{ item.description }}</span>
-                                    <span v-if="item.extra_service_name">
-                                        <strong class="text-highlighted">Extra:</strong> {{ item.extra_service_name }}
-                                        ({{ formatCurrency(item.extra_service_price) }})
-                                    </span>
-                                    <span v-if="item.discount > 0">
+                                    <span v-if="item.discount_amount > 0">
                                         <strong class="text-highlighted">Discount:</strong> −{{
-                                            formatCurrency(item.discount) }}
+                                            formatCurrency(item.discount_amount) }}
                                     </span>
                                     <span v-if="item.notes"><strong class="text-highlighted">Notes:</strong> {{
                                         item.notes }}</span>
@@ -200,7 +196,7 @@ const printJobOrder = () => {
                             class="border-t border-default odd:bg-elevated/20">
                             <td class="p-3 text-highlighted">{{ formatDate(payment.date_received) }}</td>
                             <td class="p-3 text-highlighted">{{ payment.reference_number }}</td>
-                            <td class="p-3 text-highlighted">{{ payment.account_name }}</td>
+                            <!-- <td class="p-3 text-highlighted">{{ payment.account_name }}</td> -->
                             <td class="p-3 font-semibold text-highlighted">{{ formatCurrency(payment.amount) }}</td>
                         </tr>
                     </tbody>
@@ -213,8 +209,8 @@ const printJobOrder = () => {
 
         <!-- Claiming History -->
         <section>
-            <h2 class="text-lg font-semibold text-highlighted mb-3">Claiming History ({{ jobOrder.claims.length }})</h2>
-            <p v-if="!jobOrder.claims.length"
+            <h2 class="text-lg font-semibold text-highlighted mb-3">Claiming History ({{ jobOrder.claiming_history.length }})</h2>
+            <p v-if="!jobOrder.claiming_history.length"
                 class="text-muted text-base border border-default rounded-md p-4 text-center">
                 No items have been claimed yet.
             </p>
