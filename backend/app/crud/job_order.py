@@ -19,7 +19,7 @@ from app.models import (
     Service,
     ServiceOption,
 )
-from app.schemas.job_order import JobOrderCreate, PricingData
+from app.schemas.job_order import JobOrderCreate, JobOrderPublic, PricingData
 from app.utils.utils import compute_unit_price
 
 
@@ -38,7 +38,7 @@ def get_all_job_orders(
     job_status: JobStatus | None = None,
     search: str | None = None,
 ) -> list[JobOrder]:
-    query = select(JobOrder).join(
+    query = select(JobOrder).outerjoin(
         Customer, col(JobOrder.customer_id) == col(Customer.id)
     )
 
@@ -77,7 +77,7 @@ def get_job_order_count(
     query = (
         select(func.count())
         .select_from(JobOrder)
-        .join(Customer, col(JobOrder.customer_id) == col(Customer.id))
+        .outerjoin(Customer, col(JobOrder.customer_id) == col(Customer.id))
     )
 
     if not include_archived:
@@ -98,7 +98,7 @@ def get_job_order_count(
     return db.exec(query).one()
 
 
-def get_job_order(db: Session, jo_number: int) -> JobOrder:
+def get_job_order(db: Session, jo_number: int) -> JobOrderPublic:
     job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
     if not job_order:
         raise HTTPException(

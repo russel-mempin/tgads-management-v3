@@ -131,8 +131,8 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
 <template>
   <USidebar v-model:open="open" collapsible="icon" rail :ui="{
     container: 'h-full',
-    inner: 'bg-elevated/25 divide-transparent',
-    body: 'py-0 px-1.5 bg-default/75 backdrop-blur-md'
+    inner: 'bg-default divide-transparent',
+    body: 'py-0 px-1.5 bg-default backdrop-blur-md'
   }">
     <template #header="{ state }">
       <div class="flex items-center gap-2 px-1.5 py-1 w-full"

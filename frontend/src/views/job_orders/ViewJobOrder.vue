@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { JobOrder } from '@/types/jobOrder'
 import { getJobOrder } from '@/api/jobOrders'
-import { formatDate, formatCurrency } from '@/utils/formatters'
+import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,25 +19,6 @@ onMounted(async () => {
 
 const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobOrder.value.total_paid : 0))
 
-const paymentStatusColor = computed(() => ({
-    'Fully Paid': 'success' as const,
-    'Partial': 'warning' as const,
-    'Unpaid': 'error' as const,
-    'Credit': 'info' as const,
-    'Refunded': 'neutral' as const,
-    'Overcharged': 'warning' as const,
-}[jobOrder.value?.payment_status ?? 'Unpaid']))
-
-const jobStatusColor = computed(() => ({
-    'Pending': 'warning' as const,
-    'For Layout': 'info' as const,
-    'For Approval': 'primary' as const,
-    'For Printing': 'primary' as const,
-    'For Pickup': 'success' as const,
-    'Released': 'neutral' as const,
-    'Cancelled': 'error' as const,
-}[jobOrder.value?.overall_job_status ?? 'Pending']))
-
 const printJobOrder = () => {
     const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
     window.open(resolved.href, '_blank')
@@ -52,18 +33,22 @@ const printJobOrder = () => {
     <div v-else-if="jobOrder" class="m-6 flex flex-col gap-6">
         <!-- Back + Title -->
         <div class="flex items-center justify-between">
-            <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="ghost"
+            <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="outline"
                 to="/job-orders" />
-            <UButton icon="i-lucide-printer" label="Print Job Order" color="neutral" variant="outline" size="lg"
-                @click="printJobOrder" />
+            <UButton icon="i-lucide-printer" label="Print Job Order" variant="subtle" @click="printJobOrder" />
         </div>
 
+        <!-- Order Summary -->
         <div class="flex items-center gap-6">
-            <h1 class="text-2xl font-semibold text-highlighted">JO-{{ jobOrder.jo_number }}</h1>
-            <UBadge :color="jobStatusColor" variant="soft" size="lg" class="font-semibold">{{
-                jobOrder.overall_job_status }}</UBadge>
-            <UBadge :color="paymentStatusColor" variant="soft" size="lg" class="font-semibold">{{
-                jobOrder.payment_status }}</UBadge>
+            <h1 class="text-2xl font-semibold text-highlighted">Job Order #{{ jobOrder.jo_number }}</h1>
+            <div class="flex gap-2">
+                <UBadge :color="getJobStatusColor(jobOrder.overall_job_status)" variant="subtle" size="lg"
+                    class="font-semibold">{{
+                        jobOrder.overall_job_status }}</UBadge>
+                <UBadge :color="getPaymentStatusColor(jobOrder.payment_status)" variant="subtle" size="lg"
+                    class="font-semibold">{{
+                        jobOrder.payment_status }}</UBadge>
+            </div>
         </div>
 
         <!-- Summary -->
@@ -76,7 +61,7 @@ const printJobOrder = () => {
                 <p class="text-sm text-muted uppercase font-semibold">Total Paid</p>
                 <p class="text-2xl font-bold text-highlighted mt-1">{{ formatCurrency(jobOrder.total_paid) }}</p>
             </div>
-            <div class="border rounded-md p-4"
+            <div class="border border-default bg-default rounded-md p-4"
                 :class="balance > 0 ? 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30' : 'border-default bg-default'">
                 <p class="text-sm uppercase font-semibold"
                     :class="balance > 0 ? 'text-red-700 dark:text-red-400' : 'text-muted'">Balance</p>
@@ -88,36 +73,52 @@ const printJobOrder = () => {
         </div>
 
         <!-- Customer Information -->
-        <section>
-            <h2 class="text-lg font-semibold text-highlighted mb-3">Customer Information</h2>
-            <div class="border border-default rounded-md p-4 grid grid-cols-3 gap-6">
+        <section class="bg-default border border-default rounded-md">
+            <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-user" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                    <h2 class="text-highlighted font-semibold">Customer and Order Info</h2>
+                </div>
+                <UButton icon="i-lucide-pen-square" label="Change Customer" variant="outline" color="neutral" />
+            </div>
+            <div class="m-6 grid grid-cols-3 gap-6">
                 <div>
-                    <p class="text-sm text-muted">Name</p>
-                    <p class="text-base text-highlighted">{{ jobOrder.customer_name }}</p>
+                    <p class="text-sm text-muted uppercase">Name</p>
+                    <p class="text-base text-highlighted">{{ jobOrder.customer_name ?? 'Walk-in' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-muted">Contact No.</p>
+                    <p class="text-sm text-muted uppercase">Contact No.</p>
                     <p class="text-base text-highlighted">{{ jobOrder.customer_contact_no ?? '—' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-muted">Email</p>
+                    <p class="text-sm text-muted uppercase">Email</p>
                     <p class="text-base text-highlighted">{{ jobOrder.customer_email ?? '—' }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-muted">Date Received</p>
+                    <p class="text-sm text-muted uppercase">Date Received</p>
                     <p class="text-base text-highlighted">{{ formatDate(jobOrder.date_received) }}</p>
                 </div>
                 <div>
-                    <p class="text-sm text-muted">Last Updated</p>
+                    <p class="text-sm text-muted uppercase">Last Updated</p>
                     <p class="text-base text-highlighted">{{ formatDate(jobOrder.updated_at) }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-muted uppercase">Last Update By</p>
+                    <p class="text-base text-highlighted">{{ jobOrder.updated_by_name }}</p>
                 </div>
             </div>
         </section>
 
         <!-- Job Items -->
-        <section>
-            <h2 class="text-lg font-semibold text-highlighted mb-3">Job Items ({{ jobOrder.job_items.length }})</h2>
-            <div class="border border-default rounded-md overflow-hidden">
+        <section class="bg-default border border-default rounded-md">
+            <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                    <h2 class="text-highlighted font-semibold">Job Items</h2>
+                </div>
+                <UButton icon="i-lucide-plus" label="Add Item" variant="outline" />
+            </div>
+            <div class="overflow-hidden">
                 <table class="w-full text-base">
                     <thead class="bg-elevated">
                         <tr class="text-left text-sm text-muted uppercase">
@@ -130,46 +131,83 @@ const printJobOrder = () => {
                             <th class="p-3">Due Date</th>
                             <th class="p-3">Claimed</th>
                             <th class="p-3">Status</th>
+                            <th class="p-3"></th>
                         </tr>
                     </thead>
                     <tbody>
                         <template v-for="item in jobOrder.job_items" :key="item.item_id">
-                            <tr class="border-t border-default odd:bg-elevated/20">
+                            <tr class="border-t border-default odd:bg-elevated/20 align-middle">
                                 <td class="p-3 text-highlighted">{{ item.item_id }}</td>
                                 <td class="p-3 text-highlighted">
-                                    {{ item.service_name_snapshot }}
-                                    <span class="text-muted" v-if="item.service_option_name_snapshot"> — {{
-                                        item.service_option_name_snapshot }}</span>
-                                    <span class="text-muted" v-if="item.extras"> — {{ item.extras }}</span>
+                                    <UTooltip v-if="item.description || item.notes" :text="[
+                                        item.description ? `Description: ${item.description}` : '',
+                                        item.notes ? `Notes: ${item.notes}` : ''
+                                    ].filter(Boolean).join('\n')">
+                                        <div class="flex items-center gap-2 whitespace-nowrap cursor-help">
+                                            <span>
+                                                {{ item.service_name_snapshot }}
+
+                                                <span v-if="item.service_option_name_snapshot" class="text-muted">
+                                                    — {{ item.service_option_name_snapshot }}
+                                                </span>
+                                            </span>
+
+                                            <span v-for="extra_item in item.extras" :key="extra_item.id"
+                                                class="text-muted">
+                                                — {{ extra_item.name_snapshot }} ({{ extra_item.quantity }}×)
+                                            </span>
+                                        </div>
+                                    </UTooltip>
+
+                                    <div v-else class="flex items-center gap-2 whitespace-nowrap">
+                                        <span>
+                                            {{ item.service_name_snapshot }}
+
+                                            <span v-if="item.service_option_name_snapshot" class="text-muted">
+                                                — {{ item.service_option_name_snapshot }}
+                                            </span>
+                                        </span>
+
+                                        <span v-for="extra_item in item.extras" :key="extra_item.id" class="text-muted">
+                                            — {{ extra_item.name_snapshot }} ({{ extra_item.quantity }}×)
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="p-3 text-highlighted">
                                     {{ item.width && item.height ? `${item.width} × ${item.height} ${item.size_unit}` :
                                         '—' }}
                                 </td>
-                                <td class="p-3 text-highlighted">{{ item.quantity }}</td>
+                                <td class="p-3 text-highlighted">{{ item.quantity }} pc(s)</td>
                                 <td class="p-3 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
-                                <td class="p-3 font-semibold text-highlighted">{{ formatCurrency(item.subtotal) }}</td>
+                                <td class="p-3 font-semibold text-highlighted">
+                                    <UTooltip v-if="item.extra_total > 0 || item.discount_amount > 0" :text="[
+                                        item.extra_total > 0
+                                            ? `Extra Charge: ${formatCurrency(item.extra_total)}`
+                                            : '',
+                                        item.discount_amount > 0
+                                            ? `Discount: −${formatCurrency(item.discount_amount)}`
+                                            : ''
+                                    ].filter(Boolean).join('\n')">
+                                        <span class="cursor-help">
+                                            {{ formatCurrency(item.subtotal) }}
+                                        </span>
+                                    </UTooltip>
+
+                                    <span v-else>
+                                        {{ formatCurrency(item.subtotal) }}
+                                    </span>
+                                </td>
                                 <td class="p-3 text-highlighted">{{ formatDate(item.due_date) }}</td>
                                 <td class="p-3 text-highlighted">
                                     {{ item.total_claimed }} / {{ item.quantity }}
                                 </td>
                                 <td class="p-3">
-                                    <UBadge variant="soft" color="neutral" class="font-semibold">{{ item.job_status }}
+                                    <UBadge variant="outline" :color="getJobStatusColor(item.job_status)"
+                                        class="font-semibold">{{ item.job_status }}
                                     </UBadge>
                                 </td>
-                            </tr>
-                            <!-- Only rendered when there's something extra to show for this item -->
-                            <tr v-if="item.description || item.notes || item.discount_amount > 0 || item.extra_total > 0"
-                                class="border-t border-default bg-elevated/40">
-                                <td colspan="9" class="px-3 py-2 text-sm text-muted flex flex-wrap gap-x-6 gap-y-1">
-                                    <span v-if="item.description"><strong class="text-highlighted">Description:</strong>
-                                        {{ item.description }}</span>
-                                    <span v-if="item.discount_amount > 0">
-                                        <strong class="text-highlighted">Discount:</strong> −{{
-                                            formatCurrency(item.discount_amount) }}
-                                    </span>
-                                    <span v-if="item.notes"><strong class="text-highlighted">Notes:</strong> {{
-                                        item.notes }}</span>
+                                <td class="p-3">
+                                    <UButton variant="outline" icon="i-lucide-pen-square" />
                                 </td>
                             </tr>
                         </template>
@@ -179,13 +217,20 @@ const printJobOrder = () => {
         </section>
 
         <!-- Payments -->
-        <section>
-            <h2 class="text-lg font-semibold text-highlighted mb-3">Payments ({{ jobOrder.payments.length }})</h2>
-            <div v-if="jobOrder.payments.length" class="border border-default rounded-md overflow-hidden">
+        <section class="bg-default border border-default rounded-md">
+            <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-philippine-peso"
+                        class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                    <h2 class="text-highlighted font-semibold">Payments</h2>
+                </div>
+                <UButton icon="i-lucide-plus" label="Add Payment" variant="outline" />
+            </div>
+            <div v-if="jobOrder.payments.length">
                 <table class="w-full text-base">
                     <thead class="bg-elevated">
                         <tr class="text-left text-sm text-muted uppercase">
-                            <th class="p-3">Date</th>
+                            <th class="p-3">Date Received</th>
                             <th class="p-3">Reference #</th>
                             <th class="p-3">Method</th>
                             <th class="p-3">Amount</th>
@@ -196,7 +241,7 @@ const printJobOrder = () => {
                             class="border-t border-default odd:bg-elevated/20">
                             <td class="p-3 text-highlighted">{{ formatDate(payment.date_received) }}</td>
                             <td class="p-3 text-highlighted">{{ payment.reference_number }}</td>
-                            <!-- <td class="p-3 text-highlighted">{{ payment.account_name }}</td> -->
+                            <td class="p-3 text-highlighted">{{ payment.account_name_snapshot }}</td>
                             <td class="p-3 font-semibold text-highlighted">{{ formatCurrency(payment.amount) }}</td>
                         </tr>
                     </tbody>
@@ -208,13 +253,39 @@ const printJobOrder = () => {
         </section>
 
         <!-- Claiming History -->
-        <section>
-            <h2 class="text-lg font-semibold text-highlighted mb-3">Claiming History ({{ jobOrder.claiming_history.length }})</h2>
-            <p v-if="!jobOrder.claiming_history.length"
-                class="text-muted text-base border border-default rounded-md p-4 text-center">
-                No items have been claimed yet.
+        <section class="bg-default border border-default rounded-md">
+            <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-scroll-text"
+                        class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                    <h2 class="text-highlighted font-semibold">Claiming History</h2>
+                </div>
+                <UButton icon="i-lucide-plus" label="Add Claim" variant="outline" />
+            </div>
+            <div v-if="jobOrder.claiming_history.length">
+                <table class="w-full text-base">
+                    <thead class="bg-elevated">
+                        <tr class="text-left text-sm text-muted uppercase">
+                            <th class="p-3">Date Claimed</th>
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Item Claimed</th>
+                            <th class="p-3">Pieces Claimed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="claim in jobOrder.claiming_history" :key="claim.claimed_item_id"
+                            class="border-t border-default odd:bg-elevated/20">
+                            <td class="p-3 text-highlighted">{{ formatDate(claim.date_claimed) }}</td>
+                            <td class="p-3 text-highlighted">{{ claim.name }}</td>
+                            <td class="p-3 text-highlighted">{{ claim.claimed_item_id }}</td>
+                            <td class="p-3 text-highlighted">{{ claim.pcs_claimed }} pc(s)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p v-else class="text-muted text-base border border-default rounded-md p-4 text-center">No payments recorded
+                yet.
             </p>
-            <!-- populate a table here the same way as Payments once claims have data -->
         </section>
     </div>
 </template>

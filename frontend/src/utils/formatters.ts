@@ -65,42 +65,6 @@ export const formatDateNoYear = (date: string | Date | undefined) => {
   })
 }
 
-export const mapSeverity = (status: string) => {
-  switch (status) {
-    case 'For Approval':
-      return 'info'
-    case 'For Pickup':
-      return 'info'
-    case 'Released':
-      return 'success'
-    case 'Fully Paid':
-      return 'success'
-    case 'Cancelled':
-      return 'danger'
-    case 'Unpaid':
-      return 'danger'
-    case 'Credit':
-      return 'danger'
-    case 'Refunded':
-      return 'danger'
-    default:
-      return 'contrast'
-  }
-}
-
-export const mapCustomColor = (status: string): string | null => {
-  switch (status) {
-    case 'Overcharged':
-      return '!bg-purple-500 !text-white'
-    case 'Pending':
-      return '!bg-orange-600 !text-white'
-    case 'For Layout':
-      return '!bg-yellow-500 !text-white'
-    default:
-      return null
-  }
-}
-
 export const formatNullable = (value: string | null | undefined) => {
   if (!value || value === 'null') return '-'
   return value
@@ -130,3 +94,30 @@ export const mapExpenseCategory = (category: string): string => {
       return ''
   }
 }
+
+type BadgeColor = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary'
+
+const paymentStatusColors: Record<string, BadgeColor> = {
+    'Fully Paid': 'success',
+    'Partial': 'warning',
+    'Unpaid': 'error',
+    'Credit': 'info',
+    'Refunded': 'neutral',
+    'Overcharged': 'warning',
+}
+
+const jobStatusColors: Record<string, BadgeColor> = {
+    'Pending': 'warning',
+    'For Layout': 'info',
+    'For Approval': 'primary',
+    'For Printing': 'primary',
+    'For Pickup': 'success',
+    'Released': 'neutral',
+    'Cancelled': 'error',
+}
+
+export const getPaymentStatusColor = (status?: string): BadgeColor =>
+    paymentStatusColors[status ?? 'Unpaid'] ?? 'error'
+
+export const getJobStatusColor = (status?: string): BadgeColor =>
+    jobStatusColors[status ?? 'Pending'] ?? 'warning'

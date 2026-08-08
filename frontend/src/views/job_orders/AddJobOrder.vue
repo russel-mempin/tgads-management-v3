@@ -166,7 +166,7 @@ const handleSave = async () => {
             </div>
             <div class="flex items-center gap-3 bg-elevated border border-default rounded-md px-4 py-3 mt-1">
                 <div>
-                    <p class="text-sm font-semibold text-highlighted">Walk-in Customer</p>
+                    <p class="text-base font-semibold text-highlighted">Walk-in Customer</p>
                     <p class="text-xs text-muted">No customer record needed</p>
                 </div>
                 <USwitch v-model="isWalkIn" size="lg" />

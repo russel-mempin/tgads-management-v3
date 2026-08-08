@@ -252,17 +252,13 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             placeholder="Payment Status" showClear />
         <USelect size="lg" class="w-50" v-model="jobStatus" :items="jobStatusOptions" placeholder="Job Status"
             showClear />
-        <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="soft"
+        <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="outline"
             @click="clearFilters" />
         <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner"
             label="Add Job Order" color="primary" variant="solid" />
     </section>
-    <section class="mx-6 mt-6 border border-default rounded-md">
-        <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()" :ui="{
-            th: 'text-muted font-semibold uppercase',
-            td: 'text-base text-highlighted',
-            tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
-        }">
+    <section class="mx-6 mt-6 border border-default bg-default rounded-md">
+        <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()">
             <template #expanded="{ row }">
                 <div class="p-2 flex flex-col gap-6">
                     <!-- Job Items -->

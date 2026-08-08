@@ -34,8 +34,9 @@ export default defineConfig({
         },
         table: {
           slots: {
-            th: 'text-muted font-semibold uppercase text-xs tracking-wide',
-            td: 'text-highlighted',
+            th: 'bg-default rounded-tl-md rounded-tr-md text-muted font-semibold uppercase text-xs tracking-wide',
+            td: 'text-base text-highlighted',
+            tr: 'hover:bg-elevated odd:bg-muted cursor-pointer'
           },
         },
         navigationMenu: {

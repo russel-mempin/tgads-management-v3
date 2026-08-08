@@ -217,7 +217,7 @@ class JobOrder(JobOrderBase, table=True):
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    claims: list[ClaimingHistory] = Relationship(
+    claiming_history: list[ClaimingHistory] = Relationship(
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -355,7 +355,7 @@ class JobItem(JobItemBase, table=True):
     job_order: JobOrder = Relationship(back_populates="job_items")
     service: Service = Relationship(back_populates="job_items")
     service_option: ServiceOption = Relationship(back_populates="job_items")
-    claims: list[ClaimingHistory] = Relationship(back_populates="job_item")
+    claiming_history: list[ClaimingHistory] = Relationship(back_populates="job_item")
     extras: list[JobItemExtra] = Relationship(
         back_populates="job_item",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
@@ -363,7 +363,7 @@ class JobItem(JobItemBase, table=True):
 
     @property
     def total_claimed(self) -> int:
-        return sum(c.pcs_claimed for c in self.claims)
+        return sum(c.pcs_claimed for c in self.claiming_history)
 
     @property
     def remaining_on_hand(self) -> int:
@@ -418,8 +418,8 @@ class ClaimingHistory(ClaimingHistoryBase, table=True):
         sa_column=Column(ForeignKey("job_items.id", ondelete="CASCADE"), nullable=False)
     )
 
-    job_order: JobOrder = Relationship(back_populates="claims")
-    job_item: JobItem = Relationship(back_populates="claims")
+    job_order: JobOrder = Relationship(back_populates="claiming_history")
+    job_item: JobItem = Relationship(back_populates="claiming_history")
 
 
 # ====================== EXPENSES =========================

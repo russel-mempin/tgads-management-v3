@@ -28,7 +28,7 @@ const subtitle = computed(() => {
             <p v-if="subtitle" class="sticky top-0 z-10 bg-elevated border-b border-default text-muted py-2 px-4">
                 {{ subtitle }}
             </p>
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto bg-[#fbfbfb] dark:bg-[#18181b]">
                 <RouterView />
             </div>
         </div>

@@ -3,13 +3,14 @@ import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import type { JobOrder } from '@/types/jobOrder'
 import { getJobOrder } from '@/api/jobOrders'
-import { formatDate, formatCurrency, nowInManila } from '@/utils/formatters'
+import { formatDate, formatCurrency } from '@/utils/formatters'
 
 const route = useRoute()
 const jobOrder = ref<JobOrder>()
 
 onMounted(async () => {
 	jobOrder.value = await getJobOrder(Number(route.params.jo_number))
+	console.log(jobOrder.value)
 	await nextTick()
 	window.print()
 })
@@ -31,7 +32,7 @@ const paddedPayments = computed(() => {
 })
 
 const paddedClaims = computed(() => {
-	const claims = jobOrder.value?.claims ?? []
+	const claims = jobOrder.value?.claiming_history ?? []
 	const blanksNeeded = Math.max(0, MIN_CLAIM_ROWS - claims.length)
 	return [...claims, ...Array(blanksNeeded).fill(null)]
 })
@@ -53,7 +54,7 @@ const paddedClaims = computed(() => {
 				</div>
 			</div>
 			<div class="form-title-block">
-				<div class="form-subtitle">Monitoring Form</div>
+				<div class="form-subtitle">Temporary Monitoring Form</div>
 			</div>
 		</div>
 
@@ -73,7 +74,7 @@ const paddedClaims = computed(() => {
 			</div>
 			<div class="meta-field">
 				<div class="meta-label">Print Date / Time</div>
-				<div class="meta-value">{{ formatDate(nowInManila()) }}</div>
+				<div class="meta-value">{{ formatDate(new Date()) }}</div>
 			</div>
 		</div>
 
@@ -135,7 +136,15 @@ const paddedClaims = computed(() => {
 				<tbody>
 					<tr v-for="(item, index) in paddedJobItems" :key="item?.item_id ?? `blank-${index}`">
 						<td>{{ item?.item_id ?? '' }}</td>
-						<td>{{ item ? `${item.service_name} – ${item.description}` : '' }}</td>
+						<td>
+							<span v-if="item">
+								{{ `${item.service_name_snapshot} – ${item.service_option_name_snapshot}` }}
+								<span v-for="extra in item.extras" :key="extra.id"
+									style="display: block; font-size: 8px; color: #5a5a5a; margin-top: 1mm;">
+									+ {{ extra.name_snapshot }} ({{ extra.quantity }}×)
+								</span>
+							</span>
+						</td>
 						<td>{{ item?.quantity ?? '' }}</td>
 						<td>{{ item ? `${item.width} × ${item.height} ${item.size_unit}` : '' }}</td>
 						<td>{{ item ? formatCurrency(item.subtotal) : '' }}</td>
@@ -168,7 +177,7 @@ const paddedClaims = computed(() => {
 					<tr v-for="(payment, index) in paddedPayments" :key="payment?.date_received ?? `blank-${index}`">
 						<td>{{ payment ? formatCurrency(payment.amount) : '' }}</td>
 						<td>{{ payment ? formatDate(payment.date_received) : '' }}</td>
-						<td>{{ payment?.method ?? '' }}</td>
+						<td>{{ payment?.account_name_snapshot ?? '' }}</td>
 					</tr>
 				</tbody>
 			</table>
@@ -470,12 +479,12 @@ body {
 }
 
 .job-table td {
-	border-bottom: 1px solid #d0d0d0;
-	border-right: 1px solid #d0d0d0;
-	height: 9mm;
-	padding: 0 3mm;
-	vertical-align: middle;
-	font-size: 9px;
+    border-bottom: 1px solid #d0d0d0;
+    border-right: 1px solid #d0d0d0;
+    min-height: 9mm;  /* change height to min-height */
+    padding: 2mm 3mm;  /* add some vertical padding */
+    vertical-align: middle;
+    font-size: 9px;
 }
 
 .job-table td:last-child {
