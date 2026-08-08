@@ -247,7 +247,7 @@ const printJobOrder = () => {
                     </tbody>
                 </table>
             </div>
-            <p v-else class="text-muted text-base border border-default rounded-md p-4 text-center">No payments recorded
+            <p v-else class="text-muted text-base p-4 text-center">No payments recorded
                 yet.
             </p>
         </section>
@@ -274,7 +274,7 @@ const printJobOrder = () => {
                     </thead>
                     <tbody>
                         <tr v-for="claim in jobOrder.claiming_history" :key="claim.claimed_item_id"
-                            class="border-t border-default odd:bg-elevated/20">
+                            class="odd:bg-elevated/20">
                             <td class="p-3 text-highlighted">{{ formatDate(claim.date_claimed) }}</td>
                             <td class="p-3 text-highlighted">{{ claim.name }}</td>
                             <td class="p-3 text-highlighted">{{ claim.claimed_item_id }}</td>
@@ -283,9 +283,7 @@ const printJobOrder = () => {
                     </tbody>
                 </table>
             </div>
-            <p v-else class="text-muted text-base border border-default rounded-md p-4 text-center">No payments recorded
-                yet.
-            </p>
+            <p v-else class="text-muted text-base p-4 text-center">No claims recorded yet.</p>
         </section>
     </div>
 </template>
