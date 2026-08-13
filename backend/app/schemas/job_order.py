@@ -33,6 +33,8 @@ class JobItemPublic(JobItemBase):
     total_claimed: int
     remaining_on_hand: int
     extras: list[JobItemExtraPublic] = Field(default_factory=list)
+    service_id: uuid.UUID
+    service_option_id: uuid.UUID
     
     
 class JobItemCreate(JobItemBase):

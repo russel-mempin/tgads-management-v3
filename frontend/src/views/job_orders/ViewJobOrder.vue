@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { JobOrder } from '@/types/jobOrder'
+import type { JobOrder, JobItem } from '@/types/jobOrder'
 import { getJobOrder } from '@/api/jobOrders'
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
+import EditJobItemForm from '@/components/EditJobItemForm.vue'
 
 const route = useRoute()
 const router = useRouter()
 const jobOrder = ref<JobOrder>()
 const loading = ref(true)
+const isEditJobItemOpen = ref(false)
+const selectedJobItem = ref<JobItem | null>(null)
 
 onMounted(async () => {
     loading.value = true
     jobOrder.value = await getJobOrder(Number(route.params.jo_number))
     loading.value = false
-    console.log(jobOrder.value)
 })
 
 const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobOrder.value.total_paid : 0))
@@ -22,6 +24,11 @@ const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobO
 const printJobOrder = () => {
     const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
     window.open(resolved.href, '_blank')
+}
+
+const openEditJobItem = (item: JobItem) => {
+    selectedJobItem.value = item
+    isEditJobItemOpen.value = true
 }
 </script>
 
@@ -42,12 +49,12 @@ const printJobOrder = () => {
         <div class="flex items-center gap-6">
             <h1 class="text-2xl font-semibold text-highlighted">Job Order #{{ jobOrder.jo_number }}</h1>
             <div class="flex gap-2">
-                <UBadge :color="getJobStatusColor(jobOrder.overall_job_status)" variant="subtle" size="lg"
-                    class="font-semibold">{{
-                        jobOrder.overall_job_status }}</UBadge>
                 <UBadge :color="getPaymentStatusColor(jobOrder.payment_status)" variant="subtle" size="lg"
                     class="font-semibold">{{
                         jobOrder.payment_status }}</UBadge>
+                <UBadge :color="getJobStatusColor(jobOrder.overall_job_status)" variant="subtle" size="lg"
+                    class="font-semibold">{{
+                        jobOrder.overall_job_status }}</UBadge>
             </div>
         </div>
 
@@ -79,7 +86,6 @@ const printJobOrder = () => {
                     <UIcon name="i-lucide-user" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                     <h2 class="text-highlighted font-semibold">Customer and Order Info</h2>
                 </div>
-                <UButton icon="i-lucide-pen-square" label="Change Customer" variant="outline" color="neutral" />
             </div>
             <div class="m-6 grid grid-cols-3 gap-6">
                 <div>
@@ -110,6 +116,7 @@ const printJobOrder = () => {
         </section>
 
         <!-- Job Items -->
+        <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" />
         <section class="bg-default border border-default rounded-md">
             <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
                 <div class="flex items-center gap-2">
@@ -207,7 +214,7 @@ const printJobOrder = () => {
                                     </UBadge>
                                 </td>
                                 <td class="p-3">
-                                    <UButton variant="outline" icon="i-lucide-pen-square" />
+                                    <UButton variant="outline" icon="i-lucide-pen-square" @click="openEditJobItem(item)" />
                                 </td>
                             </tr>
                         </template>

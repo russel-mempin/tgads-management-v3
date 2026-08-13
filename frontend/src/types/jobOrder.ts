@@ -64,6 +64,8 @@ export interface JobItem {
   total_claimed?: number        // optional since not needed in forms
   remaining_on_hand?: number    // optional since not needed in forms
   extras: JobItemExtra[]
+  service_id: string
+  service_option_id: string
 }
 
 export interface ClaimingHistory {

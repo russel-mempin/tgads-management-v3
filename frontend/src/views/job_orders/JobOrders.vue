@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getJobOrderKpis, getAllJobOrders, getJobOrderCount } from '@/api/jobOrders'
 import type { JobOrder } from '@/types/jobOrder'
 import type { TableColumn } from '@nuxt/ui'
-import { formatDate, formatCurrency } from '@/utils/formatters'
+import { formatDate, formatCurrency, formatDateNoYear, getJobStatusColor } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 
@@ -118,7 +118,7 @@ const columns: TableColumn<JobOrder>[] = [
                 'Overcharged': 'warning' as const,
             }[row.getValue('payment_status') as string]
 
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'soft', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'outline', color }, () =>
                 row.getValue('payment_status')
             )
         }
@@ -137,7 +137,7 @@ const columns: TableColumn<JobOrder>[] = [
                 'Cancelled': 'error' as const,
             }[row.getValue('overall_job_status') as string]
 
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'soft', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'outline', color }, () =>
                 row.getValue('overall_job_status')
             )
         }
@@ -274,6 +274,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                         <th class="p-2.5">Item</th>
                                         <th class="p-2.5">Service</th>
                                         <th class="p-2.5">Size</th>
+                                        <th class="p-2.5">Due</th>
                                         <th class="p-2.5">Unit Price</th>
                                         <th class="p-2.5">Qty</th>
                                         <th class="p-2.5">Subtotal</th>
@@ -291,12 +292,13 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                         </td>
                                         <td class="p-2.5 text-highlighted">{{ item.height && item.width ?
                                             `${item.height} × ${item.width} ${item.size_unit}` : '—' }}</td>
+                                        <td class="p-2.5 text-highlighted">{{ formatDateNoYear(item.due_date) }}</td>
                                         <td class="p-2.5 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
                                         <td class="p-2.5 text-highlighted">{{ item.quantity }}</td>
                                         <td class="p-2.5 font-semibold text-highlighted">{{
                                             formatCurrency(item.subtotal) }}</td>
                                         <td class="p-2.5">
-                                            <UBadge variant="soft" color="neutral" class="font-semibold">{{
+                                            <UBadge variant="outline" :color="getJobStatusColor(item.job_status)" class="font-semibold">{{
                                                 item.job_status }}</UBadge>
                                         </td>
                                     </tr>
