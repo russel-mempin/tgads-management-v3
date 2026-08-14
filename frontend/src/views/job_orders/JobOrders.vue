@@ -160,7 +160,7 @@ const columns: TableColumn<JobOrder>[] = [
                     size: 'md',
                     onClick: (event: Event) => {
                         event.stopPropagation()
-                        router.push(`/job-orders/view/${row.original.jo_number}`)
+                        router.push(`/job-orders/view/${row.original.id}`)
                     }
                 }),
                 h(UButton, {

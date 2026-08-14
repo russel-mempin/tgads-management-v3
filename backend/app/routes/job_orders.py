@@ -129,9 +129,9 @@ def compute_unit_price_route(
     )
     
 
-@router.get("/{jo_number}", response_model=JobOrderPublic)
-def read_job_order(jo_number: int, db: Session = Depends(get_session)):
-    return get_job_order(db, jo_number)
+@router.get("/{job_order_id}", response_model=JobOrderPublic)
+def read_job_order(job_order_id: uuid.UUID, db: Session = Depends(get_session)):
+    return get_job_order(db, job_order_id)
 
 
 @router.post("/", response_model=JobOrderPublic)

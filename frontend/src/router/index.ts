@@ -56,7 +56,7 @@ const router = createRouter({
           }
         },
         {
-          path: 'job-orders/view/:jo_number',
+          path: 'job-orders/view/:job_order_id',
           component: () => import('@/views/job_orders/ViewJobOrder.vue'),
           meta: {
             title: 'Job Orders - View',

@@ -10,6 +10,7 @@ import { getUnitPrice } from '@/api/jobOrders'
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
+    canCallAPI: boolean
 }>()
 
 const emit = defineEmits<{

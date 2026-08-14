@@ -248,7 +248,7 @@ const removeExtra = (index: number) => {
                     <div class="border-r border-b border-l border-default px-2 py-1 grid grid-cols-2 gap-2">
                         <div>
                             <p class="uppercase text-sm">Consumption</p>
-                            <p>{{ pricingData?.consumption }}</p>
+                            <p>{{ `${pricingData?.consumption} ${pricingData?.consumption_unit}.` }}</p>
                         </div>
                         <div>
                             <p class="uppercase text-sm">Rate</p>
@@ -265,8 +265,8 @@ const removeExtra = (index: number) => {
                     </div>
                     <div
                         class="border-r border-b border-l border-default px-2 py-1 rounded-br-md rounded-bl-md bg-elevated flex items-center justify-between">
-                        <p class="uppercase text-sm">Subtotal</p>
-                        <p>{{ `₱ ${subtotal}` }}</p>
+                        <p class="uppercase text-sm font-semibold">Subtotal</p>
+                        <p class="font-semibold">{{ `₱ ${subtotal}` }}</p>
                     </div>
                 </div>
                 <!-- Cancel / Save Buttons -->

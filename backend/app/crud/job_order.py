@@ -19,7 +19,12 @@ from app.models import (
     Service,
     ServiceOption,
 )
-from app.schemas.job_order import JobItemUpdate, JobOrderCreate, PricingData
+from app.schemas.job_order import (
+    JobItemCreate,
+    JobItemUpdate,
+    JobOrderCreate,
+    PricingData,
+)
 from app.utils.utils import compute_unit_price
 
 
@@ -92,12 +97,12 @@ def get_job_order_count(
     return db.exec(query).one()
 
 
-def get_job_order(db: Session, jo_number: int) -> JobOrder:
-    job_order = db.exec(select(JobOrder).where(JobOrder.jo_number == jo_number)).first()
+def get_job_order(db: Session, job_order_id: uuid.UUID) -> JobOrder:
+    job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
     if not job_order:
         raise HTTPException(
             status_code=404,
-            detail=f"Job order with JO number of {jo_number} not found.",
+            detail="Job order not found.",
         )
     return job_order
 
@@ -407,6 +412,85 @@ def update_job_item(
 
         return job_item
 
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def create_job_item(
+    db: Session,
+    job_order_id: uuid.UUID,
+    data: JobItemCreate,
+    current_user_id: uuid.UUID,
+):
+    try:
+        job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=404,
+                detail="Job order not found.",
+            )
+        option = db.get(ServiceOption, data.service_option_id)
+        if not option:
+            raise HTTPException(status_code=404, detail="Variant not found.")
+        service = option.service
+        if not service:
+            raise HTTPException(status_code=404, detail="Service not found.")
+        job_item = JobItem(
+            description=data.description,
+            discount_amount=data.discount_amount,
+            due_date=data.due_date,
+            extra_charge=data.extra_charge,
+            height=data.height,
+            item_id=data.item_id,
+            job_status=data.job_status,
+            notes=data.notes,
+            quantity=data.quantity,
+            service_abbreviation_snapshot=service.abbreviation,
+            service_option_name_snapshot=option.name,
+            service_name_snapshot=service.name,
+            size_unit=data.size_unit,
+            subtotal=data.subtotal,
+            unit_price=data.unit_price,
+            width=data.width,
+            job_order_id=job_order.id,
+            service_id=service.id,
+            service_option_id=option.id,
+        )
+        db.add(job_item)
+        if data.extras:
+            for extra in data.extras:
+                extra_service = db.exec(
+                    select(ExtraService).where(
+                        ExtraService.id == extra.extra_service_id
+                    )
+                ).first()
+                if not extra_service:
+                    raise HTTPException(
+                        status_code=404, detail="Extra service not found."
+                    )
+                db.add(
+                    JobItemExtra(
+                        job_item_id=job_item.id,
+                        extra_service_id=extra_service.id,
+                        quantity=extra.quantity,
+                        price_snapshot=extra_service.price,
+                        name_snapshot=extra_service.name,
+                    )
+                )
+        db.flush()
+        job_order.sync_computed_fields()
+
+        audit = AuditLog(
+            action=f"Created job item {job_item.item_id}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(job_order)
+        return job_order
+        
     except HTTPException:
         raise
     except Exception:

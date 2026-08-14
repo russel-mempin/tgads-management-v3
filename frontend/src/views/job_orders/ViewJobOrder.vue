@@ -6,20 +6,26 @@ import { getJobOrder } from '@/api/jobOrders'
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
 import EditJobItemForm from '@/components/EditJobItemForm.vue'
 
+const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 const jobOrder = ref<JobOrder>()
 const loading = ref(true)
 const isEditJobItemOpen = ref(false)
+const isAddJobItemOpen = ref(false)
 const selectedJobItem = ref<JobItem | null>(null)
 
 const fetchJobOrder = async () => {
     loading.value = true
 
     try {
-        jobOrder.value = await getJobOrder(
-            Number(route.params.jo_number)
-        )
+        const jobOrderId = route.params.job_order_id
+
+        if (typeof jobOrderId !== 'string') {
+            throw new Error('Invalid job order ID')
+        }
+
+        jobOrder.value = await getJobOrder(jobOrderId)
     } finally {
         loading.value = false
     }
@@ -40,9 +46,13 @@ const openEditJobItem = (item: JobItem) => {
     selectedJobItem.value = item
     isEditJobItemOpen.value = true
 }
-const handleJobItemSaved = async () => {
-    console.log("FETCH")
+const handleJobItemUpdated = async () => {
     await fetchJobOrder()
+    toast.add({
+        title: 'Changes Saved',
+        description: 'Job Item information updated.',
+        color: 'success',
+    })
 }
 </script>
 
@@ -130,14 +140,16 @@ const handleJobItemSaved = async () => {
         </section>
 
         <!-- Job Items -->
-        <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemSaved" />
+        <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
+        <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-a-p-i="true" />
         <section class="bg-default border border-default rounded-md">
             <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
                 <div class="flex items-center gap-2">
                     <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                     <h2 class="text-highlighted font-semibold">Job Items</h2>
                 </div>
-                <UButton icon="i-lucide-plus" label="Add Item" variant="outline" />
+                <UButton @click="() => { isAddJobItemOpen = true }" icon="i-lucide-plus" label="Add Item"
+                    variant="outline" />
             </div>
             <div class="overflow-hidden">
                 <table class="w-full text-base">

@@ -16,6 +16,12 @@ export default defineConfig({
           primary: 'blue',
           neutral: 'slate',
         },
+        toast: {
+          slots: {
+            title: 'font-semibold text-highlighted',
+            description: 'text-muted',
+          },
+        },
         input: {
           slots: {
             base: 'disabled:cursor-not-allowed disabled:bg-elevated disabled:cursor-not-allowed disabled:text-gray-800 placeholder:text-slate-500 dark:placeholder:text-slate-400',
@@ -36,7 +42,7 @@ export default defineConfig({
           slots: {
             th: 'bg-default rounded-tl-md rounded-tr-md text-muted font-semibold uppercase text-xs tracking-wide',
             td: 'text-base text-highlighted',
-            tr: 'hover:bg-elevated odd:bg-muted cursor-pointer'
+            tr: 'hover:bg-elevated odd:bg-muted cursor-pointer',
           },
         },
         navigationMenu: {

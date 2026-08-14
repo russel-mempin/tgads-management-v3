@@ -26,6 +26,7 @@ const itemPendingDelete = ref<JobItemCreate | null>(null)
 const isDeleteConfirmOpen = ref(false)
 
 // Data functions
+// TODO: Move to JobItemForm to generate item ID independently
 const generateItemId = (serviceAbbreviation: string): string => {
     const existingCount = props.jobItems.filter(
         item => item.item_id.includes(`-${serviceAbbreviation}-`)
@@ -178,7 +179,7 @@ const columns: TableColumn<JobItemCreate>[] = [
             </div>
         </template>
     </UModal>
-    <JobItemForm v-model:isOpen="isOpen" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
+    <JobItemForm v-model:isOpen="isOpen" :can-call-a-p-i="false" :editing-item="itemPendingEdit" @save="handleAddOrUpdateJobItem" />
     <div class="bg-default border border-default rounded-md p-6 m-8">
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
