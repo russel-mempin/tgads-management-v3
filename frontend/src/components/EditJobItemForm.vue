@@ -2,10 +2,17 @@
 import { reactive, watch, ref, computed, onMounted } from 'vue';
 import type { JobItem, PricingData } from '@/types/jobOrder';
 import { z } from 'zod'
-import type { } from '@/types/jobOrder';
 import type { Extra } from '@/types/service'
-import { getUnitPrice } from '@/api/jobOrders';
+import { getUnitPrice, updateJobItem } from '@/api/jobOrders';
 import { getAllExtras } from '@/api/services';
+import type { FormSubmitEvent } from '@nuxt/ui';
+import isEqual from 'lodash/isEqual'
+
+const toast = useToast()
+
+const emit = defineEmits<{
+    updated: []
+}>()
 
 const props = defineProps<{
     jobItem?: JobItem | null
@@ -40,14 +47,11 @@ const form = reactive<Schema>({
 })
 
 // UI Variables
-const statusOptions = ["Pending", "For Layout", "For Approval", "For Printing", "For Pickup", "Released"]
+const statusOptions = ["Pending", "For Layout", "For Approval", "For Printing", "For Pickup", "Released", "Cancelled"]
 const extraList = ref<Extra[]>([])
 let debounceTimer: ReturnType<typeof setTimeout>
 const extraChargeTotal = computed(() =>
     form.extra_charge * form.quantity
-)
-const subtotal = computed(() =>
-    ((pricingData.value?.unit_price ?? 0) * form.quantity) + extraChargeTotal.value - form.discount_amount
 )
 const getExtraPrice = (extra: ExtraLineItem) => {
     const extraData = extraList.value.find(x => x.id === extra.extraId)
@@ -57,6 +61,10 @@ const getExtraPrice = (extra: ExtraLineItem) => {
 const extraTotal = computed(() =>
     form.extras.reduce((sum, e) => sum + getExtraPrice(e), 0)
 )
+const subtotal = computed(() =>
+    ((pricingData.value?.unit_price ?? 0) * form.quantity) + extraTotal.value + extraChargeTotal.value - form.discount_amount
+)
+const isSubmitting = ref(false)
 
 // Data variables
 const pricingData = ref<PricingData>()
@@ -74,7 +82,7 @@ watch(
         form.quantity = item.quantity
         form.job_status = item.job_status
         form.notes = item.notes ?? ''
-        form.extra_charge = item.extra_total ?? 0
+        form.extra_charge = item.extra_charge ?? 0
         form.discount_amount = item.discount_amount ?? 0
 
         form.extras = (item.extras ?? []).map(extra => ({
@@ -101,8 +109,62 @@ watch(
                 quantity: props.jobItem.quantity
             })
         }, 400)
-    }
+    },
+    { immediate: true }
 )
+
+const getChanges = (): Record<string, unknown> => {
+    if (!props.jobItem) return {}
+
+    const changes: Record<string, unknown> = {}
+
+    for (const key of Object.keys(form) as (keyof typeof form)[]) {
+        const current = key === 'extras'
+            ? form.extras.map(e => ({ extra_service_id: e.extraId, quantity: e.quantity }))
+            : form[key]
+
+        const original = key === 'extras'
+            ? props.jobItem.extras ?? []
+            : props.jobItem[key as keyof typeof props.jobItem]
+
+        if (!isEqual(current, original)) {
+            changes[key] = current
+        }
+    }
+
+    return changes
+}
+
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
+
+    try {
+        if (props.jobItem) {
+            // Editing an existing item — send only the diff
+            const changes = getChanges()
+            if (Object.keys(changes).length === 0) {
+                // nothing changed, no need to hit the backend
+                return
+            }
+            await updateJobItem(changes, props.jobItem.id)
+            emit("updated")
+            isOpen.value = false
+        }
+    }
+    catch (error) {
+        console.error('Failed to update job item:', error)
+        toast.add({
+            title: 'Save failed',
+            description: 'Something went wrong while saving the job item.',
+            color: 'error',
+        })
+    }
+    finally {
+        isSubmitting.value = false
+    }
+}
 
 // UI Functions
 const addExtra = () => {
@@ -117,7 +179,7 @@ const removeExtra = (index: number) => {
     <UModal :ui="{ content: 'max-w-2xl' }" title="Edit Job Item" description="Update job item info when saved."
         v-model:open="isOpen" :close="{ color: 'error', class: 'rounded-full' }">
         <template #body>
-            <UForm :schema="schema" :state="form" class="flex flex-col gap-4">
+            <UForm :schema="schema" :state="form" @submit="onSubmit" class="flex flex-col gap-4">
                 <div class="grid grid-cols-2 gap-4">
                     <UFormField label="Quantity" name="quantity" required class="w-full">
                         <UInputNumber v-model="form.quantity" :min="1" class="w-full"
@@ -158,12 +220,14 @@ const removeExtra = (index: number) => {
                     <UFormField label="Extra Charge (Per Piece)" name="extra_charge" class="w-full">
                         <UInputNumber v-model="form.extra_charge" :increment="false" :decrement="false"
                             :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                            class="w-full" :step="0.1" :step-snapping="false" />
+                            class="w-full" :step="0.1" :step-snapping="false"
+                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                     <UFormField label="Discount (Flat)" name="discount_amount" class="w-full">
                         <UInputNumber v-model="form.discount_amount" :increment="false" :decrement="false"
                             :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                            class="w-full" :step="0.1" :step-snapping="false" />
+                            class="w-full" :step="0.1" :step-snapping="false"
+                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                 </div>
                 <!-- Pricing Breakdown -->
@@ -207,10 +271,10 @@ const removeExtra = (index: number) => {
                 </div>
                 <!-- Cancel / Save Buttons -->
                 <div class="flex justify-end gap-4">
-                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
-                        class="w-28" />
-                    <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold"
-                        type="submit" />
+                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-40"
+                        @click="() => { isOpen = false }" />
+                    <UButton label="Save Changes    " icon="i-lucide-save" color="primary" size="lg"
+                        class="w-40 font-semibold" type="submit" />
                 </div>
             </UForm>
         </template>

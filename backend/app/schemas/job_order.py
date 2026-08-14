@@ -2,7 +2,7 @@ import uuid
 
 from sqlmodel import Field, SQLModel
 
-from app.enums import PaymentStatus, PriceUnit
+from app.enums import JobStatus, PaymentStatus, PriceUnit
 from app.models import ClaimingHistoryBase, JobItemBase, JobOrderBase, PaymentBase
 
 
@@ -41,6 +41,19 @@ class JobItemCreate(JobItemBase):
     service_id: uuid.UUID
     service_option_id: uuid.UUID
     extras: list[JobItemExtraCreate] = Field(default_factory=list)
+
+# TODO: Refactor create to use this instead
+class JobItemExtraUpdate(SQLModel):
+    extra_service_id: uuid.UUID
+    quantity: int
+
+class JobItemUpdate(SQLModel):
+    quantity: int | None = None
+    job_status: JobStatus | None = None
+    notes: str | None = None
+    extra_charge: float | None = None
+    discount_amount: float | None = None
+    extras: list[JobItemExtraUpdate] | None = None
     
     
 class PaymentPublic(PaymentBase):

@@ -21,12 +21,17 @@ from app.crud.job_order import (
     get_overdue_jobs,
     get_price,
     get_unpaid_job_orders,
-    update_job_order,
+    update_job_item,
 )
 from app.database import get_session
 from app.enums import JobStatus, PaymentStatus, SizeUnit, UserRoles
 from app.models import User
-from app.schemas.job_order import JobOrderCreate, JobOrderPublic, PricingData
+from app.schemas.job_order import (
+    JobItemUpdate,
+    JobOrderCreate,
+    JobOrderPublic,
+    PricingData,
+)
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(
@@ -147,11 +152,11 @@ def archive(
     return archive_job_order(db, jo_number, current_user.id)
 
 
-@router.put("/{jo_number}")
+@router.patch("/job-items/{id}")
 def update(
-    jo_number: int,
-    data: JobOrderCreate,
+    id: uuid.UUID,
+    data: JobItemUpdate,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    return update_job_order(db, jo_number, data, current_user.id)
+    return update_job_item(db, id, data, current_user.id)

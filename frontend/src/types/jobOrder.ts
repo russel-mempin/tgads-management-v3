@@ -35,16 +35,17 @@ export interface JobItemCreate {
   service_abbreviation_snapshot: string
 }
 
-export interface Payment {
-  date_received: Date
-  reference_number: string
-  amount: number
-  notes: string
-  account_id?: string
-  account_name_snapshot: string
+export interface JobItemUpdate {
+  quantity?: number
+  job_status?: string
+  notes?: string
+  extra_charge?: number
+  discount_amount?: number
+  extras?: JobItemExtra[]
 }
 
 export interface JobItem {
+  id: string
   item_id: string
   description: string
   height: number
@@ -56,7 +57,7 @@ export interface JobItem {
   notes: string
   unit_price: number
   discount_amount: number
-  extra_total: number
+  extra_charge: number
   subtotal: number
   service_name_snapshot: string
   service_option_name_snapshot: string
@@ -66,6 +67,15 @@ export interface JobItem {
   extras: JobItemExtra[]
   service_id: string
   service_option_id: string
+}
+
+export interface Payment {
+  date_received: Date
+  reference_number: string
+  amount: number
+  notes: string
+  account_id?: string
+  account_name_snapshot: string
 }
 
 export interface ClaimingHistory {

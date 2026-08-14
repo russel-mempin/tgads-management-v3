@@ -13,10 +13,20 @@ const loading = ref(true)
 const isEditJobItemOpen = ref(false)
 const selectedJobItem = ref<JobItem | null>(null)
 
-onMounted(async () => {
+const fetchJobOrder = async () => {
     loading.value = true
-    jobOrder.value = await getJobOrder(Number(route.params.jo_number))
-    loading.value = false
+
+    try {
+        jobOrder.value = await getJobOrder(
+            Number(route.params.jo_number)
+        )
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(async () => {
+    fetchJobOrder()
 })
 
 const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobOrder.value.total_paid : 0))
@@ -29,6 +39,10 @@ const printJobOrder = () => {
 const openEditJobItem = (item: JobItem) => {
     selectedJobItem.value = item
     isEditJobItemOpen.value = true
+}
+const handleJobItemSaved = async () => {
+    console.log("FETCH")
+    await fetchJobOrder()
 }
 </script>
 
@@ -116,7 +130,7 @@ const openEditJobItem = (item: JobItem) => {
         </section>
 
         <!-- Job Items -->
-        <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" />
+        <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemSaved" />
         <section class="bg-default border border-default rounded-md">
             <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
                 <div class="flex items-center gap-2">
@@ -187,9 +201,9 @@ const openEditJobItem = (item: JobItem) => {
                                 <td class="p-3 text-highlighted">{{ item.quantity }} pc(s)</td>
                                 <td class="p-3 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
                                 <td class="p-3 font-semibold text-highlighted">
-                                    <UTooltip v-if="item.extra_total > 0 || item.discount_amount > 0" :text="[
-                                        item.extra_total > 0
-                                            ? `Extra Charge: ${formatCurrency(item.extra_total)}`
+                                    <UTooltip v-if="item.extra_charge > 0 || item.discount_amount > 0" :text="[
+                                        item.extra_charge > 0
+                                            ? `Extra Charge: ${formatCurrency(item.extra_charge)}`
                                             : '',
                                         item.discount_amount > 0
                                             ? `Discount: −${formatCurrency(item.discount_amount)}`
@@ -214,7 +228,8 @@ const openEditJobItem = (item: JobItem) => {
                                     </UBadge>
                                 </td>
                                 <td class="p-3">
-                                    <UButton variant="outline" icon="i-lucide-pen-square" @click="openEditJobItem(item)" />
+                                    <UButton variant="outline" icon="i-lucide-pen-square"
+                                        @click="openEditJobItem(item)" />
                                 </td>
                             </tr>
                         </template>

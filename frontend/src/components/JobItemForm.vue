@@ -313,12 +313,12 @@ const removeExtra = (index: number) => {
                         <UFormField label="Extra Charge (Per Piece)" class="w-full">
                             <UInputNumber v-model="state.extraCharge" :increment="false" :decrement="false"
                                 :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false" />
+                                class="w-full" :step="0.1" :step-snapping="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                         </UFormField>
                         <UFormField label="Discount (Flat)" class="w-full">
                             <UInputNumber v-model="state.discount" :increment="false" :decrement="false"
                                 :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false" />
+                                class="w-full" :step="0.1" :step-snapping="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                         </UFormField>
                     </div>
                     <!-- Pricing Breakdown -->
@@ -351,7 +351,7 @@ const removeExtra = (index: number) => {
                     <!-- Cancel / Save Buttons -->
                     <div class="flex justify-end gap-4">
                         <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
-                            class="w-28" />
+                            class="w-28" @click="() => { isOpen = false }" />
                         <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold"
                             type="submit" />
                     </div>
