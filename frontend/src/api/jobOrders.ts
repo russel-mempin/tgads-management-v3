@@ -1,5 +1,5 @@
 import http from './http'
-import type { JobOrderCreate, JobItem, JobItemUpdate } from '@/types/jobOrder'
+import type { JobOrderCreate, JobItem, JobItemCreate, JobItemUpdate } from '@/types/jobOrder'
 
 export async function getJobOrderKpis() {
 	const res = await http.get('/job-orders/kpis')
@@ -49,6 +49,11 @@ export const getUnitPrice = async (params: {
 
 export const createJobOrder = async(payload: JobOrderCreate) => {
   const res = await http.post('/job-orders/', payload)
+  return res.data
+}
+
+export const createJobItem = async(payload: JobItemCreate, job_order_id: string): Promise<JobItem> => {
+  const res = await http.post(`/job-orders/job-items/${job_order_id}`)
   return res.data
 }
 

@@ -5,6 +5,7 @@ import type { JobOrder, JobItem } from '@/types/jobOrder'
 import { getJobOrder } from '@/api/jobOrders'
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
 import EditJobItemForm from '@/components/EditJobItemForm.vue'
+import JobItemTable from '@/components/JobItemTable.vue'
 
 const toast = useToast()
 const route = useRoute()
@@ -42,10 +43,6 @@ const printJobOrder = () => {
     window.open(resolved.href, '_blank')
 }
 
-const openEditJobItem = (item: JobItem) => {
-    selectedJobItem.value = item
-    isEditJobItemOpen.value = true
-}
 const handleJobItemUpdated = async () => {
     await fetchJobOrder()
     toast.add({
@@ -142,113 +139,7 @@ const handleJobItemUpdated = async () => {
         <!-- Job Items -->
         <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
         <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-a-p-i="true" />
-        <section class="bg-default border border-default rounded-md">
-            <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
-                <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-                    <h2 class="text-highlighted font-semibold">Job Items</h2>
-                </div>
-                <UButton @click="() => { isAddJobItemOpen = true }" icon="i-lucide-plus" label="Add Item"
-                    variant="outline" />
-            </div>
-            <div class="overflow-hidden">
-                <table class="w-full text-base">
-                    <thead class="bg-elevated">
-                        <tr class="text-left text-sm text-muted uppercase">
-                            <th class="p-3">Item</th>
-                            <th class="p-3">Service</th>
-                            <th class="p-3">Size</th>
-                            <th class="p-3">Qty</th>
-                            <th class="p-3">Unit Price</th>
-                            <th class="p-3">Subtotal</th>
-                            <th class="p-3">Due Date</th>
-                            <th class="p-3">Claimed</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template v-for="item in jobOrder.job_items" :key="item.item_id">
-                            <tr class="border-t border-default odd:bg-elevated/20 align-middle">
-                                <td class="p-3 text-highlighted">{{ item.item_id }}</td>
-                                <td class="p-3 text-highlighted">
-                                    <UTooltip v-if="item.description || item.notes" :text="[
-                                        item.description ? `Description: ${item.description}` : '',
-                                        item.notes ? `Notes: ${item.notes}` : ''
-                                    ].filter(Boolean).join('\n')">
-                                        <div class="flex items-center gap-2 whitespace-nowrap cursor-help">
-                                            <span>
-                                                {{ item.service_name_snapshot }}
-
-                                                <span v-if="item.service_option_name_snapshot" class="text-muted">
-                                                    — {{ item.service_option_name_snapshot }}
-                                                </span>
-                                            </span>
-
-                                            <span v-for="extra_item in item.extras" :key="extra_item.id"
-                                                class="text-muted">
-                                                — {{ extra_item.name_snapshot }} ({{ extra_item.quantity }}×)
-                                            </span>
-                                        </div>
-                                    </UTooltip>
-
-                                    <div v-else class="flex items-center gap-2 whitespace-nowrap">
-                                        <span>
-                                            {{ item.service_name_snapshot }}
-
-                                            <span v-if="item.service_option_name_snapshot" class="text-muted">
-                                                — {{ item.service_option_name_snapshot }}
-                                            </span>
-                                        </span>
-
-                                        <span v-for="extra_item in item.extras" :key="extra_item.id" class="text-muted">
-                                            — {{ extra_item.name_snapshot }} ({{ extra_item.quantity }}×)
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-3 text-highlighted">
-                                    {{ item.width && item.height ? `${item.width} × ${item.height} ${item.size_unit}` :
-                                        '—' }}
-                                </td>
-                                <td class="p-3 text-highlighted">{{ item.quantity }} pc(s)</td>
-                                <td class="p-3 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
-                                <td class="p-3 font-semibold text-highlighted">
-                                    <UTooltip v-if="item.extra_charge > 0 || item.discount_amount > 0" :text="[
-                                        item.extra_charge > 0
-                                            ? `Extra Charge: ${formatCurrency(item.extra_charge)}`
-                                            : '',
-                                        item.discount_amount > 0
-                                            ? `Discount: −${formatCurrency(item.discount_amount)}`
-                                            : ''
-                                    ].filter(Boolean).join('\n')">
-                                        <span class="cursor-help">
-                                            {{ formatCurrency(item.subtotal) }}
-                                        </span>
-                                    </UTooltip>
-
-                                    <span v-else>
-                                        {{ formatCurrency(item.subtotal) }}
-                                    </span>
-                                </td>
-                                <td class="p-3 text-highlighted">{{ formatDate(item.due_date) }}</td>
-                                <td class="p-3 text-highlighted">
-                                    {{ item.total_claimed }} / {{ item.quantity }}
-                                </td>
-                                <td class="p-3">
-                                    <UBadge variant="outline" :color="getJobStatusColor(item.job_status)"
-                                        class="font-semibold">{{ item.job_status }}
-                                    </UBadge>
-                                </td>
-                                <td class="p-3">
-                                    <UButton variant="outline" icon="i-lucide-pen-square"
-                                        @click="openEditJobItem(item)" />
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true"/>
 
         <!-- Payments -->
         <section class="bg-default border border-default rounded-md">

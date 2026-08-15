@@ -23,8 +23,6 @@ class JobItemExtraPublic(SQLModel):
     
 class JobItemExtraCreate(SQLModel):
     extra_service_id: uuid.UUID
-    name_snapshot: str
-    price_snapshot: float
     quantity: int
     
 
@@ -41,11 +39,7 @@ class JobItemCreate(JobItemBase):
     service_id: uuid.UUID
     service_option_id: uuid.UUID
     extras: list[JobItemExtraCreate] = Field(default_factory=list)
-
-# TODO: Refactor create to use this instead
-class JobItemExtraUpdate(SQLModel):
-    extra_service_id: uuid.UUID
-    quantity: int
+    
 
 class JobItemUpdate(SQLModel):
     quantity: int | None = None
@@ -53,7 +47,7 @@ class JobItemUpdate(SQLModel):
     notes: str | None = None
     extra_charge: float | None = None
     discount_amount: float | None = None
-    extras: list[JobItemExtraUpdate] | None = None
+    extras: list[JobItemExtraCreate] | None = None
     
     
 class PaymentPublic(PaymentBase):

@@ -13,6 +13,11 @@ export interface JobItemExtra {
   name_snapshot: string
 }
 
+export interface JobItemExtraCreate {
+  extra_service_id: string
+  quantity: number
+}
+
 export interface JobItemCreate {
   item_id: string
   service_id: string
@@ -25,7 +30,7 @@ export interface JobItemCreate {
   due_date: Date
   description: string
   notes: string
-  extras: JobItemExtra[]
+  extras: JobItemExtraCreate[]
   extra_charge: number
   discount_amount: number
   unit_price: number

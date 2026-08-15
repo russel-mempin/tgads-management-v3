@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { reactive, watch, computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { z } from 'zod'
 import { nowForInput, utcToInput } from '@/utils/formatters'
 import type { Service, Extra } from '@/types/service'
-import type { JobItemCreate, JobItemExtra, PricingData } from '@/types/jobOrder'
+import type { JobItemCreate, JobItemExtraCreate, PricingData } from '@/types/jobOrder'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { getAllServices, getAllExtras } from '@/api/services'
-import { getUnitPrice } from '@/api/jobOrders'
+import { getUnitPrice, createJobItem } from '@/api/jobOrders'
+
+const route = useRoute()
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
@@ -178,13 +181,10 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
         due_date: new Date(d.dueDate),
         description: d.description,
         notes: d.notes,
-        extras: d.extras.map((e): JobItemExtra => {
-            const extraData = extraList.value.find(x => x.id === e.extraId)
+        extras: d.extras.map((e): JobItemExtraCreate => {
             return {
                 extra_service_id: e.extraId,
                 quantity: e.quantity,
-                price_snapshot: extraData?.price ?? 0,
-                name_snapshot: extraData?.name ?? '',
             }
         }),
         extra_charge: d.extraCharge,
@@ -195,8 +195,13 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
         service_option_name_snapshot: applicableOptions.value.find(o => o.id === d.selectedOption)?.name ?? '',
         service_abbreviation_snapshot: selectedServiceData.value?.abbreviation ?? '',
     }
-
-    emit('save', payload)
+    if (props.canCallAPI) {
+        const jobOrderId = route.params.job_order_id
+        // createJobItem(payload, jobOrderId)
+    }
+    else {
+        emit('save', payload)
+    }
     resetForm()
     isOpen.value = false
 }
@@ -314,12 +319,14 @@ const removeExtra = (index: number) => {
                         <UFormField label="Extra Charge (Per Piece)" class="w-full">
                             <UInputNumber v-model="state.extraCharge" :increment="false" :decrement="false"
                                 :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                                class="w-full" :step="0.1" :step-snapping="false"
+                                @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                         </UFormField>
                         <UFormField label="Discount (Flat)" class="w-full">
                             <UInputNumber v-model="state.discount" :increment="false" :decrement="false"
                                 :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                                class="w-full" :step="0.1" :step-snapping="false"
+                                @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                         </UFormField>
                     </div>
                     <!-- Pricing Breakdown -->
