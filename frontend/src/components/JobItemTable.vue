@@ -166,7 +166,6 @@ const columns: TableColumn<JobItem>[] = [
             <UButton @click="() => { isAddJobItemOpen = true }" icon="i-lucide-plus" label="Add Item"
                 variant="outline" />
         </div>
-        <UTable :data="props.jobItems" :columns="columns">
-        </UTable>
+        <UTable :data="props.jobItems" :columns="columns" />
     </section>
 </template>

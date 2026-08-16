@@ -20,6 +20,7 @@ from app.models import (
     ServiceOption,
 )
 from app.schemas.job_order import (
+    ClaimCreate,
     JobItemCreate,
     JobItemExtraCreate,
     JobItemUpdate,
@@ -40,25 +41,32 @@ def _get_service_data_from_option(db: Session, option_id: uuid.UUID):
     return option, service
 
 
-def _get_extra_service_data(db: Session, extra_id: uuid.UUID):
+def _get_extra_service_data_by_id(db: Session, extra_id: uuid.UUID):
     extra = db.get(ExtraService, extra_id)
     if not extra:
         raise HTTPException(status_code=404, detail="Extra service not found.")
     return extra
 
 
-def _get_account(db: Session, account_id: uuid.UUID):
+def _get_account_by_id(db: Session, account_id: uuid.UUID):
     account = db.get(Account, account_id)
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
     return account
 
 
-def _get_job_order(db: Session, job_order_id: uuid.UUID):
+def _get_job_order_by_id(db: Session, job_order_id: uuid.UUID):
     job_order = db.get(JobOrder, job_order_id)
     if not job_order:
         raise HTTPException(status_code=404, detail="Job order not found.")
     return job_order
+
+
+def _get_job_item_by_item_id(db: Session, item_id: str):
+    job_item = db.exec(select(JobItem).where(JobItem.item_id == item_id)).first()
+    if not job_item:
+        raise HTTPException(status_code=404, detail="Job item not found.")
+    return job_item
 
 
 def _build_job_item(
@@ -91,7 +99,7 @@ def _build_job_item(
 def _build_job_item_extra(
     db: Session, job_item_id: uuid.UUID, data: JobItemExtraCreate
 ) -> JobItemExtra:
-    extra_service = _get_extra_service_data(db, data.extra_service_id)
+    extra_service = _get_extra_service_data_by_id(db, data.extra_service_id)
     return JobItemExtra(
         job_item_id=job_item_id,
         extra_service_id=extra_service.id,
@@ -101,8 +109,8 @@ def _build_job_item_extra(
     )
 
 
-def _build_payment(db: Session, account_id: uuid.UUID, job_order_id: uuid.UUID, data: PaymentCreate) -> Payment:
-    account = _get_account(db, account_id)
+def _build_payment(db: Session, job_order_id: uuid.UUID, data: PaymentCreate) -> Payment:
+    account = _get_account_by_id(db, data.account_id)
     return Payment(
         date_received=data.date_received,
         reference_number=data.reference_number,
@@ -114,17 +122,15 @@ def _build_payment(db: Session, account_id: uuid.UUID, job_order_id: uuid.UUID, 
     )
 
 
-def _build_claiming_history(db: Session, job_order_id: uuid.UUID, job_item_id: uuid.UUID, data: ClaimingHistory) -> ClaimingHistory:
-    job_order = db.get(JobOrder, job_order_id)
-    
-    
+def _build_claiming_history(db: Session, job_order_id: uuid.UUID, item_id: str, data: ClaimCreate) -> ClaimingHistory:
+    job_item = _get_job_item_by_item_id(db, item_id)
     return ClaimingHistory(
-        date_claimed=claim.date_claimed,
-        name=claim.name,
-        pcs_claimed=claim.pcs_claimed,
-        job_order_id=job_order.id,
+        date_claimed=data.date_claimed,
+        name=data.name,
+        pcs_claimed=data.pcs_claimed,
+        job_order_id=job_order_id,
         job_item_id=job_item.id,
-        claimed_item_id=claim.claimed_item_id,
+        claimed_item_id=data.claimed_item_id,
     )
 
 
@@ -302,24 +308,10 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                     db.add(_build_job_item_extra(db, job_item.id, extra))
         if data.payments:
             for payment in data.payments:
-                db.add(_build_payment(db, payment.account_id, job_order.id, payment))
+                db.add(_build_payment(db, job_order.id, payment))
         if data.claiming_history:
             for claim in data.claiming_history:
-                job_item = db.exec(
-                    select(JobItem).where(JobItem.item_id == claim.claimed_item_id)
-                ).first()
-                if not job_item:
-                    raise HTTPException(status_code=404, detail="Job item not found.")
-                db.add(
-                    ClaimingHistory(
-                        date_claimed=claim.date_claimed,
-                        name=claim.name,
-                        pcs_claimed=claim.pcs_claimed,
-                        job_order_id=job_order.id,
-                        job_item_id=job_item.id,
-                        claimed_item_id=claim.claimed_item_id,
-                    )
-                )
+                db.add(_build_claiming_history(db, job_order.id, claim.claimed_item_id, claim))
         db.flush()
         job_order.sync_computed_fields()
 
@@ -413,6 +405,8 @@ def update_job_item(
                 detail="Job item not found.",
             )
 
+        new_extras = []
+
         # Update basic fields
         if data.quantity is not None:
             job_item.quantity = data.quantity
@@ -435,29 +429,11 @@ def update_job_item(
                 db.delete(existing_extra)
 
             for extra in data.extras:
-                extra_service = db.get(
-                    ExtraService,
-                    extra.extra_service_id,
-                )
-
-                if not extra_service:
-                    raise HTTPException(
-                        status_code=404,
-                        detail="Extra service not found.",
-                    )
-
-                db.add(
-                    JobItemExtra(
-                        job_item_id=job_item.id,
-                        extra_service_id=extra_service.id,
-                        quantity=extra.quantity,
-                        price_snapshot=extra_service.price,
-                        name_snapshot=extra_service.name,
-                    )
-                )
-
-        # Make sure the new extras are available
-        db.flush()
+                job_item_extra = _build_job_item_extra(db, job_item.id, extra)
+                db.add(job_item_extra)
+                new_extras.append(job_item_extra)
+            # Make sure the new extras are available for extras total calculation
+            db.flush()
 
         if job_item.job_status == JobStatus.CANCELLED:
             job_item.subtotal = 0
@@ -477,16 +453,16 @@ def update_job_item(
                 job_item.quantity,
             )
 
-            job_item.unit_price = pricing.unit_price
-
             # Recalculate extras
-            extra_total = sum(e.price_snapshot * e.quantity for e in job_item.extras)
+            extra_total = sum(e.price_snapshot * e.quantity for e in new_extras)
+
+            job_item.unit_price = pricing.unit_price
 
             # Recalculate subtotal
             job_item.subtotal = (
                 (job_item.unit_price * job_item.quantity)
                 + extra_total
-                + job_item.extra_charge
+                + (job_item.extra_charge * job_item.quantity)
                 - job_item.discount_amount
             )
 
