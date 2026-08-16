@@ -40,9 +40,9 @@ export default defineConfig({
         },
         table: {
           slots: {
-            th: 'bg-default rounded-tl-md rounded-tr-md text-muted font-semibold uppercase text-sm tracking-wide',
+            th: 'bg-elevated text-muted font-semibold uppercase text-sm tracking-wide',
             td: 'text-base text-highlighted',
-            tr: 'hover:bg-elevated odd:bg-muted cursor-pointer',
+            tr: 'last:rounded-br-md last:rounded-bl-md even:bg-muted',
           },
         },
         navigationMenu: {

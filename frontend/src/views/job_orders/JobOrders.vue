@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getJobOrderKpis, getAllJobOrders, getJobOrderCount } from '@/api/jobOrders'
 import type { JobOrder } from '@/types/jobOrder'
 import type { TableColumn } from '@nuxt/ui'
-import { formatDate, formatCurrency, formatDateNoYear, getJobStatusColor } from '@/utils/formatters'
+import { formatDate, formatCurrency, formatDateNoYear, getPaymentStatusColor, getJobStatusColor } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 
@@ -109,16 +109,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'payment_status',
         header: 'Payment',
         cell: ({ row }) => {
-            const color = {
-                'Fully Paid': 'success' as const,
-                'Partial': 'warning' as const,
-                'Unpaid': 'error' as const,
-                'Credit': 'info' as const,
-                'Refunded': 'neutral' as const,
-                'Overcharged': 'warning' as const,
-            }[row.getValue('payment_status') as string]
-
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'outline', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getPaymentStatusColor(row.original.payment_status) }, () =>
                 row.getValue('payment_status')
             )
         }
@@ -127,17 +118,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'overall_job_status',
         header: 'Status',
         cell: ({ row }) => {
-            const color = {
-                'Pending': 'warning' as const,
-                'For Layout': 'info' as const,
-                'For Approval': 'primary' as const,
-                'For Printing': 'primary' as const,
-                'For Pickup': 'success' as const,
-                'Released': 'neutral' as const,
-                'Cancelled': 'error' as const,
-            }[row.getValue('overall_job_status') as string]
-
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'outline', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getJobStatusColor(row.original.overall_job_status) }, () =>
                 row.getValue('overall_job_status')
             )
         }
@@ -298,7 +279,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                         <td class="p-2.5 font-semibold text-highlighted">{{
                                             formatCurrency(item.subtotal) }}</td>
                                         <td class="p-2.5">
-                                            <UBadge variant="outline" :color="getJobStatusColor(item.job_status)" class="font-semibold">{{
+                                            <UBadge variant="solid" :color="getJobStatusColor(item.job_status)" class="font-semibold">{{
                                                 item.job_status }}</UBadge>
                                         </td>
                                     </tr>

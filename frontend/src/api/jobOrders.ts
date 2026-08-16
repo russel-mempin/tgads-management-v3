@@ -53,7 +53,7 @@ export const createJobOrder = async(payload: JobOrderCreate) => {
 }
 
 export const createJobItem = async(payload: JobItemCreate, job_order_id: string): Promise<JobItem> => {
-  const res = await http.post(`/job-orders/job-items/${job_order_id}`)
+  const res = await http.post(`/job-orders/job-items/${job_order_id}`, payload)
   return res.data
 }
 

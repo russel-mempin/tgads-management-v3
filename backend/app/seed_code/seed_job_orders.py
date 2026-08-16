@@ -55,7 +55,7 @@ def parse_date(value: str) -> datetime:
     return datetime.strptime(value.strip(), "%m/%d/%y").replace(tzinfo=timezone.utc)  # noqa: UP017
 
 
-def get_or_create_customer(session: Session, customer_name: str) -> Customer:
+def get_or_create_customer(session: Session, customer_name: str) -> Customer | None:
     customer_name = customer_name.strip()
     if not customer_name:
         return None
@@ -164,6 +164,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                         entity_reference=row["jo_number"].strip(),
                         reason=reason,
                         reason_category=ReasonCategory(row["review_category"].strip()),
+                        resolution_note="Pending"
                     )
                 )
                 print(f"JO {jo_number} has been marked for review.")
@@ -253,6 +254,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                             reason_category=ReasonCategory(
                                 review_reason if review_reason else "Missing Data"
                             ),
+                            resolution_note="Pending"
                         )
                     )
                     continue
@@ -278,6 +280,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                                 if review_reason
                                 else "Pricing Discrepancy"
                             ),
+                            resolution_note="Pending"
                         )
                     )
                 elif (computed_unit_price + extra_service_price) < csv_unit_price:
@@ -293,6 +296,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                                 if review_reason
                                 else "Pricing Discrepancy"
                             ),
+                            resolution_note="Pending"
                         )
                     )
 

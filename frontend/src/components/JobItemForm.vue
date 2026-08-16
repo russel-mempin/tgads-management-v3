@@ -9,15 +9,19 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { getAllServices, getAllExtras } from '@/api/services'
 import { getUnitPrice, createJobItem } from '@/api/jobOrders'
 
+const toast = useToast()
 const route = useRoute()
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
     canCallAPI: boolean
+    currentItemIds?: string[]
+    joNumber?: number
 }>()
 
 const emit = defineEmits<{
     save: [item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }]
+    added: []
 }>()
 
 // Validation Schema
@@ -167,10 +171,16 @@ watch(() => props.editingItem, (item) => {
 watch(isOpen, (open) => {
     if (!open) resetForm()
 })
+const generateItemId = (serviceAbbreviation: string): string => {
+    const existingCount = (props.currentItemIds ?? []).filter(
+        item => item.includes(`-${serviceAbbreviation}-`)
+    ).length
+    return `${props.joNumber}-${serviceAbbreviation}-${existingCount + 1}`
+}
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
     const d = event.data
-    const payload: Omit<JobItemCreate, 'item_id'> & { item_id?: string } = {
-        item_id: props.editingItem?.item_id,
+    const payload: JobItemCreate = {
+        item_id: props.editingItem?.item_id ?? generateItemId(selectedServiceData.value?.abbreviation ?? ''),
         service_id: d.selectedService,
         service_option_id: d.selectedOption,
         height: isAreaBased.value ? d.height : undefined,
@@ -181,23 +191,34 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
         due_date: new Date(d.dueDate),
         description: d.description,
         notes: d.notes,
-        extras: d.extras.map((e): JobItemExtraCreate => {
-            return {
-                extra_service_id: e.extraId,
-                quantity: e.quantity,
-            }
-        }),
+        extras: d.extras.map((e): JobItemExtraCreate => ({
+            extra_service_id: e.extraId,
+            quantity: e.quantity,
+        })),
         extra_charge: d.extraCharge,
         discount_amount: d.discount,
         unit_price: pricingData.value?.unit_price ?? 0,
         subtotal: subtotal.value,
         service_name_snapshot: selectedServiceData.value?.name ?? '',
-        service_option_name_snapshot: applicableOptions.value.find(o => o.id === d.selectedOption)?.name ?? '',
-        service_abbreviation_snapshot: selectedServiceData.value?.abbreviation ?? '',
+        service_option_name_snapshot:
+            applicableOptions.value.find(o => o.id === d.selectedOption)?.name ?? '',
+        service_abbreviation_snapshot:
+            selectedServiceData.value?.abbreviation ?? '',
     }
     if (props.canCallAPI) {
         const jobOrderId = route.params.job_order_id
-        // createJobItem(payload, jobOrderId)
+        if (typeof jobOrderId !== 'string') {
+            console.error('Invalid job order ID:', jobOrderId)
+            return
+        }
+        createJobItem(payload, jobOrderId)
+        toast.add({
+            title: 'Job Item Saved',
+            description: `Job Item #${payload.item_id} was created successfully.`,
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        emit('added')
     }
     else {
         emit('save', payload)

@@ -67,7 +67,7 @@ class User(UserBase, table=True):
 
 
 # ====================== CUSTOMERS =========================
-# Customer info, only name is required but users still should try to fill at least contact_number or email
+# Customer info, customer is optional
 class CustomerBase(SQLModel):
     name: str = Field(unique=True, index=True)
     address: str | None = None

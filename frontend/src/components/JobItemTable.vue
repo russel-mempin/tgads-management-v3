@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, resolveComponent, h } from 'vue'
+import { ref, resolveComponent, h, computed } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
 import type { JobItem } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
@@ -11,14 +11,20 @@ const UButton = resolveComponent('UButton')
 const props = defineProps<{
     jobItems?: JobItem[]
     canCallApi: boolean
+    joNumber?: number
 }>()
 const emit = defineEmits<{
     updated: []
+    added: []
 }>()
 
+// UI Variables
 const isAddJobItemOpen = ref(false)
 const isEditJobItemOpen = ref(false)
 const selectedJobItem = ref<JobItem>()
+const currentItemIds = computed(() => 
+    props.jobItems?.map(item => item.item_id)
+)
 
 const openEditJobItem = (item: JobItem) => {
     selectedJobItem.value = item
@@ -119,16 +125,7 @@ const columns: TableColumn<JobItem>[] = [
         accessorKey: 'job_status',
         header: 'Status',
         cell: ({ row }) => {
-            const color = {
-                'Pending': 'warning' as const,
-                'For Layout': 'info' as const,
-                'For Approval': 'primary' as const,
-                'For Printing': 'primary' as const,
-                'For Pickup': 'success' as const,
-                'Released': 'neutral' as const,
-            }[row.getValue('job_status') as string]
-
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getJobStatusColor(row.original.job_status) }, () =>
                 row.getValue('job_status')
             )
         }
@@ -156,7 +153,7 @@ const columns: TableColumn<JobItem>[] = [
 
 <template>
     <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
-    <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-a-p-i="true" />
+    <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-a-p-i="true" :current-item-ids="currentItemIds" :jo-number="props.joNumber" />
     <section class="bg-default border border-default rounded-md">
         <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
             <div class="flex items-center gap-2">
@@ -166,6 +163,16 @@ const columns: TableColumn<JobItem>[] = [
             <UButton @click="() => { isAddJobItemOpen = true }" icon="i-lucide-plus" label="Add Item"
                 variant="outline" />
         </div>
-        <UTable :data="props.jobItems" :columns="columns" />
+        <UTable :data="props.jobItems" :columns="columns">
+            <template #empty>
+                <div class="flex flex-col items-center justify-center py-12 text-center px-6">
+                    <div class="w-12 h-12 rounded-full bg-elevated flex items-center justify-center mb-3">
+                        <UIcon name="i-lucide-package-open" class="size-6 text-muted" />
+                    </div>
+                    <p class="font-medium text-highlighted mb-1">No items yet</p>
+                    <p class="text-sm text-muted">Click "Add Item" to start building this job order.</p>
+                </div>
+            </template>
+        </UTable>
     </section>
 </template>

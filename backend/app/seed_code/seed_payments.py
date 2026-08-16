@@ -87,10 +87,12 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             reference_number=reference_number,
                             amount=amount,
                             account_id=account.id,
+                            job_order_id=job_order.id,
                             job_order=job_order,
                             account_name_snapshot=account.name
                         )
                     )
+                    job_order.sync_computed_fields()
                     touched_job_order_ids.add(job_order.id)
                     linked_count += 1
                 else:
