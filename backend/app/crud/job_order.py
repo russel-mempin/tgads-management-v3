@@ -471,10 +471,16 @@ def update_job_item(
         job_order.sync_computed_fields()
 
         # Audit
-        audit = AuditLog(
-            action=f"Updated job item {job_item.item_id}",
-            user_id=current_user_id,
-        )
+        if job_item.job_status == JobStatus.CANCELLED:
+            audit = AuditLog(
+                action=f"Cancelled job item {job_item.item_id}",
+                user_id=current_user_id
+            )
+        else:
+            audit = AuditLog(
+                action=f"Updated job item {job_item.item_id}",
+                user_id=current_user_id,
+            )
         db.add(audit)
 
         # One transaction

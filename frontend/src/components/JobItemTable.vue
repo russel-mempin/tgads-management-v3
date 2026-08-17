@@ -38,6 +38,14 @@ const handleJobItemUpdated = async () => {
         color: 'success',
     })
 }
+const handleJobItemAdded = async () => {
+    emit('added')
+    toast.add({
+        title: 'New Item Saved',
+        description: 'Job Item added.',
+        color: 'success',
+    })
+}
 
 // Table data
 const columns: TableColumn<JobItem>[] = [
@@ -153,7 +161,7 @@ const columns: TableColumn<JobItem>[] = [
 
 <template>
     <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
-    <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-a-p-i="true" :current-item-ids="currentItemIds" :jo-number="props.joNumber" />
+    <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-api="canCallApi" :current-item-ids="currentItemIds" :jo-number="props.joNumber" @added="handleJobItemAdded" />
     <section class="bg-default border border-default rounded-md">
         <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
             <div class="flex items-center gap-2">

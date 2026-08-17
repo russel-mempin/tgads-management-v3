@@ -9,12 +9,11 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { getAllServices, getAllExtras } from '@/api/services'
 import { getUnitPrice, createJobItem } from '@/api/jobOrders'
 
-const toast = useToast()
 const route = useRoute()
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
-    canCallAPI: boolean
+    canCallApi: boolean
     currentItemIds?: string[]
     joNumber?: number
 }>()
@@ -177,7 +176,7 @@ const generateItemId = (serviceAbbreviation: string): string => {
     ).length
     return `${props.joNumber}-${serviceAbbreviation}-${existingCount + 1}`
 }
-const onSubmit = (event: FormSubmitEvent<Schema>) => {
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     const d = event.data
     const payload: JobItemCreate = {
         item_id: props.editingItem?.item_id ?? generateItemId(selectedServiceData.value?.abbreviation ?? ''),
@@ -205,19 +204,13 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
         service_abbreviation_snapshot:
             selectedServiceData.value?.abbreviation ?? '',
     }
-    if (props.canCallAPI) {
+    if (props.canCallApi) {
         const jobOrderId = route.params.job_order_id
         if (typeof jobOrderId !== 'string') {
             console.error('Invalid job order ID:', jobOrderId)
             return
         }
-        createJobItem(payload, jobOrderId)
-        toast.add({
-            title: 'Job Item Saved',
-            description: `Job Item #${payload.item_id} was created successfully.`,
-            color: 'success',
-            icon: 'i-lucide-circle-check'
-        })
+        await createJobItem(payload, jobOrderId)
         emit('added')
     }
     else {
