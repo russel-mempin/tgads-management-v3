@@ -33,6 +33,11 @@ class JobItemPublic(JobItemBase):
     extras: list[JobItemExtraPublic] = Field(default_factory=list)
     service_id: uuid.UUID
     service_option_id: uuid.UUID
+    unit_price: float
+    subtotal: float
+    service_name_snapshot: str
+    service_option_name_snapshot: str
+    service_abbreviation_snapshot: str
     
     
 class JobItemCreate(JobItemBase):

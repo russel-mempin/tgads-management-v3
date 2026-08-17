@@ -70,9 +70,12 @@ def _get_job_item_by_item_id(db: Session, item_id: str):
 
 
 def _build_job_item(
-    db: Session, job_order_id: uuid.UUID, data: JobItemCreate, extras:
+    db: Session, job_order_id: uuid.UUID, data: JobItemCreate, extras: list[tuple[JobItemExtraCreate, ExtraService]]
 ) -> JobItem:
     option, service = _get_service_data_from_option(db, data.service_option_id)
+    pricing_data = compute_unit_price(data.height, data.width, service, option, data.size_unit, data.quantity)
+    extra_total = sum(extra_service.price * extra.quantity for extra, extra_service in extras)
+    subtotal = round((pricing_data.unit_price * data.quantity) + extra_total + (data.extra_charge * data.quantity) - data.discount_amount, 2,)
     return JobItem(
         description=data.description,
         discount_amount=data.discount_amount,
@@ -87,8 +90,8 @@ def _build_job_item(
         service_option_name_snapshot=option.name,
         service_name_snapshot=service.name,
         size_unit=data.size_unit,
-        subtotal=data.subtotal,
-        unit_price=data.unit_price,
+        subtotal=subtotal,
+        unit_price=pricing_data.unit_price,
         width=data.width,
         job_order_id=job_order_id,
         service_id=service.id,
@@ -97,9 +100,10 @@ def _build_job_item(
 
 
 def _build_job_item_extra(
-    db: Session, job_item_id: uuid.UUID, data: JobItemExtraCreate
+    job_item_id: uuid.UUID,
+    data: JobItemExtraCreate,
+    extra_service: ExtraService,
 ) -> JobItemExtra:
-    extra_service = _get_extra_service_data_by_id(db, data.extra_service_id)
     return JobItemExtra(
         job_item_id=job_item_id,
         extra_service_id=extra_service.id,
@@ -299,13 +303,17 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.add(job_order)
         db.flush()
 
+
         for item in data.job_items:
-            job_item = _build_job_item(db, job_order.id, item)
+            extra_services = []
+            for extra in item.extras:
+                extra_service = _get_extra_service_data_by_id(db, extra.extra_service_id)
+                extra_services.append((extra, extra_service))
+            job_item = _build_job_item(db, job_order.id, item, extra_services)
             db.add(job_item)
             db.flush()
-            if item.extras:
-                for extra in item.extras:
-                    db.add(_build_job_item_extra(db, job_item.id, extra))
+            for extra, extra_service in extra_services:
+                db.add(_build_job_item_extra(job_item.id, extra, extra_service))
         if data.payments:
             for payment in data.payments:
                 db.add(_build_payment(db, job_order.id, payment))
@@ -370,7 +378,8 @@ def create_job_item(
             )
         extra_services = []
         for extra in data.extras:
-            extra_services.append((extra, _get_extra_service_data_by_id(db, extra.extra_service_id)))
+            extra_service = _get_extra_service_data_by_id(db, extra.extra_service_id)
+            extra_services.append((extra, extra_service))
         job_item = _build_job_item(db, job_order_id, data, extra_services)
         db.add(job_item)
         db.flush()
@@ -378,7 +387,7 @@ def create_job_item(
             job_extra = _build_job_item_extra(
                 job_item.id,
                 extra,
-                extra_service
+                extra_service,
             )
             db.add(job_extra)
         db.flush()
@@ -411,8 +420,6 @@ def update_job_item(
                 detail="Job item not found.",
             )
 
-        new_extras = []
-
         # Update basic fields
         if data.quantity is not None:
             job_item.quantity = data.quantity
@@ -429,13 +436,15 @@ def update_job_item(
         if data.discount_amount is not None:
             job_item.discount_amount = data.discount_amount
 
+        new_extras = []
         # Replace extras only when extras was included in the request
         if data.extras is not None:
             for existing_extra in job_item.extras:
                 db.delete(existing_extra)
 
             for extra in data.extras:
-                job_item_extra = _build_job_item_extra(db, job_item.id, extra)
+                extra_service = _get_extra_service_data_by_id(db, extra.extra_service_id)
+                job_item_extra = _build_job_item_extra(job_item.id, extra, extra_service)
                 db.add(job_item_extra)
                 new_extras.append(job_item_extra)
             # Make sure the new extras are available for extras total calculation
