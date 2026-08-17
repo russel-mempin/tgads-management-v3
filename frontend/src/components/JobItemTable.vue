@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, resolveComponent, h, computed } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
-import type { JobItem } from '@/types/jobOrder';
+import type { JobItem, JobItemCreate } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
 
 const toast = useToast()
@@ -16,6 +16,9 @@ const props = defineProps<{
 const emit = defineEmits<{
     updated: []
     added: []
+    addJobItem: [item: JobItemCreate]
+    updateJobItem: [item: JobItemCreate]
+    removeJobItem: [item_id: string]
 }>()
 
 // UI Variables

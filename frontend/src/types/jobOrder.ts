@@ -1,3 +1,5 @@
+import type { NumberLiteralType } from "typescript"
+
 export interface PricingData {
   consumption: number
   consumption_unit: string
@@ -48,9 +50,9 @@ export interface JobItem {
   id: string
   item_id: string
   description: string
-  height: number
-  width: number
-  size_unit: string
+  height?: number
+  width?: number
+  size_unit?: string
   quantity: number
   job_status: string
   due_date: Date
@@ -62,8 +64,8 @@ export interface JobItem {
   service_name_snapshot: string
   service_option_name_snapshot: string
   service_abbreviation_snapshot: string
-  total_claimed?: number        // optional since not needed in forms
-  remaining_on_hand?: number    // optional since not needed in forms
+  total_claimed?: NumberLiteralType
+  remaining_on_hand?: number
   extras: JobItemExtra[]
   service_id: string
   service_option_id: string

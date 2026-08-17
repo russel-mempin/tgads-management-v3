@@ -1,5 +1,5 @@
 import http from './http'
-import type { JobOrderCreate, JobItem, JobItemCreate, JobItemUpdate } from '@/types/jobOrder'
+import type { JobOrderCreate, JobItem, JobItemCreate, JobItemUpdate, PricingData } from '@/types/jobOrder'
 
 export async function getJobOrderKpis() {
 	const res = await http.get('/job-orders/kpis')
@@ -39,8 +39,8 @@ export const getUnitPrice = async (params: {
   option_id: string
   size_unit?: string
   quantity: number
-}) => {
-  const response = await http.get('/job-orders/compute-unit-price', {
+}): Promise<PricingData> => {
+  const response = await http.get<PricingData>('/job-orders/compute-unit-price', {
     params
   })
 
