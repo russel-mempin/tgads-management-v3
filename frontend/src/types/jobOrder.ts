@@ -33,11 +33,6 @@ export interface JobItemCreate {
   extras: JobItemExtraCreate[]
   extra_charge: number
   discount_amount: number
-  unit_price: number
-  subtotal: number
-  service_name_snapshot: string
-  service_option_name_snapshot: string
-  service_abbreviation_snapshot: string
 }
 
 export interface JobItemUpdate {

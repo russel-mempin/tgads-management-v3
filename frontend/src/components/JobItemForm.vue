@@ -24,12 +24,8 @@ const emit = defineEmits<{
 }>()
 
 // Validation Schema
-interface ExtraLineItem {
-    extraId: string
-    quantity: number
-}
 const extraSchema = z.object({
-    extraId: z.string().min(1, 'Select an extra'),
+    extra_service_id: z.string().min(1, 'Select an extra'),
     quantity: z.number().min(1, 'Quantity must be at least 1'),
 })
 const schema = z.object({
@@ -93,8 +89,8 @@ const applicableOptions = computed(() =>
 const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
 )
-const getExtraPrice = (extra: ExtraLineItem) => {
-    const extraData = extraList.value.find(x => x.id === extra.extraId)
+const getExtraPrice = (extra: JobItemExtraCreate) => {
+    const extraData = extraList.value.find(x => x.id === extra.extra_service_id)
     if (!extraData) return 0
     return extraData.price * extra.quantity
 }
@@ -191,18 +187,11 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         description: d.description,
         notes: d.notes,
         extras: d.extras.map((e): JobItemExtraCreate => ({
-            extra_service_id: e.extraId,
+            extra_service_id: e.extra_service_id,
             quantity: e.quantity,
         })),
         extra_charge: d.extraCharge,
         discount_amount: d.discount,
-        unit_price: pricingData.value?.unit_price ?? 0,
-        subtotal: subtotal.value,
-        service_name_snapshot: selectedServiceData.value?.name ?? '',
-        service_option_name_snapshot:
-            applicableOptions.value.find(o => o.id === d.selectedOption)?.name ?? '',
-        service_abbreviation_snapshot:
-            selectedServiceData.value?.abbreviation ?? '',
     }
     if (props.canCallApi) {
         const jobOrderId = route.params.job_order_id
@@ -222,7 +211,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
 // UI Functions
 const addExtra = () => {
-    state.extras.push({ extraId: '', quantity: 1 })
+    state.extras.push({ extra_service_id: '', quantity: 1 })
 }
 const removeExtra = (index: number) => {
     state.extras.splice(index, 1)
@@ -315,7 +304,7 @@ const removeExtra = (index: number) => {
                         <div v-for="(extra, index) in state.extras" :key="index"
                             class="grid grid-cols-[1fr_1fr_auto_auto] gap-4 items-end p-4 border-b border-default last:border-b-0">
                             <UFormField label="Extra">
-                                <USelect v-model="extra.extraId" value-key="id" label-key="name" :items="extraList"
+                                <USelect v-model="extra.extra_service_id" value-key="id" label-key="name" :items="extraList"
                                     class="w-full" />
                             </UFormField>
                             <UFormField label="Quantity">

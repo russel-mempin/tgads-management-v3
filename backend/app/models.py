@@ -331,14 +331,8 @@ class JobItemBase(SQLModel):
 
     # Pricing data
     # extra_charge is used for rounding up, discount can also be used to round down
-    unit_price: float = Field(default=0.0)
     discount_amount: float = Field(default=0.0)
     extra_charge: float = Field(default=0.0)
-    subtotal: float = Field(default=0.0)
-
-    service_name_snapshot: str
-    service_option_name_snapshot: str
-    service_abbreviation_snapshot: str
 
 
 class JobItem(JobItemBase, table=True):
@@ -360,6 +354,12 @@ class JobItem(JobItemBase, table=True):
         back_populates="job_item",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    
+    unit_price: float = Field(default=0.0)
+    subtotal: float = Field(default=0.0)
+    service_name_snapshot: str
+    service_option_name_snapshot: str
+    service_abbreviation_snapshot: str
 
     @property
     def total_claimed(self) -> int:

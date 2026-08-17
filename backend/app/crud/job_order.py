@@ -70,7 +70,7 @@ def _get_job_item_by_item_id(db: Session, item_id: str):
 
 
 def _build_job_item(
-    db: Session, job_order_id: uuid.UUID, data: JobItemCreate
+    db: Session, job_order_id: uuid.UUID, data: JobItemCreate, extras:
 ) -> JobItem:
     option, service = _get_service_data_from_option(db, data.service_option_id)
     return JobItem(
@@ -368,13 +368,19 @@ def create_job_item(
                 status_code=404,
                 detail="Job order not found.",
             )
-        job_item = _build_job_item(db, job_order_id, data)
+        extra_services = []
+        for extra in data.extras:
+            extra_services.append((extra, _get_extra_service_data_by_id(db, extra.extra_service_id)))
+        job_item = _build_job_item(db, job_order_id, data, extra_services)
         db.add(job_item)
         db.flush()
-        if data.extras:
-            for extra in data.extras:
-                job_extra = _build_job_item_extra(db, job_item.id, extra)
-                db.add(job_extra)
+        for extra, extra_service in extra_services:
+            job_extra = _build_job_item_extra(
+                job_item.id,
+                extra,
+                extra_service
+            )
+            db.add(job_extra)
         db.flush()
         job_order.sync_computed_fields()
 
@@ -473,7 +479,7 @@ def update_job_item(
         # Audit
         if job_item.job_status == JobStatus.CANCELLED:
             audit = AuditLog(
-                action=f"Cancelled job item {job_item.item_id}",
+                action=f"Updated job item {job_item.item_id}",
                 user_id=current_user_id
             )
         else:
