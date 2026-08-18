@@ -1,29 +1,49 @@
-import { ref } from 'vue'
-import type { PricingData } from '@/types/jobOrder'
+import { ref, watch, type Ref } from 'vue'
+import type { PricingData, SizeUnit } from '@/types/jobOrder'
+import { getUnitPrice } from '@/api/jobOrders'
 
-export const useJobItemPricing = () => {
+export const useJobItemPricing = (
+    serviceId: Ref<string>,
+    serviceOptionId: Ref<string>,
+    width: Ref<number | undefined>,
+    height: Ref<number | undefined>,
+    unit: Ref<SizeUnit | undefined>,
+    quantity: Ref<number>,
+) => {
     const pricingData = ref<PricingData>()
-    return pricingData
+    let debounceTimer: ReturnType<typeof setTimeout>
+
+    watch(
+        [
+            serviceId,
+            serviceOptionId,
+            width,
+            height,
+            quantity,
+            unit
+        ],
+        () => {
+            clearTimeout(debounceTimer)
+            debounceTimer = setTimeout(async () => {
+                if (!serviceId.value || !serviceOptionId.value || !quantity.value) {
+                    return
+                }
+                if (!width.value || !height.value || !unit.value) {
+                    return
+                }
+                pricingData.value = await getUnitPrice({
+                    height: height.value ?? 0,
+                    width: width.value ?? 0,
+                    service_id: serviceId.value,
+                    option_id: serviceOptionId.value,
+                    size_unit: unit.value ?? 'ft.',
+                    quantity: quantity.value
+                })
+            }, 400)
+        }
+    )
+
+    return {
+        pricingData
+    }
 }
-
-// let debounceTimer: ReturnType<typeof setTimeout>
-
-// watch(
-//     () => [state.width, state.height, state.quantity, state.selectedService, state.selectedOption, state.unit],
-//     () => {
-//         clearTimeout(debounceTimer)
-//         debounceTimer = setTimeout(async () => {
-//             if (!state.selectedService || !state.selectedOption || !state.quantity) return
-//             if (isAreaBased.value && (!state.width || !state.height || !state.unit)) return
-
-//             pricingData.value = await getUnitPrice({
-//                 height: state.height ?? 0,
-//                 width: state.width ?? 0,
-//                 service_id: state.selectedService,
-//                 option_id: state.selectedOption,
-//                 size_unit: state.unit ?? 'ft.',
-//                 quantity: state.quantity
-//             })
-//         }, 400)
-//     }
-// )

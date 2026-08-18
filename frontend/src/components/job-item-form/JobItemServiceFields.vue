@@ -6,6 +6,7 @@ import { MEASUREMENT_UNITS } from '@/utils/constants';
 
 const props = defineProps<{
     services: Service[]
+    isAreaBased: boolean
 }>()
 
 const service = defineModel<string>('service', { required: true })
@@ -21,10 +22,6 @@ const selectedServiceData = computed(() =>
 
 const applicableOptions = computed(() =>
     selectedServiceData.value?.options ?? []
-)
-
-const isAreaBased = computed(() =>
-    selectedServiceData.value?.pricing_strategy === 'Area'
 )
 </script>
 

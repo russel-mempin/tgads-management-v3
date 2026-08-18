@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { reactive, watch, computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { z } from 'zod'
 import { nowForInput, utcToInput } from '@/utils/formatters'
 import type { Service, Extra } from '@/types/service'
@@ -15,6 +14,8 @@ const props = defineProps<{
     currentItemIds?: string[]
     joNumber?: number
 }>()
+
+const isOpen = defineModel<boolean>('isOpen', { required: true })
 
 const emit = defineEmits<{
     save: [item: JobItemCreate]
@@ -76,12 +77,8 @@ const pricingData = ref<PricingData>()
 // UI Variables
 const serviceList = ref<Service[]>([])
 const extraList = ref<Extra[]>([])
-const isOpen = defineModel<boolean>('isOpen', { required: true })
 const selectedServiceData = computed(() =>
     serviceList.value.find(service => service.id === state.selectedService)
-)
-const applicableOptions = computed(() =>
-    selectedServiceData.value?.options ?? []
 )
 const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
@@ -91,21 +88,6 @@ const getExtraPrice = (extra: JobItemExtraCreate) => {
     if (!extraData) return 0
     return extraData.price * extra.quantity
 }
-const extraTotal = computed(() =>
-    state.extras.reduce((sum, e) => sum + getExtraPrice(e), 0)
-)
-const extraChargeTotal = computed(() =>
-    state.extraCharge * state.quantity
-)
-const subtotal = computed(() =>
-    ((pricingData.value?.unit_price ?? 0) * state.quantity) + extraTotal.value + extraChargeTotal.value - state.discount
-)
-const breakdownColumns = computed(() => {
-    let cols = 3
-    if (isAreaBased.value) cols += 2
-    if (state.extraCharge != 0) cols += 1
-    return cols
-})
 
 // Data functions
 const resetForm = () => {
@@ -213,23 +195,8 @@ const removeExtra = (index: number) => {
         <template #body>
             <UForm :schema="schema" :state="state" @submit="onSubmit" class="flex flex-col gap-6">
                 <div class="flex flex-col gap-6">
-                    <JobItemServiceFields
-                        :services="serviceList"
-                        v-model:service="state.selectedService"
-                        v-model:option="state.selectedOption"
-                        v-model:width="state.width"
-                        v-model:height="state.height"
-                        v-model:unit="state.unit"
-                        v-model:quantity="state.quantity"
-                    />
-                    <JobItemWorkflowFields 
-                        v-model:job-status="state.jobStatus"
-                        v-model:due-date="state.dueDate"
-                        v-model:description="state.description"
-                        v-model:notes="state.notes"
-                    />
                     <!-- Extras Selection -->
-                    <div class="border border-default bg-muted rounded-md">
+                    <!-- <div class="border border-default bg-muted rounded-md">
                         <div class="flex items-center justify-between p-4">
                             <p class="uppercase font-bold">Extras</p>
                             <UButton label="Add Extra" variant="subtle" icon="i-lucide-plus" @click="addExtra" />
@@ -252,7 +219,7 @@ const removeExtra = (index: number) => {
                             <UButton icon="i-lucide-trash-2" color="error" variant="ghost"
                                 @click="removeExtra(index)" />
                         </div>
-                    </div>
+                    </div> -->
                     <!-- Extra Charge / Discount -->
                     <div class="grid grid-cols-2 gap-6">
                         <UFormField label="Extra Charge (Per Piece)" class="w-full">
@@ -269,7 +236,7 @@ const removeExtra = (index: number) => {
                         </UFormField>
                     </div>
                     <!-- Pricing Breakdown -->
-                    
+            
                     <!-- Cancel / Save Buttons -->
                     <div class="flex justify-end gap-4">
                         <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
