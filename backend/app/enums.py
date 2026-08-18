@@ -7,7 +7,6 @@ class SizeUnit(str, Enum):
     FEET = "ft."
     CENTIMETER = "cm."
     MILLIMETER = "mm."
-    NA = "N/A"
     
     
 class UserRoles(str, Enum):

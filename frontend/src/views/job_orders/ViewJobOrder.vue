@@ -1,37 +1,46 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+// Type imports
 import type { JobOrder } from '@/types/jobOrder'
+// API call imports
 import { getJobOrder } from '@/api/jobOrders'
-import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
+// Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
+import JobItemForm from '@/components/JobItemForm.vue'
+import EditJobItemForm from '@/components/EditJobItemForm.vue'
+
+import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
+
 
 const route = useRoute()
 const router = useRouter()
-const jobOrder = ref<JobOrder>()
-const loading = ref(true)
 
+// Data variables
+const jobOrder = ref<JobOrder>()
+
+// UI variables
+const loading = ref(true)
+const isFormOpen = ref(false)
+
+// Data functions 
 const fetchJobOrder = async () => {
     loading.value = true
-
     try {
         const jobOrderId = route.params.job_order_id
-
         if (typeof jobOrderId !== 'string') {
             throw new Error('Invalid job order ID')
         }
-
         jobOrder.value = await getJobOrder(jobOrderId)
-
-    } finally {
+    } 
+    finally {
         loading.value = false
     }
 }
-
 onMounted(fetchJobOrder)
 
+// UI functions
 const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobOrder.value.total_paid : 0))
-
 const printJobOrder = () => {
     const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
     window.open(resolved.href, '_blank')
@@ -39,6 +48,8 @@ const printJobOrder = () => {
 </script>
 
 <template>
+    <JobItemForm v-model:is-open="isFormOpen" :jo-number="jobOrder?.jo_number"  />
+    <!-- <EditJobItemForm /> -->
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />

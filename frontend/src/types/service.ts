@@ -4,7 +4,7 @@ interface ServicePriceTier {
 	rate: number
 }
 
-interface ServiceOption {
+export interface ServiceOption {
 	id: string
 	name: string
 	option_name: string

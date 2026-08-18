@@ -49,6 +49,16 @@ const handleJobItemAdded = async () => {
         color: 'success',
     })
 }
+const handleAddOrUpdateJobItem = (item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }) => {
+    console.log(item)
+    // if (item.item_id) {
+    //     // Editing an existing item — item_id already present
+    //     emit('updateJobItem', item)
+    // } else {
+    //     emit('addJobItem', item)
+    // }
+    // itemPendingEdit.value = null
+}
 
 // Table data
 const columns: TableColumn<JobItem>[] = [
@@ -164,7 +174,14 @@ const columns: TableColumn<JobItem>[] = [
 
 <template>
     <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
-    <JobItemForm v-model:isOpen="isAddJobItemOpen" :can-call-api="canCallApi" :current-item-ids="currentItemIds" :jo-number="props.joNumber" @added="handleJobItemAdded" />
+    <JobItemForm 
+        v-model:isOpen="isAddJobItemOpen" 
+        :can-call-api="canCallApi" 
+        :current-item-ids="currentItemIds" 
+        :jo-number="props.joNumber" 
+        @added="handleJobItemAdded" 
+        @save="handleAddOrUpdateJobItem"
+    />
     <section class="bg-default border border-default rounded-md">
         <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
             <div class="flex items-center gap-2">

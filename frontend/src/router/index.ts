@@ -76,16 +76,6 @@ const router = createRouter({
           }
         },
         {
-          path: 'job-orders/addai',
-          component: () => import('@/views/job_orders/aiAddJobOrder.vue'),
-          meta: {
-            title: 'Job Orders - Add',
-            breadcrumb: 'Add Job Order',
-            breadcrumbParent: { label: 'Job Orders', to: '/job-orders' },
-            subtitle: 'Create a new Job Order upon clicking save.'
-          }
-        },
-        {
           path: 'review-data',
           component: () => import('@/views/NeedsReview.vue'),
           meta: {

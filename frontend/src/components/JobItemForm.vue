@@ -4,23 +4,20 @@ import { useRoute } from 'vue-router'
 import { z } from 'zod'
 import { nowForInput, utcToInput } from '@/utils/formatters'
 import type { Service, Extra } from '@/types/service'
-import type { JobItemCreate, JobItemExtraCreate, PricingData } from '@/types/jobOrder'
+import type { JobItemCreate, JobItemExtraCreate, PricingData, SizeUnit, JobStatus } from '@/types/jobOrder'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { getAllServices, getAllExtras } from '@/api/services'
-import { getUnitPrice, createJobItem } from '@/api/jobOrders'
-
-const route = useRoute()
+import { getUnitPrice } from '@/api/jobOrders'
+import JobItemServiceFields from './job-item-form/JobItemServiceFields.vue'
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
-    canCallApi: boolean
     currentItemIds?: string[]
     joNumber?: number
 }>()
 
 const emit = defineEmits<{
-    save: [item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }]
-    added: []
+    save: [item: JobItemCreate]
 }>()
 
 // Validation Schema
@@ -33,9 +30,11 @@ const schema = z.object({
     selectedOption: z.string().min(1, 'Variant is required'),
     width: z.number().optional(),
     height: z.number().optional(),
-    unit: z.string().optional(),
+    unit: z.custom<SizeUnit>().optional(),
     quantity: z.number().min(1, 'Quantity must be at least 1'),
-    jobStatus: z.string().min(1, 'Job status is required'),
+    jobStatus: z.custom<JobStatus>((value) => !!value, {
+        message: 'Job status is required'
+    }),
     dueDate: z.string().min(1, 'Due date is required'),
     description: z.string().default(''),
     notes: z.string().default(''),
@@ -61,9 +60,9 @@ const getInitialState = (): Schema => ({
     selectedOption: '',
     width: 0,
     height: 0,
-    unit: 'ft.',
+    unit: 'FEET',
     quantity: 1,
-    jobStatus: 'Pending',
+    jobStatus: 'PENDING',
     dueDate: nowForInput(),
     description: '',
     notes: '',
@@ -75,8 +74,6 @@ const state = reactive<Schema>(getInitialState())
 const pricingData = ref<PricingData>()
 
 // UI Variables
-const unitOptions = ["ft.", "in.", "cm.", "mm.", "meter"]
-const statusOptions = ["Pending", "For Layout", "For Approval", "For Printing", "For Pickup", "Released"]
 const serviceList = ref<Service[]>([])
 const extraList = ref<Extra[]>([])
 const isOpen = defineModel<boolean>('isOpen', { required: true })
@@ -145,7 +142,7 @@ watch(() => props.editingItem, (item) => {
         Object.assign(state, {
             selectedService: item.service_id,
             selectedOption: item.service_option_id,
-            extras: item.extras.map(e => ({ extraId: e.extra_service_id, quantity: e.quantity })),
+            extras: item.extras.map(e => ({ extra_service_id: e.extra_service_id, quantity: e.quantity })),
             width: item.width ?? 0,
             height: item.height ?? 0,
             unit: item.size_unit ?? 'ft.',
@@ -193,18 +190,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         extra_charge: d.extraCharge,
         discount_amount: d.discount,
     }
-    if (props.canCallApi) {
-        const jobOrderId = route.params.job_order_id
-        if (typeof jobOrderId !== 'string') {
-            console.error('Invalid job order ID:', jobOrderId)
-            return
-        }
-        await createJobItem(payload, jobOrderId)
-        emit('added')
-    }
-    else {
-        emit('save', payload)
-    }
+    emit('save', payload)
     resetForm()
     isOpen.value = false
 }
@@ -227,71 +213,21 @@ const removeExtra = (index: number) => {
         <template #body>
             <UForm :schema="schema" :state="state" @submit="onSubmit" class="flex flex-col gap-6">
                 <div class="flex flex-col gap-6">
-                    <!-- Service Selection -->
-                    <div class="grid grid-cols-2 gap-6">
-                        <UFormField label="Service/Product" name="selectedService" required class="w-full">
-                            <UInputMenu v-model="state.selectedService" value-key="id" label-key="name"
-                                :items="serviceList" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Variant" name="selectedOption" required class="w-full">
-                            <USelect v-model="state.selectedOption" value-key="id" label-key="name"
-                                :items="applicableOptions" class="w-full" />
-                        </UFormField>
-                    </div>
-                    <!-- Size Input for Area Based -->
-                    <Transition enter-active-class="transition-all duration-300 ease-out"
-                        enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
-                        leave-active-class="transition-all duration-200 ease-in"
-                        leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
-                        <div v-if="isAreaBased" class="grid grid-cols-4 gap-6">
-                            <UFormField label="Width" name="width" required class="w-full">
-                                <UInputNumber v-model="state.width" :increment="false" :decrement="false" :step="0.1"
-                                    :step-snapping="false" :format-options="{ minimumFractionDigits: 1 }" class="w-full"
-                                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                            </UFormField>
-                            <UFormField label="Height" name="height" required class="w-full">
-                                <UInputNumber v-model="state.height" :increment="false" :decrement="false" :step="0.1"
-                                    :step-snapping="false" :format-options="{ minimumFractionDigits: 1 }" class="w-full"
-                                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                            </UFormField>
-                            <UFormField label="Unit" name="unit" required class="w-full">
-                                <UInputMenu v-model="state.unit" value-key="id" label-key="name" :items="unitOptions"
-                                    class="w-full" />
-                            </UFormField>
-                            <UFormField label="Quantity" required class="w-full">
-                                <UInputNumber v-model="state.quantity" :min="1" class="w-full"
-                                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                            </UFormField>
-                        </div>
-                    </Transition>
-                    <!-- Quantity Input for Non Area Based -->
-                    <Transition enter-active-class="transition-all duration-300 ease-out"
-                        enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
-                        leave-active-class="transition-all duration-200 ease-in"
-                        leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
-                        <div v-if="!isAreaBased">
-                            <UFormField label="Quantity" required class="w-full">
-                                <UInputNumber v-model="state.quantity" :min="1" class="w-full"
-                                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                            </UFormField>
-                        </div>
-                    </Transition>
-                    <!-- Workflow Input -->
-                    <div class="grid grid-cols-2 gap-6">
-                        <UFormField label="Job Status" class="w-full">
-                            <USelect v-model="state.jobStatus" value-key="id" label-key="name" :items="statusOptions"
-                                class="w-full" />
-                        </UFormField>
-                        <UFormField label="Due Date" required>
-                            <UInput v-model="state.dueDate" type="datetime-local" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Description" class="w-full">
-                            <UInput v-model="state.description" class="w-full" />
-                        </UFormField>
-                        <UFormField label="Notes" class="w-full">
-                            <UInput v-model="state.notes" class="w-full" />
-                        </UFormField>
-                    </div>
+                    <JobItemServiceFields
+                        :services="serviceList"
+                        v-model:service="state.selectedService"
+                        v-model:option="state.selectedOption"
+                        v-model:width="state.width"
+                        v-model:height="state.height"
+                        v-model:unit="state.unit"
+                        v-model:quantity="state.quantity"
+                    />
+                    <JobItemWorkflowFields 
+                        v-model:job-status="state.jobStatus"
+                        v-model:due-date="state.dueDate"
+                        v-model:description="state.description"
+                        v-model:notes="state.notes"
+                    />
                     <!-- Extras Selection -->
                     <div class="border border-default bg-muted rounded-md">
                         <div class="flex items-center justify-between p-4">
@@ -333,32 +269,7 @@ const removeExtra = (index: number) => {
                         </UFormField>
                     </div>
                     <!-- Pricing Breakdown -->
-                    <div class="border border-default rounded-md">
-                        <p
-                            class="bg-elevated p-4 border-b border-default rounded-tl-md rounded-tr-md uppercase font-bold text-sm">
-                            Pricing Breakdown</p>
-
-                        <div class="bg-muted border-b border-default px-4 py-2 grid"
-                            :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
-                            <p v-if="isAreaBased" class="uppercase text-sm">Consumption</p>
-                            <p v-if="isAreaBased" class="uppercase text-sm">Rate (Based on consumption)</p>
-                            <p class="uppercase text-sm">Unit Price</p>
-                            <p v-if="state.extraCharge != 0" class="uppercase text-sm">Extra Charge Total</p>
-                            <p class="uppercase text-sm">Extra Total</p>
-                            <p class="uppercase text-sm">Subtotal</p>
-                        </div>
-
-                        <div class="p-4 grid"
-                            :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
-                            <p v-if="isAreaBased">{{ `${pricingData?.consumption ?? 0} ${pricingData?.consumption_unit
-                                ?? state.unit}.` }}</p>
-                            <p v-if="isAreaBased">{{ `₱ ${pricingData?.rate ?? 0}` }}</p>
-                            <p>{{ `₱ ${pricingData?.unit_price ?? 0}` }}</p>
-                            <p v-if="state.extraCharge != 0">{{ `₱ ${extraChargeTotal}` }}</p>
-                            <p>{{ `₱ ${extraTotal}` }}</p>
-                            <p>₱ {{ subtotal }}</p>
-                        </div>
-                    </div>
+                    
                     <!-- Cancel / Save Buttons -->
                     <div class="flex justify-end gap-4">
                         <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
