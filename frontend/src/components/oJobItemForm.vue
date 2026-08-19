@@ -7,7 +7,6 @@ import type { JobItemCreate, JobItemExtraCreate, PricingData, SizeUnit, JobStatu
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { getAllServices, getAllExtras } from '@/api/services'
 import { getUnitPrice } from '@/api/jobOrders'
-import JobItemServiceFields from './job-item-form/JobItemServiceFields.vue'
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
@@ -83,11 +82,6 @@ const selectedServiceData = computed(() =>
 const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
 )
-const getExtraPrice = (extra: JobItemExtraCreate) => {
-    const extraData = extraList.value.find(x => x.id === extra.extra_service_id)
-    if (!extraData) return 0
-    return extraData.price * extra.quantity
-}
 
 // Data functions
 const resetForm = () => {
@@ -176,14 +170,6 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     resetForm()
     isOpen.value = false
 }
-
-// UI Functions
-const addExtra = () => {
-    state.extras.push({ extra_service_id: '', quantity: 1 })
-}
-const removeExtra = (index: number) => {
-    state.extras.splice(index, 1)
-}
 </script>
 
 <template>
@@ -195,46 +181,7 @@ const removeExtra = (index: number) => {
         <template #body>
             <UForm :schema="schema" :state="state" @submit="onSubmit" class="flex flex-col gap-6">
                 <div class="flex flex-col gap-6">
-                    <!-- Extras Selection -->
-                    <!-- <div class="border border-default bg-muted rounded-md">
-                        <div class="flex items-center justify-between p-4">
-                            <p class="uppercase font-bold">Extras</p>
-                            <UButton label="Add Extra" variant="subtle" icon="i-lucide-plus" @click="addExtra" />
-                        </div>
-                        <div v-if="!state.extras.length" class="p-4 text-sm text-muted text-center">
-                            No extras added.
-                        </div>
-                        <div v-for="(extra, index) in state.extras" :key="index"
-                            class="grid grid-cols-[1fr_1fr_auto_auto] gap-4 items-end p-4 border-b border-default last:border-b-0">
-                            <UFormField label="Extra">
-                                <USelect v-model="extra.extra_service_id" value-key="id" label-key="name" :items="extraList"
-                                    class="w-full" />
-                            </UFormField>
-                            <UFormField label="Quantity">
-                                <UInputNumber v-model="extra.quantity" :min="1" class="w-full" />
-                            </UFormField>
-                            <UFormField label="Price (Auto computed)">
-                                <UInput :model-value="`₱ ${getExtraPrice(extra)}`" disabled readonly />
-                            </UFormField>
-                            <UButton icon="i-lucide-trash-2" color="error" variant="ghost"
-                                @click="removeExtra(index)" />
-                        </div>
-                    </div> -->
                     <!-- Extra Charge / Discount -->
-                    <div class="grid grid-cols-2 gap-6">
-                        <UFormField label="Extra Charge (Per Piece)" class="w-full">
-                            <UInputNumber v-model="state.extraCharge" :increment="false" :decrement="false"
-                                :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false"
-                                @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                        </UFormField>
-                        <UFormField label="Discount (Flat)" class="w-full">
-                            <UInputNumber v-model="state.discount" :increment="false" :decrement="false"
-                                :format-options="{ style: 'currency', currency: 'PHP', currencyDisplay: 'code', currencySign: 'accounting' }"
-                                class="w-full" :step="0.1" :step-snapping="false"
-                                @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
-                        </UFormField>
-                    </div>
                     <!-- Pricing Breakdown -->
             
                     <!-- Cancel / Save Buttons -->

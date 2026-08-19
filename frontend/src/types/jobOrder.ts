@@ -1,19 +1,19 @@
 import type { NumberLiteralType } from "typescript"
 export type SizeUnit =
-  | "METER"
-  | "INCHES"
-  | "FEET"
-  | "CENTIMETER"
-  | "MILLIMETER"
+  | "meter"
+  | "in."
+  | "ft."
+  | "cm."
+  | "mm."
 
 export type JobStatus =
-  | "PENDING"
-  | "FOR_LAYOUT"
-  | "FOR_APPROVAL"
-  | "FOR_PRINTING"
-  | "FOR_PICKUP"
-  | "RELEASED"
-  | "CANCELLED"
+  | "Pending"
+  | "For Layout"
+  | "For Approval"
+  | "For Printing"
+  | "For Pickup"
+  | "Released"
+  | "Cancelled"
 
 export interface PricingData {
   consumption: number

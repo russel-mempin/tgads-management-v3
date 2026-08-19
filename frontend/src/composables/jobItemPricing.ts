@@ -36,7 +36,7 @@ export const useJobItemPricing = (
                     width: width.value ?? 0,
                     service_id: serviceId.value,
                     option_id: serviceOptionId.value,
-                    size_unit: unit.value ?? 'ft.',
+                    size_unit: unit.value,
                     quantity: quantity.value
                 })
             }, 400)

@@ -2,12 +2,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 // Type imports
-import type { JobOrder } from '@/types/jobOrder'
+import type { JobOrder, JobItemCreate } from '@/types/jobOrder'
 // API call imports
-import { getJobOrder } from '@/api/jobOrders'
+import { getJobOrder, createJobItem } from '@/api/jobOrders'
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
-import JobItemForm from '@/components/JobItemForm.vue'
+import JobItemForm from '@/components/job-item-form/JobItemForm.vue'
 import EditJobItemForm from '@/components/EditJobItemForm.vue'
 
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
@@ -21,7 +21,11 @@ const jobOrder = ref<JobOrder>()
 
 // UI variables
 const loading = ref(true)
-const isFormOpen = ref(false)
+const isAddFormOpen = ref(false)
+const isEditFormOpen = ref(false)
+const currentItemIds = computed(() =>
+    jobOrder.value?.job_items.map(item => item.item_id) ?? []
+)
 
 // Data functions 
 const fetchJobOrder = async () => {
@@ -32,7 +36,7 @@ const fetchJobOrder = async () => {
             throw new Error('Invalid job order ID')
         }
         jobOrder.value = await getJobOrder(jobOrderId)
-    } 
+    }
     finally {
         loading.value = false
     }
@@ -45,11 +49,31 @@ const printJobOrder = () => {
     const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
     window.open(resolved.href, '_blank')
 }
+const openAddItemForm = () => {
+    isAddFormOpen.value = true
+}
+const openEditItemForm = () => {
+    isEditFormOpen.value = true
+}
+const saveNewItemToDb = async (item: JobItemCreate) => {
+    if (!jobOrder.value) {
+        console.error('Cannot save job item: Job order not loaded.')
+        return
+    }
+    try {
+        await createJobItem(item, jobOrder.value.id)
+        await fetchJobOrder()
+    }
+    catch (error) {
+        console.error('Failed to create job item:', error)
+    }
+}
 </script>
 
 <template>
-    <JobItemForm v-model:is-open="isFormOpen" :jo-number="jobOrder?.jo_number"  />
-    <!-- <EditJobItemForm /> -->
+    <JobItemForm v-model:is-open="isAddFormOpen" :jo-number="jobOrder?.jo_number" :current-item-ids="currentItemIds"
+        @save="saveNewItemToDb" />
+    <EditJobItemForm v-model:is-open="isEditFormOpen" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -135,7 +159,11 @@ const printJobOrder = () => {
 
             <!-- Job Items -->
             <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"
-                @added="fetchJobOrder" @updated="fetchJobOrder" />
+                @added="fetchJobOrder" @updated="fetchJobOrder" @open-form="openAddItemForm">
+                <template #actions="{ item }">
+                    <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm" />
+                </template>
+            </JobItemTable>
 
             <!-- Payments -->
             <section class="bg-default border border-default rounded-md">

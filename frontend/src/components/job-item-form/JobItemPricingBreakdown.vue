@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useJobItemPricing } from '@/composables/jobItemPricing';
+import { computed, toRef } from 'vue';
 import type { SizeUnit, JobItemExtraCreate } from '@/types/jobOrder';
 import type { Extra } from '@/types/service';
+import { useJobItemPricing } from '@/composables/jobItemPricing';
 
 const props = defineProps<{ 
+    selectedServiceId: string
+    selectedOptionId: string
     extraList: Extra[]
     isAreaBased: boolean
 }>()
 
-const serviceId = defineModel<string>('serviceId', { required: true })
-const serviceOptionId = defineModel<string>('serviceOptionId', { required: true })
-const width = defineModel<number | undefined>('width')
-const height = defineModel<number | undefined>('height')
-const unit = defineModel<SizeUnit | undefined>('unit')
+const width = defineModel<number>('width')
+const height = defineModel<number>('height')
+const unit = defineModel<SizeUnit>('unit')
 const quantity = defineModel<number>('quantity', { required: true })
-const extraCharge = defineModel<number | undefined>('extraCharge')
-const extras = defineModel<JobItemExtraCreate[] | undefined>('extras')
+const extras = defineModel<JobItemExtraCreate[]>('extras', { required: true })
+const extraCharge = defineModel<number>('extraCharge', { required: true })
+const discount = defineModel<number>('discount', { required: true })
+
+const { pricingData } = useJobItemPricing(
+    toRef(props, 'selectedServiceId'), toRef(props, 'selectedOptionId'),
+    width, height, unit, quantity
+)
+
 const breakdownColumns = computed(() => {
     let cols = 3
     if (props.isAreaBased) cols += 2
@@ -28,19 +35,11 @@ const getExtraPrice = (extra: JobItemExtraCreate) => {
     if (!extraData) return 0
     return extraData.price * extra.quantity
 }
-const { pricingData } = useJobItemPricing(
-    serviceId,
-    serviceOptionId,
-    width,
-    height,
-    unit,
-    quantity,
-)
 const extraTotal = computed(() =>
-    extras.reduce((sum, e) => sum + getExtraPrice(e), 0)
+    extras.value.reduce((sum, e) => sum + getExtraPrice(e), 0)
 )
 const extraChargeTotal = computed(() =>
-    extraCharge.value ?? 0 * quantity.value
+    extraCharge.value * quantity.value
 )
 const subtotal = computed(() =>
     ((pricingData.value?.unit_price ?? 0) * quantity.value) + extraTotal.value + extraChargeTotal.value - discount.value

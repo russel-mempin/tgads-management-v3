@@ -1,20 +1,20 @@
 import type { SizeUnit, JobStatus } from '@/types/jobOrder'
 
-export const MEASUREMENT_UNITS: { label: string; value: SizeUnit }[] = [
-    { label: 'meter', value: 'METER' },
-    { label: 'in.', value: 'INCHES' },
-    { label: 'ft.', value: 'FEET' },
-    { label: 'cm.', value: 'CENTIMETER' },
-    { label: 'mm.', value: 'MILLIMETER' },
+export const MEASUREMENT_UNITS: SizeUnit[] = [
+  'meter',
+  'in.',
+  'ft.',
+  'cm.',
+  'mm.',
 ]
 
-export const JOB_STATUSES: { label: string; value: JobStatus }[] = [
-  { label: "Pending", value: "PENDING" },
-  { label: "For Layout", value: "FOR_LAYOUT" },
-  { label: "For Approval", value: "FOR_APPROVAL" },
-  { label: "For Printing", value: "FOR_PRINTING" },
-  { label: "For Pickup", value: "FOR_PICKUP" },
-  { label: "Released", value: "RELEASED" },
+export const JOB_STATUSES: JobStatus[] = [
+  'Pending',
+  'For Layout',
+  'For Approval',
+  'For Printing',
+  'For Pickup',
+  'Released',
 ]
 
 export const PAYMENT_STATUSES = [

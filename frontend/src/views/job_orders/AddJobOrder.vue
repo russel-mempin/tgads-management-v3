@@ -15,7 +15,7 @@ import { nowForInput } from '@/utils/formatters';
 
 // Data Variables
 const joNumber = ref(0)
-const jobItems = ref<JobItemCreate[]>([])
+const jobItems = ref<JobItem[]>([])
 const dateReceived = ref(nowForInput())
 const customerInfo = ref<Customer>({
 	name: '',
@@ -24,9 +24,6 @@ const customerInfo = ref<Customer>({
 	address: '',
 	id: '',
 })
-const displayItems = computed(() =>
-	jobItems.value.map(item => draftToDisplayItem(item, serviceList.value))
-)
 
 // UI Variables
 const isWalkIn = ref(false)
@@ -90,39 +87,6 @@ const mapExtraCreateToExtra = (extra: JobItemExtraCreate, extraServices: Extra[]
 		quantity: extra.quantity,
 		price_snapshot: extraService?.price ?? 0,
 		name_snapshot: extraService?.name ?? '—',
-	}
-}
-const draftToDisplayItem = async (draft: JobItemCreate, services: Service[]): JobItem => {
-	if (draft.service_id && draft.service_option_id) {
-		const service = services.find(s => s.id === draft.service_id)
-		const option = service?.options.find(o => o.id === draft.service_option_id)
-		const quantity = draft.quantity
-		// I can call an api to get the unitPrice
-		pricingData.value = await getUnitPrice({
-			height: draft.height ?? 0,
-			width: draft.width ?? 0,
-			service_id: service?.id ?? '',
-			option_id: option?.id ?? '',
-			size_unit: draft.size_unit ?? 'ft.',
-			quantity: draft.quantity
-		})
-		const unit_price = 1
-		const mappedExtras = draft.extras.map(extra => mapExtraCreateToExtra(extra, extraList.value))
-		const extraTotal = mappedExtras.reduce((sum, extra) => sum + extra.price_snapshot * extra.quantity, 0)
-
-		const subtotal = (unit_price * quantity) + (draft.extra_charge * draft.quantity) + extraTotal - draft.discount_amount
-		return {
-			...draft,
-			id: draft.item_id,
-			unit_price: unit_price,
-			subtotal: subtotal,
-			service_name_snapshot: service?.name ?? '',
-			service_option_name_snapshot: option?.name ?? '',
-			service_abbreviation_snapshot: service?.abbreviation ?? '',
-			total_claimed: undefined,
-			remaining_on_hand: undefined,
-			extras: mappedExtras
-		}
 	}
 }
 </script>
@@ -210,7 +174,7 @@ const draftToDisplayItem = async (draft: JobItemCreate, services: Service[]): Jo
 
 	<!-- Job Items -->
 	<div class="m-8">
-		<JobItemTable :can-call-api="false" :jo-number="joNumber" :job-items="displayItems" />
+		<JobItemTable :can-call-api="false" :jo-number="joNumber" :job-items="jobItems" />
 	</div>
 
 	<!-- <JobItemTable 

@@ -7,6 +7,7 @@ import { MEASUREMENT_UNITS } from '@/utils/constants';
 const props = defineProps<{
     services: Service[]
     isAreaBased: boolean
+    selectedServiceData?: Service
 }>()
 
 const service = defineModel<string>('service', { required: true })
@@ -16,12 +17,8 @@ const height = defineModel<number | undefined>('height')
 const unit = defineModel<SizeUnit | undefined>('unit')
 const quantity = defineModel<number>('quantity', { required: true })
 
-const selectedServiceData = computed(() =>
-    props.services.find(item => item.id === service.value)
-)
-
 const applicableOptions = computed(() =>
-    selectedServiceData.value?.options ?? []
+    props.selectedServiceData?.options ?? []
 )
 </script>
 

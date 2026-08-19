@@ -4,13 +4,11 @@ import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatter
 import type { JobItem, JobItemCreate } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
 
-const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
 const props = defineProps<{
     jobItems?: JobItem[]
-    canCallApi: boolean
     joNumber?: number
 }>()
 const emit = defineEmits<{
@@ -19,45 +17,17 @@ const emit = defineEmits<{
     addJobItem: [item: JobItemCreate]
     updateJobItem: [item: JobItemCreate]
     removeJobItem: [item_id: string]
+    openForm: []
 }>()
 
 // UI Variables
 const isAddJobItemOpen = ref(false)
 const isEditJobItemOpen = ref(false)
 const selectedJobItem = ref<JobItem>()
-const currentItemIds = computed(() => 
-    props.jobItems?.map(item => item.item_id)
-)
 
 const openEditJobItem = (item: JobItem) => {
     selectedJobItem.value = item
     isEditJobItemOpen.value = true
-}
-const handleJobItemUpdated = async () => {
-    emit('updated')
-    toast.add({
-        title: 'Changes Saved',
-        description: 'Job Item information updated.',
-        color: 'success',
-    })
-}
-const handleJobItemAdded = async () => {
-    emit('added')
-    toast.add({
-        title: 'New Item Saved',
-        description: 'Job Item added.',
-        color: 'success',
-    })
-}
-const handleAddOrUpdateJobItem = (item: Omit<JobItemCreate, 'item_id'> & { item_id?: string }) => {
-    console.log(item)
-    // if (item.item_id) {
-    //     // Editing an existing item — item_id already present
-    //     emit('updateJobItem', item)
-    // } else {
-    //     emit('addJobItem', item)
-    // }
-    // itemPendingEdit.value = null
 }
 
 // Table data
@@ -153,45 +123,24 @@ const columns: TableColumn<JobItem>[] = [
     },
     {
         id: 'actions',
-        header: `${props.canCallApi ? '' : 'Actions'}`,
-        cell: ({ row }) => {
-            if (props.canCallApi) {
-                return h(UButton, {
-                    color: 'info',
-                    variant: 'outline',
-                    icon: 'i-lucide-pen-square',
-                    onClick: (e: Event) => {
-                        e.stopPropagation()
-                        console.log(row.original)
-                        openEditJobItem(row.original)
-                    }
-                })
-            }
-        }
+        header: ''
     }
 ]
 </script>
 
 <template>
-    <EditJobItemForm v-model:isOpen="isEditJobItemOpen" :job-item="selectedJobItem" @updated="handleJobItemUpdated" />
-    <JobItemForm 
-        v-model:isOpen="isAddJobItemOpen" 
-        :can-call-api="canCallApi" 
-        :current-item-ids="currentItemIds" 
-        :jo-number="props.joNumber" 
-        @added="handleJobItemAdded" 
-        @save="handleAddOrUpdateJobItem"
-    />
     <section class="bg-default border border-default rounded-md">
         <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
             <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <h2 class="text-highlighted font-semibold">Job Items</h2>
             </div>
-            <UButton @click="() => { isAddJobItemOpen = true }" icon="i-lucide-plus" label="Add Item"
-                variant="outline" />
+            <UButton @click="emit('openForm')" icon="i-lucide-plus" label="Add Item" variant="outline" />
         </div>
         <UTable :data="props.jobItems" :columns="columns">
+            <template #actions-cell="{ row }">
+                <slot name="actions" :item="row.original" />
+            </template>
             <template #empty>
                 <div class="flex flex-col items-center justify-center py-12 text-center px-6">
                     <div class="w-12 h-12 rounded-full bg-elevated flex items-center justify-center mb-3">
