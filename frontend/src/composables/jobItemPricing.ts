@@ -40,7 +40,7 @@ export const useJobItemPricing = (
                     quantity: quantity.value
                 })
             }, 400)
-        }
+        }, { immediate: true }
     )
 
     return {

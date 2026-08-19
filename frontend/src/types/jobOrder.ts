@@ -41,7 +41,7 @@ export interface JobItemCreate {
   service_option_id: string
   height?: number
   width?: number
-  size_unit?: string
+  size_unit?: SizeUnit
   quantity: number
   job_status: string
   due_date: Date
@@ -67,7 +67,7 @@ export interface JobItem {
   description: string
   height?: number
   width?: number
-  size_unit?: string
+  size_unit?: SizeUnit
   quantity: number
   job_status: string
   due_date: Date

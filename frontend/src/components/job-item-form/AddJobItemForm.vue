@@ -19,7 +19,6 @@ const props = defineProps<{
     editingItem?: JobItemCreate | null
     currentItemIds?: string[]
     joNumber?: number
-
 }>()
 const emit = defineEmits<{
     save: [item: JobItemCreate]
@@ -81,8 +80,8 @@ const extraList = ref<Extra[]>([])
 
 // Data functions
 onMounted(async () => {
-	serviceList.value = await getAllServices()
-	extraList.value = await getAllExtras()
+    serviceList.value = await getAllServices()
+    extraList.value = await getAllExtras()
 })
 const resetForm = () => {
     Object.assign(state, getInitialState())
@@ -100,6 +99,13 @@ const selectedServiceData = computed(() =>
 const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
 )
+// UI variables
+const breakdownColumns = computed(() => {
+    let cols = 3
+    if (isAreaBased) cols += 2
+    if (state.extraCharge != 0) cols += 1
+    return cols
+})
 const handleSave = (event: FormSubmitEvent<Schema>) => {
     const d = event.data
     const payload: JobItemCreate = {
@@ -144,13 +150,42 @@ const handleSave = (event: FormSubmitEvent<Schema>) => {
                 <JobItemPriceAdjustFields v-model:extra-charge="state.extraCharge" v-model:discount="state.discount" />
                 <JobItemPricingBreakdown :selected-service-id="state.selectedService"
                     :selected-option-id="state.selectedOption" :extra-list="extraList" :is-area-based="isAreaBased"
-                    :width="state.width" :height="state.height" :unit="state.unit"
-                    :quantity="state.quantity" :extras="state.extras"
-                    :extra-charge="state.extraCharge" :discount="state.discount" />
-                <div class="flex justify-end gap-4">
-                    <UButton label="Cancel" />
+                    :width="state.width" :height="state.height" :unit="state.unit" :quantity="state.quantity"
+                    :extras="state.extras" :extra-charge="state.extraCharge" :discount="state.discount">
+                    <template #breakdown="{ pricingData, extraTotal, extraChargeTotal, subtotal }">
+                        <div class="border border-default rounded-md">
+                            <p
+                                class="bg-elevated p-4 border-b border-default rounded-tl-md rounded-tr-md uppercase font-bold text-sm">
+                                Pricing Breakdown</p>
 
-                    <UButton label="Save" type="submit" />
+                            <div class="bg-muted border-b border-default px-4 py-2 grid"
+                                :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
+                                <p v-if="isAreaBased" class="uppercase text-sm">Consumption</p>
+                                <p v-if="isAreaBased" class="uppercase text-sm">Rate (Based on consumption)</p>
+                                <p class="uppercase text-sm">Unit Price</p>
+                                <p v-if="state.extraCharge != 0" class="uppercase text-sm">Extra Charge Total</p>
+                                <p class="uppercase text-sm">Extras Total</p>
+                                <p class="uppercase text-sm">Subtotal</p>
+                            </div>
+
+                            <div class="p-4 grid"
+                                :style="{ gridTemplateColumns: `repeat(${breakdownColumns}, minmax(0, 1fr))` }">
+                                <p v-if="isAreaBased">{{ `${pricingData?.consumption ?? 0}
+                                    ${pricingData?.consumption_unit
+                                    ?? state.unit}.` }}</p>
+                                <p v-if="isAreaBased">{{ `₱ ${pricingData?.rate ?? 0}` }}</p>
+                                <p>{{ `₱ ${pricingData?.unit_price ?? 0}` }}</p>
+                                <p v-if="state.extraCharge != 0">{{ `₱ ${state.extraCharge ?? 0 * state.quantity}` }}</p>
+                                <p>{{ `₱ ${extraTotal}` }}</p>
+                                <p>₱ {{ subtotal }}</p>
+                            </div>
+                        </div>
+                    </template>
+                </JobItemPricingBreakdown>
+                <div class="flex justify-end gap-4">
+                    <UButton label="Cancel" icon="i-lucide-x" variant="outline" size="lg" class="w-40" @click="() => { isOpen = false }" />
+
+                    <UButton label="Save Data" icon="i-lucide-save" size="lg" class="w-40 font-semibold" type="submit" />
                 </div>
             </UForm>
         </template>

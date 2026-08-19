@@ -11,12 +11,12 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddJobItemForm: typeof import('./src/components/job-item-form/AddJobItemForm.vue')['default']
     ClaimForm: typeof import('./src/components/ClaimForm.vue')['default']
     ClaimTable: typeof import('./src/components/ClaimTable.vue')['default']
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
     EditJobItemForm: typeof import('./src/components/EditJobItemForm.vue')['default']
     JobItemExtrasFields: typeof import('./src/components/job-item-form/JobItemExtrasFields.vue')['default']
-    JobItemForm: typeof import('./src/components/job-item-form/JobItemForm.vue')['default']
     JobItemPriceAdjustFields: typeof import('./src/components/job-item-form/JobItemPriceAdjustFields.vue')['default']
     JobItemPricingBreakdown: typeof import('./src/components/job-item-form/JobItemPricingBreakdown.vue')['default']
     JobItemServiceFields: typeof import('./src/components/job-item-form/JobItemServiceFields.vue')['default']

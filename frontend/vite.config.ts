@@ -21,6 +21,17 @@ export default defineConfig({
             title: 'font-semibold text-highlighted',
             description: 'text-muted',
           },
+          variants: {
+            color: {
+              primary: { root: 'bg-primary text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              secondary: { root: 'bg-secondary text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              success: { root: 'bg-success text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              info: { root: 'bg-info text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              warning: { root: 'bg-warning text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              error: { root: 'bg-error text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' },
+              neutral: { root: 'bg-inverted text-inverted', title: 'text-inverted font-semibold uppercase', description: 'text-inverted/80 text-lg', icon: 'text-inverted' }
+            }
+          }
         },
         input: {
           slots: {

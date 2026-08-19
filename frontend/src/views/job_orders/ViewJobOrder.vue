@@ -2,27 +2,29 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 // Type imports
-import type { JobOrder, JobItemCreate } from '@/types/jobOrder'
+import type { JobOrder, JobItem, JobItemCreate } from '@/types/jobOrder'
 // API call imports
-import { getJobOrder, createJobItem } from '@/api/jobOrders'
+import { getJobOrder, createJobItem, updateJobItem } from '@/api/jobOrders'
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
-import JobItemForm from '@/components/job-item-form/JobItemForm.vue'
+import AddJobItemForm from '@/components/job-item-form/AddJobItemForm.vue'
 import EditJobItemForm from '@/components/EditJobItemForm.vue'
-
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
-
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 
 // Data variables
 const jobOrder = ref<JobOrder>()
+const editingJobItem = ref<JobItem>()
 
 // UI variables
 const loading = ref(true)
 const isAddFormOpen = ref(false)
 const isEditFormOpen = ref(false)
+const isAdding = ref(false)
+const isUpdating = ref(false)
 const currentItemIds = computed(() =>
     jobOrder.value?.job_items.map(item => item.item_id) ?? []
 )
@@ -52,8 +54,9 @@ const printJobOrder = () => {
 const openAddItemForm = () => {
     isAddFormOpen.value = true
 }
-const openEditItemForm = () => {
+const openEditItemForm = (item: JobItem) => {
     isEditFormOpen.value = true
+    editingJobItem.value = item
 }
 const saveNewItemToDb = async (item: JobItemCreate) => {
     if (!jobOrder.value) {
@@ -63,17 +66,51 @@ const saveNewItemToDb = async (item: JobItemCreate) => {
     try {
         await createJobItem(item, jobOrder.value.id)
         await fetchJobOrder()
+        toast.add({
+            title: 'Saved successfully',
+            color: 'success',
+        })
     }
     catch (error) {
         console.error('Failed to create job item:', error)
+        toast.add({
+            title: 'Save failed',
+            description: 'Something went wrong while saving the job item.',
+            color: 'error',
+        })
+    }
+}
+const saveUpdatedItemToDb = async (payload: { jobItemId: string, changes: Partial<JobItem> }) => {
+    if (!payload.jobItemId) return
+    if (isUpdating.value) return
+    isUpdating.value = true
+    try {
+        await updateJobItem(payload.changes, payload.jobItemId)
+        toast.add({
+            title: 'Job item updated',
+            color: 'success',
+        })
+        isEditFormOpen.value = false
+        await fetchJobOrder()
+    } 
+    catch (error) {
+        console.error('Failed to update job item:', error)
+        toast.add({
+            title: 'Save failed',
+            description: 'Something went wrong while saving the job item.',
+            color: 'error',
+        })
+    } 
+    finally {
+        isUpdating.value = false
     }
 }
 </script>
 
 <template>
-    <JobItemForm v-model:is-open="isAddFormOpen" :jo-number="jobOrder?.jo_number" :current-item-ids="currentItemIds"
+    <AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="jobOrder?.jo_number" :current-item-ids="currentItemIds"
         @save="saveNewItemToDb" />
-    <EditJobItemForm v-model:is-open="isEditFormOpen" />
+    <EditJobItemForm v-if="editingJobItem" v-model:is-open="isEditFormOpen" :job-item="editingJobItem" @update="saveUpdatedItemToDb" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -161,7 +198,7 @@ const saveNewItemToDb = async (item: JobItemCreate) => {
             <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"
                 @added="fetchJobOrder" @updated="fetchJobOrder" @open-form="openAddItemForm">
                 <template #actions="{ item }">
-                    <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm" />
+                    <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
                 </template>
             </JobItemTable>
 
