@@ -8,7 +8,7 @@ import { getJobOrder, createJobItem, updateJobItem } from '@/api/jobOrders'
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
 import AddJobItemForm from '@/components/job-item-form/AddJobItemForm.vue'
-import EditJobItemForm from '@/components/EditJobItemForm.vue'
+import EditJobItemForm from '@/components/job-item-form/EditJobItemForm.vue'
 import { formatDate, formatCurrency, getJobStatusColor, getPaymentStatusColor } from '@/utils/formatters'
 
 const route = useRoute()

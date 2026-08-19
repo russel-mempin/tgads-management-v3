@@ -10,9 +10,9 @@ import type { Service, Extra } from '@/types/service'
 // API call imports
 import { getAllServices, getAllExtras } from '@/api/services';
 // Component imports
-import JobItemExtrasFields from './job-item-form/JobItemExtrasFields.vue';
-import JobItemPriceAdjustFields from './job-item-form/JobItemPriceAdjustFields.vue';
-import JobItemPricingBreakdown from './job-item-form/JobItemPricingBreakdown.vue';
+import JobItemExtrasFields from './JobItemExtrasFields.vue';
+import JobItemPriceAdjustFields from './JobItemPriceAdjustFields.vue';
+import JobItemPricingBreakdown from './JobItemPricingBreakdown.vue';
 
 const emit = defineEmits<{
     submit: [payload: {
