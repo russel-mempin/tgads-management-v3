@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, resolveComponent, h, computed } from 'vue'
+import { resolveComponent, h } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
 import type { JobItem, JobItemCreate } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
@@ -19,16 +19,6 @@ const emit = defineEmits<{
     removeJobItem: [item_id: string]
     openForm: []
 }>()
-
-// UI Variables
-const isAddJobItemOpen = ref(false)
-const isEditJobItemOpen = ref(false)
-const selectedJobItem = ref<JobItem>()
-
-const openEditJobItem = (item: JobItem) => {
-    selectedJobItem.value = item
-    isEditJobItemOpen.value = true
-}
 
 // Table data
 const columns: TableColumn<JobItem>[] = [
@@ -135,7 +125,12 @@ const columns: TableColumn<JobItem>[] = [
                 <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <h2 class="text-highlighted font-semibold">Job Items</h2>
             </div>
-            <UButton @click="emit('openForm')" icon="i-lucide-plus" label="Add Item" variant="outline" />
+            <UTooltip :text="!joNumber ? 'A valid job order number is required' : 'Add an item'">
+                <span>
+                    <UButton @click="emit('openForm')" :disabled="!joNumber || joNumber <= 0" icon="i-lucide-plus"
+                        label="Add Item" variant="outline" />
+                </span>
+            </UTooltip>
         </div>
         <UTable :data="props.jobItems" :columns="columns">
             <template #actions-cell="{ row }">

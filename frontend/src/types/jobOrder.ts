@@ -79,11 +79,22 @@ export interface JobItem {
   service_name_snapshot: string
   service_option_name_snapshot: string
   service_abbreviation_snapshot: string
-  total_claimed?: NumberLiteralType
+  total_claimed?: number
   remaining_on_hand?: number
   extras: JobItemExtra[]
   service_id: string
   service_option_id: string
+}
+
+export type JobItemRow = JobItemCreate & {
+  id?: string
+  unit_price?: number
+  subtotal?: number
+  service_name_snapshot?: string
+  service_option_name_snapshot?: string
+  service_abbreviation_snapshot?: string
+  total_claimed?: number
+  remaining_on_hand?: number
 }
 
 export interface Payment {

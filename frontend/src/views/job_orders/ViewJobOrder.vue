@@ -92,7 +92,7 @@ const saveUpdatedItemToDb = async (payload: { jobItemId: string, changes: Partia
         })
         isEditFormOpen.value = false
         await fetchJobOrder()
-    } 
+    }
     catch (error) {
         console.error('Failed to update job item:', error)
         toast.add({
@@ -100,7 +100,7 @@ const saveUpdatedItemToDb = async (payload: { jobItemId: string, changes: Partia
             description: 'Something went wrong while saving the job item.',
             color: 'error',
         })
-    } 
+    }
     finally {
         isUpdating.value = false
     }
@@ -110,7 +110,8 @@ const saveUpdatedItemToDb = async (payload: { jobItemId: string, changes: Partia
 <template>
     <AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="jobOrder?.jo_number" :current-item-ids="currentItemIds"
         @save="saveNewItemToDb" />
-    <EditJobItemForm v-if="editingJobItem" v-model:is-open="isEditFormOpen" :job-item="editingJobItem" @update="saveUpdatedItemToDb" />
+    <EditJobItemForm v-if="editingJobItem" v-model:is-open="isEditFormOpen" :job-item="editingJobItem"
+        @update="saveUpdatedItemToDb" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -195,8 +196,8 @@ const saveUpdatedItemToDb = async (payload: { jobItemId: string, changes: Partia
             </section>
 
             <!-- Job Items -->
-            <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"
-                @added="fetchJobOrder" @updated="fetchJobOrder" @open-form="openAddItemForm">
+            <JobItemTable :job-items="jobOrder.job_items" :jo-number="jobOrder.jo_number" @added="fetchJobOrder"
+                @updated="fetchJobOrder" @open-form="openAddItemForm">
                 <template #actions="{ item }">
                     <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
                 </template>

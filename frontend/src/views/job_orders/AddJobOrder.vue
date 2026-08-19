@@ -2,13 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 
 // Type imports
-import type { JobItemCreate, JobItem, JobItemExtraCreate, JobItemExtra, PricingData } from '@/types/jobOrder';
+import type { JobItem, JobItemCreate } from '@/types/jobOrder';
 import type { Customer } from '@/types/customer';
 import type { Service, Extra } from '@/types/service';
 // API call imports
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import { getAllServices, getAllExtras } from '@/api/services';
-import { getUnitPrice } from '@/api/jobOrders';
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue';
 import { nowForInput } from '@/utils/formatters';
@@ -33,7 +32,7 @@ const customerList = ref<string[]>([])
 const isNewCustomer = ref(false)
 const serviceList = ref<Service[]>([])
 const extraList = ref<Extra[]>([])
-const pricingData = ref<PricingData>()
+const isAddFormOpen = ref(false)
 
 // Data Functions
 onMounted(async () => {
@@ -80,18 +79,22 @@ const selectCustomerToSearch = (name: string) => {
 	customerNameToSearch.value = name
 	showCustomerSuggestions.value = false
 }
-const mapExtraCreateToExtra = (extra: JobItemExtraCreate, extraServices: Extra[]): JobItemExtra => {
-	const extraService = extraServices.find(e => e.id === extra.extra_service_id)
-	return {
-		extra_service_id: extra.extra_service_id,
-		quantity: extra.quantity,
-		price_snapshot: extraService?.price ?? 0,
-		name_snapshot: extraService?.name ?? '—',
-	}
+const currentItemIds = computed(() =>
+    jobItems.value?.map(item => item.item_id) ?? []
+)
+const openAddItemForm = () => {
+	console.log("Hi")
+    isAddFormOpen.value = true
+}
+const saveJobItem = (item: JobItemCreate) => {
+	console.log("I AM SAVING")
+	console.log(item)
+	jobItems.value.push(item)
 }
 </script>
 
 <template>
+    <AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="joNumber" :current-item-ids="currentItemIds" @save="saveJobItem" />
 	<!-- Page Header -->
 	<div class="m-8 shrink-0">
 		<div class="flex items-start justify-between">
@@ -174,7 +177,7 @@ const mapExtraCreateToExtra = (extra: JobItemExtraCreate, extraServices: Extra[]
 
 	<!-- Job Items -->
 	<div class="m-8">
-		<JobItemTable :can-call-api="false" :jo-number="joNumber" :job-items="jobItems" />
+		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm" />
 	</div>
 
 	<!-- <JobItemTable 
