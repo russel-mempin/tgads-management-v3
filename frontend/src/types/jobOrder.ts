@@ -61,8 +61,7 @@ export interface JobItemUpdate {
   extras?: JobItemExtra[]
 }
 
-export interface JobItem {
-  id: string
+export interface JobItemRow {
   item_id: string
   description: string
   height?: number
@@ -72,21 +71,13 @@ export interface JobItem {
   job_status: string
   due_date: Date
   notes: string
-  unit_price: number
   discount_amount: number
   extra_charge: number
-  subtotal: number
-  service_name_snapshot: string
-  service_option_name_snapshot: string
-  service_abbreviation_snapshot: string
-  total_claimed?: number
-  remaining_on_hand?: number
-  extras: JobItemExtra[]
   service_id: string
   service_option_id: string
-}
+  extras: JobItemExtra[]
 
-export type JobItemRow = JobItemCreate & {
+  // present once saved, optional for drafts
   id?: string
   unit_price?: number
   subtotal?: number
@@ -95,6 +86,15 @@ export type JobItemRow = JobItemCreate & {
   service_abbreviation_snapshot?: string
   total_claimed?: number
   remaining_on_hand?: number
+}
+
+export interface JobItem extends JobItemRow {
+  id: string
+  unit_price: number
+  subtotal: number
+  service_name_snapshot: string
+  service_option_name_snapshot: string
+  service_abbreviation_snapshot: string
 }
 
 export interface Payment {

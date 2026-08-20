@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { resolveComponent, h } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
-import type { JobItem, JobItemCreate } from '@/types/jobOrder';
+import type { JobItemRow, JobItemCreate } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
 const props = defineProps<{
-    jobItems?: JobItem[]
+    jobItems?: JobItemRow[]
     joNumber?: number
 }>()
 const emit = defineEmits<{
@@ -21,7 +21,7 @@ const emit = defineEmits<{
 }>()
 
 // Table data
-const columns: TableColumn<JobItem>[] = [
+const columns: TableColumn<JobItemRow>[] = [
     { accessorKey: 'item_id', header: 'ID' },
     {
         accessorKey: 'service_name_snapshot',

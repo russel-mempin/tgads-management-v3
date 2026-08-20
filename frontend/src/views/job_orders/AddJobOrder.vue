@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, toRef } from 'vue'
 
 // Type imports
-import type { JobItem, JobItemCreate } from '@/types/jobOrder';
+import type { JobItemRow, JobItemCreate, JobItemExtra } from '@/types/jobOrder';
 import type { Customer } from '@/types/customer';
 import type { Service, Extra } from '@/types/service';
 // API call imports
@@ -11,10 +11,11 @@ import { getAllServices, getAllExtras } from '@/api/services';
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue';
 import { nowForInput } from '@/utils/formatters';
+import { useJobItemPricing } from '@/composables/jobItemPricing';
 
 // Data Variables
 const joNumber = ref(0)
-const jobItems = ref<JobItem[]>([])
+const jobItems = ref<JobItemRow[]>([])
 const dateReceived = ref(nowForInput())
 const customerInfo = ref<Customer>({
 	name: '',
@@ -80,21 +81,62 @@ const selectCustomerToSearch = (name: string) => {
 	showCustomerSuggestions.value = false
 }
 const currentItemIds = computed(() =>
-    jobItems.value?.map(item => item.item_id) ?? []
+	jobItems.value?.map(item => item.item_id) ?? []
 )
 const openAddItemForm = () => {
 	console.log("Hi")
-    isAddFormOpen.value = true
+	isAddFormOpen.value = true
+}
+const buildJobItem = (item: JobItemCreate): JobItemRow => {
+	const service = serviceList.value.find(s => s.id === item.service_id)
+	const option = service?.options.find(o => o.id === item.service_option_id)
+	const { pricingData } = useJobItemPricing(
+		toRef(item.service_id), toRef(item.service_option_id), toRef(item.width), toRef(item.height), toRef(item.size_unit), toRef(item.quantity)
+	)
+	const extras: JobItemExtra[] = item.extras.map(e => {
+		const extra = extraList.value.find(x => x.id === e.extra_service_id)
+		return {
+			extra_service_id: e.extra_service_id,
+			quantity: e.quantity,
+			name_snapshot: extra?.name ?? 'Unknown Extra',
+			price_snapshot: extra?.price ?? 0
+		}
+	})
+	const getExtraPrice = (extra: JobItemExtra) => {
+		const extraData = extraList.value.find(x => x.id === extra.extra_service_id)
+		if (!extraData) return 0
+		return extraData.price * extra.quantity
+	}
+	const extraTotal = computed(() =>
+		extras.reduce((sum, e) => sum + getExtraPrice(e), 0)
+	)
+	const extraChargeTotal = computed(() =>
+		item.extra_charge * item.quantity
+	)
+	const subtotal = computed(() =>
+		((pricingData.value?.unit_price ?? 0) * item.quantity) + extraTotal.value + extraChargeTotal.value - item.discount_amount
+	)
+	return {
+		...item,
+		unit_price: pricingData.value?.unit_price ?? 0,
+		subtotal: subtotal.value,
+		service_name_snapshot: service?.name ?? '-',
+		service_option_name_snapshot: option?.name,
+		service_abbreviation_snapshot: service?.abbreviation,
+		extras
+	}
 }
 const saveJobItem = (item: JobItemCreate) => {
 	console.log("I AM SAVING")
 	console.log(item)
-	jobItems.value.push(item)
+	const converted = buildJobItem(item)
+	jobItems.value.push(converted)
 }
 </script>
 
 <template>
-    <AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="joNumber" :current-item-ids="currentItemIds" @save="saveJobItem" />
+	<AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="joNumber" :current-item-ids="currentItemIds"
+		@save="saveJobItem" />
 	<!-- Page Header -->
 	<div class="m-8 shrink-0">
 		<div class="flex items-start justify-between">
@@ -179,15 +221,4 @@ const saveJobItem = (item: JobItemCreate) => {
 	<div class="m-8">
 		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm" />
 	</div>
-
-	<!-- <JobItemTable 
-		:jo-number="joNumber" 
-		:job-items="jobItems" 
-		@add-job-item="(item) => jobItems.push(item)"
-		@update-job-item="(updated) => {
-			const index = jobItems.findIndex(i => i.item_id === updated.item_id)
-			if (index !== -1) jobItems[index] = updated
-		}" 
-		@remove-job-item="(item_id) => jobItems = jobItems.filter(item => item.item_id !== item_id)" 
-	/> -->
 </template>
