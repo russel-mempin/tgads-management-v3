@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, toRef } from 'vue'
-
+import { ref, computed, onMounted, watch } from 'vue'
 // Type imports
-import type { JobItemRow, JobItemCreate, JobItemExtra } from '@/types/jobOrder';
+import type { JobItemTableRow, JobItemCreate, JobItemExtra } from '@/types/jobOrder';
 import type { Customer } from '@/types/customer';
 import type { Service, Extra } from '@/types/service';
 // API call imports
 import { getCustomerNames, getCustomerInfo } from '@/api/customers'
 import { getAllServices, getAllExtras } from '@/api/services';
+import { getUnitPrice } from '@/api/jobOrders';
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue';
 import { nowForInput } from '@/utils/formatters';
-import { useJobItemPricing } from '@/composables/jobItemPricing';
 
 // Data Variables
 const joNumber = ref(0)
-const jobItems = ref<JobItemRow[]>([])
+const jobItems = ref<JobItemTableRow[]>([])
 const dateReceived = ref(nowForInput())
 const customerInfo = ref<Customer>({
 	name: '',
@@ -84,17 +83,25 @@ const currentItemIds = computed(() =>
 	jobItems.value?.map(item => item.item_id) ?? []
 )
 const openAddItemForm = () => {
-	console.log("Hi")
 	isAddFormOpen.value = true
 }
-const buildJobItem = (item: JobItemCreate): JobItemRow => {
+const openEditItemForm = () => {
+	isAddFormOpen.value = true
+}
+const buildJobItem = async (item: JobItemCreate): Promise<JobItemTableRow> => {
 	const service = serviceList.value.find(s => s.id === item.service_id)
 	const option = service?.options.find(o => o.id === item.service_option_id)
-	const { pricingData } = useJobItemPricing(
-		toRef(item.service_id), toRef(item.service_option_id), toRef(item.width), toRef(item.height), toRef(item.size_unit), toRef(item.quantity)
-	)
+	const pricingData = await getUnitPrice({
+		height: item.height ?? 0,
+		width: item.width ?? 0,
+		service_id: item.service_id,
+		option_id: item.service_option_id,
+		size_unit: item.size_unit!,
+		quantity: item.quantity
+	})
 	const extras: JobItemExtra[] = item.extras.map(e => {
 		const extra = extraList.value.find(x => x.id === e.extra_service_id)
+
 		return {
 			extra_service_id: e.extra_service_id,
 			quantity: e.quantity,
@@ -102,34 +109,30 @@ const buildJobItem = (item: JobItemCreate): JobItemRow => {
 			price_snapshot: extra?.price ?? 0
 		}
 	})
-	const getExtraPrice = (extra: JobItemExtra) => {
-		const extraData = extraList.value.find(x => x.id === extra.extra_service_id)
-		if (!extraData) return 0
-		return extraData.price * extra.quantity
-	}
-	const extraTotal = computed(() =>
-		extras.reduce((sum, e) => sum + getExtraPrice(e), 0)
+	const extraTotal = extras.reduce(
+		(sum, e) => sum + e.price_snapshot * e.quantity,
+		0
 	)
-	const extraChargeTotal = computed(() =>
-		item.extra_charge * item.quantity
-	)
-	const subtotal = computed(() =>
-		((pricingData.value?.unit_price ?? 0) * item.quantity) + extraTotal.value + extraChargeTotal.value - item.discount_amount
-	)
+	const extraChargeTotal = item.extra_charge * item.quantity
+	const subtotal =
+		(pricingData.unit_price * item.quantity) +
+		extraTotal +
+		extraChargeTotal -
+		item.discount_amount
+
 	return {
 		...item,
-		unit_price: pricingData.value?.unit_price ?? 0,
-		subtotal: subtotal.value,
+		unit_price: pricingData.unit_price,
+		subtotal,
 		service_name_snapshot: service?.name ?? '-',
-		service_option_name_snapshot: option?.name,
-		service_abbreviation_snapshot: service?.abbreviation,
+		service_option_name_snapshot: option?.name ?? '-',
+		total_claimed: 0,
+		remaining_on_hand: item.quantity,
 		extras
 	}
 }
-const saveJobItem = (item: JobItemCreate) => {
-	console.log("I AM SAVING")
-	console.log(item)
-	const converted = buildJobItem(item)
+const saveJobItem = async (item: JobItemCreate) => {
+	const converted = await buildJobItem(item)
 	jobItems.value.push(converted)
 }
 </script>
@@ -219,6 +222,10 @@ const saveJobItem = (item: JobItemCreate) => {
 
 	<!-- Job Items -->
 	<div class="m-8">
-		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm" />
+		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm">
+			<template #actions="{ item }">
+				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm" />
+			</template>
+		</JobItemTable>
 	</div>
 </template>

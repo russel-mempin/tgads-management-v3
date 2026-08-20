@@ -1,25 +1,25 @@
-import type { NumberLiteralType } from "typescript"
-export type SizeUnit =
-  | "meter"
-  | "in."
-  | "ft."
-  | "cm."
-  | "mm."
-
+export type SizeUnit = 'meter' | 'in.' | 'ft.' | 'cm.' | 'mm.'
 export type JobStatus =
-  | "Pending"
-  | "For Layout"
-  | "For Approval"
-  | "For Printing"
-  | "For Pickup"
-  | "Released"
-  | "Cancelled"
+  | 'Pending'
+  | 'For Layout'
+  | 'For Approval'
+  | 'For Printing'
+  | 'For Pickup'
+  | 'Released'
+  | 'Cancelled'
+export type PaymentStatus = 'Fully Paid' | 'Partial' | 'Unpaid' | 'Credit' | 'Refunded' | 'Overcharged'
 
 export interface PricingData {
   consumption: number
   consumption_unit: string
   rate: number
   unit_price: number
+}
+
+export interface Dimensions {
+  height?: number
+  width?: number
+  size_unit?: SizeUnit
 }
 
 export interface JobItemExtra {
@@ -30,70 +30,50 @@ export interface JobItemExtra {
   name_snapshot: string
 }
 
-export interface JobItemExtraCreate {
-  extra_service_id: string
-  quantity: number
-}
+export type JobItemExtraCreate = Pick<JobItemExtra, 'extra_service_id' | 'quantity'>
 
-export interface JobItemCreate {
-  item_id: string
-  service_id: string
-  service_option_id: string
-  height?: number
-  width?: number
-  size_unit?: SizeUnit
-  quantity: number
-  job_status: string
-  due_date: Date
-  description: string
-  notes: string
-  extras: JobItemExtraCreate[]
-  extra_charge: number
-  discount_amount: number
-}
-
-export interface JobItemUpdate {
-  quantity?: number
-  job_status?: string
-  notes?: string
-  extra_charge?: number
-  discount_amount?: number
-  extras?: JobItemExtra[]
-}
-
-export interface JobItemRow {
+interface JobItemBase extends Dimensions {
   item_id: string
   description: string
-  height?: number
-  width?: number
-  size_unit?: SizeUnit
   quantity: number
-  job_status: string
+  job_status: JobStatus
   due_date: Date
   notes: string
-  discount_amount: number
   extra_charge: number
-  service_id: string
-  service_option_id: string
+  discount_amount: number
   extras: JobItemExtra[]
-
-  // present once saved, optional for drafts
-  id?: string
-  unit_price?: number
-  subtotal?: number
-  service_name_snapshot?: string
-  service_option_name_snapshot?: string
-  service_abbreviation_snapshot?: string
-  total_claimed?: number
-  remaining_on_hand?: number
 }
 
-export interface JobItem extends JobItemRow {
-  id: string
-  unit_price: number
-  subtotal: number
+interface ServiceRef {
+  service_id: string
+  service_option_id: string
+}
+
+interface ServiceSnapshot {
   service_name_snapshot: string
   service_option_name_snapshot: string
+  service_abbreviation_snapshot?: string
+}
+
+interface JobItemComputed {
+  unit_price: number
+  subtotal: number
+  total_claimed: number
+  remaining_on_hand: number
+}
+
+export interface JobItemCreate extends Omit<JobItemBase, 'extras'>, ServiceRef {
+  extras: JobItemExtraCreate[]
+}
+
+export type JobItemUpdate = Partial<Pick<JobItemBase, 'quantity' | 'job_status' | 'notes' | 'extra_charge' | 'discount_amount' | 'extras'>>
+
+export interface JobItemTableRow extends JobItemBase, ServiceSnapshot, JobItemComputed {
+  id?: string
+}
+
+export interface JobItem extends JobItemBase, ServiceRef, ServiceSnapshot, JobItemComputed {
+  id: string
   service_abbreviation_snapshot: string
 }
 
@@ -113,16 +93,18 @@ export interface ClaimingHistory {
   claimed_item_id: string
 }
 
-export interface JobOrder {
-  id: string
+interface JobOrderBase {
   jo_number: number
   date_received: Date
-  override_payment_status: boolean
-  overall_job_status: string
+  overall_job_status: JobStatus
+  payment_status: PaymentStatus
+}
+
+export interface JobOrder extends JobOrderBase {
+  id: string
   job_items: JobItem[]
   payments: Payment[]
   claiming_history: ClaimingHistory[]
-  payment_status: string
   total_due: number
   total_paid: number
   customer_name: string
@@ -134,10 +116,7 @@ export interface JobOrder {
   updated_by_name: string
 }
 
-export interface JobOrderCreate {
-  jo_number: number
-  date_received: string
-  override_payment_status?: string
+export interface JobOrderCreate extends JobOrderBase {
   customer_id?: string
   customer_name?: string
   customer_address?: string
