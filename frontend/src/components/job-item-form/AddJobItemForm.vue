@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed, ref, onMounted } from 'vue';
+import { reactive, computed, ref, onMounted, watch } from 'vue';
 import { z } from 'zod'
 // Type imports
 import type { JobItemCreate, SizeUnit, JobStatus, JobItemExtraCreate } from '@/types/jobOrder.ts';
@@ -12,7 +12,7 @@ import JobItemWorkflowFields from './JobItemWorkflowFields.vue';
 import JobItemExtrasFields from './JobItemExtrasFields.vue';
 import JobItemPriceAdjustFields from './JobItemPriceAdjustFields.vue';
 import JobItemPricingBreakdown from './JobItemPricingBreakdown.vue';
-import { nowForInput } from '@/utils/formatters.ts';
+import { nowForInput, utcToInput } from '@/utils/formatters.ts';
 import type { FormSubmitEvent } from '@nuxt/ui';
 
 const props = defineProps<{
@@ -99,6 +99,29 @@ const selectedServiceData = computed(() =>
 const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
 )
+// Edit watcher
+watch(() => props.editingItem, (item) => {
+    console.log("Hi")
+    if (item) {
+        Object.assign(state, {
+            selectedService: item.service_id,
+            selectedOption: item.service_option_id,
+            extras: item.extras.map(e => ({ extra_service_id: e.extra_service_id, quantity: e.quantity })),
+            width: item.width ?? 0,
+            height: item.height ?? 0,
+            unit: item.size_unit ?? 'ft.',
+            quantity: item.quantity,
+            jobStatus: item.job_status,
+            dueDate: utcToInput(item.due_date.toISOString()),
+            description: item.description,
+            notes: item.notes,
+            extraCharge: item.extra_charge,
+            discount: item.discount_amount,
+        })
+    } else {
+        resetForm()
+    }
+}, { immediate: true })
 // UI variables
 const breakdownColumns = computed(() => {
     let cols = 3

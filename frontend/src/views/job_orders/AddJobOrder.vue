@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 // Type imports
-import type { JobItemTableRow, JobItemCreate, JobItemExtra } from '@/types/jobOrder';
+import type { JobItemTableRow, JobItemCreate, JobItemExtra, JobItem } from '@/types/jobOrder';
 import type { Customer } from '@/types/customer';
 import type { Service, Extra } from '@/types/service';
 // API call imports
@@ -33,6 +33,7 @@ const isNewCustomer = ref(false)
 const serviceList = ref<Service[]>([])
 const extraList = ref<Extra[]>([])
 const isAddFormOpen = ref(false)
+const selectedJobItem = ref<JobItem | null>(null)
 
 // Data Functions
 onMounted(async () => {
@@ -85,7 +86,30 @@ const currentItemIds = computed(() =>
 const openAddItemForm = () => {
 	isAddFormOpen.value = true
 }
-const openEditItemForm = () => {
+const openEditItemForm = (item: JobItemTableRow) => {
+	const service = serviceList.value.find(
+		service => service.name === item.service_name_snapshot
+	)
+	if (!service?.id) {
+		console.error(`Service not found: ${item.service_name_snapshot}`)
+		return
+	}
+	const option = service.options.find(
+		option => option.name === item.service_option_name_snapshot
+	)
+	if (!option?.id) {
+		console.error(
+			`Option not found: ${item.service_option_name_snapshot}`
+		)
+		return
+	}
+	selectedJobItem.value = {
+		...item,
+		id: item.item_id,
+		service_id: service.id,
+		service_option_id: option.id,
+		service_abbreviation_snapshot: service.abbreviation
+	}
 	isAddFormOpen.value = true
 }
 const buildJobItem = async (item: JobItemCreate): Promise<JobItemTableRow> => {
@@ -133,13 +157,28 @@ const buildJobItem = async (item: JobItemCreate): Promise<JobItemTableRow> => {
 }
 const saveJobItem = async (item: JobItemCreate) => {
 	const converted = await buildJobItem(item)
-	jobItems.value.push(converted)
+	if (!selectedJobItem.value) {
+		jobItems.value.push(converted)
+	}
+	else {
+		const index = jobItems.value.findIndex(
+            jobItem => jobItem.item_id === selectedJobItem.value?.item_id
+        )
+		if (index !== -1) {
+            jobItems.value[index] = converted
+        }	
+	}
+}
+const deleteJobItem = (index: number) => {
+	if (index !== -1) {
+		jobItems.value.splice(index, 1)
+	}
 }
 </script>
 
 <template>
 	<AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="joNumber" :current-item-ids="currentItemIds"
-		@save="saveJobItem" />
+		:editing-item="selectedJobItem" @save="saveJobItem" />
 	<!-- Page Header -->
 	<div class="m-8 shrink-0">
 		<div class="flex items-start justify-between">
@@ -223,8 +262,9 @@ const saveJobItem = async (item: JobItemCreate) => {
 	<!-- Job Items -->
 	<div class="m-8">
 		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm">
-			<template #actions="{ item }">
-				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm" />
+			<template #actions="{ item, index }">
+				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
+				<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" @click="deleteJobItem(index)" />
 			</template>
 		</JobItemTable>
 	</div>

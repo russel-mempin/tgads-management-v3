@@ -20,7 +20,7 @@ const login = async () => {
     } catch (error: any) {
         console.error(error.response?.data || error)
         toast.add({
-            title: 'Login Failed',
+            title: 'Login Failed.',
             description: error.response?.data?.detail ?? 'An error occurred. Please try again.',
             icon: 'i-lucide-calendar-days',
         })

@@ -4,7 +4,7 @@ import { reactive, watch, ref, computed, onMounted } from 'vue';
 import { z } from 'zod'
 import isEqual from 'lodash/isEqual'
 // Type imports
-import type { JobItem } from '@/types/jobOrder';
+import type { JobItem, JobItemUpdate } from '@/types/jobOrder';
 import type { FormSubmitEvent } from '@nuxt/ui';
 import type { Service, Extra } from '@/types/service'
 // API call imports
@@ -17,7 +17,7 @@ import JobItemPricingBreakdown from './JobItemPricingBreakdown.vue';
 const emit = defineEmits<{
     submit: [payload: {
         id: string
-        changes: Partial<JobItem>
+        changes: JobItemUpdate
     }]
 }>()
 

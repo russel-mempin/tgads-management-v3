@@ -52,7 +52,6 @@ interface ServiceRef {
 interface ServiceSnapshot {
   service_name_snapshot: string
   service_option_name_snapshot: string
-  service_abbreviation_snapshot?: string
 }
 
 interface JobItemComputed {

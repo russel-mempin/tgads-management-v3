@@ -28,7 +28,6 @@ const columns: TableColumn<JobItemTableRow>[] = [
         header: 'Service',
         cell: ({ row }) => {
             const item = row.original
-            console.log(item)
             if (!item.service_name_snapshot) {
                 return '—'
             }
@@ -134,7 +133,7 @@ const columns: TableColumn<JobItemTableRow>[] = [
         </div>
         <UTable :data="props.jobItems" :columns="columns">
             <template #actions-cell="{ row }">
-                <slot name="actions" :item="row.original" />
+                <slot name="actions" :item="row.original" :index="row.index" />
             </template>
             <template #empty>
                 <div class="flex flex-col items-center justify-center py-12 text-center px-6">
