@@ -1,25 +1,20 @@
 <script setup lang="ts">
 import { resolveComponent, h } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
-import type { JobItemTableRow, JobItemCreate } from '@/types/jobOrder';
+import type { JobItemTableRow } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
 
 const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
 
 const props = defineProps<{
-    jobItems?: JobItemTableRow[]
-    joNumber?: number
+	jobItems?: JobItemTableRow[]
+	joNumber?: number
+	totalClaimedByItem?: Map<string, number>
+	getTotalClaimed: (itemId: string) => number
 }>()
 const emit = defineEmits<{
-    updated: []
-    added: []
-    addJobItem: [item: JobItemCreate]
-    updateJobItem: [item: JobItemCreate]
-    removeJobItem: [item_id: string]
     openForm: []
 }>()
-
 // Table data
 const columns: TableColumn<JobItemTableRow>[] = [
     { accessorKey: 'item_id', header: 'ID' },
@@ -98,8 +93,7 @@ const columns: TableColumn<JobItemTableRow>[] = [
     {
         accessorKey: 'total_claimed',
         header: 'Claimed',
-        cell: ({ row }) =>
-            `${row.original.total_claimed} / ${row.original.quantity}`
+        cell: ({ row }) => `${props.getTotalClaimed(row.original.item_id)} / ${row.original.quantity}`
     },
     {
         accessorKey: 'job_status',

@@ -95,8 +95,6 @@ export interface ClaimingHistory {
 interface JobOrderBase {
   jo_number: number
   date_received: Date
-  overall_job_status: JobStatus
-  payment_status: PaymentStatus
 }
 
 export interface JobOrder extends JobOrderBase {
@@ -113,6 +111,8 @@ export interface JobOrder extends JobOrderBase {
   updated_at: Date
   created_by_name: string
   updated_by_name: string
+  overall_job_status: JobStatus
+  payment_status: PaymentStatus
 }
 
 export interface JobOrderCreate extends JobOrderBase {

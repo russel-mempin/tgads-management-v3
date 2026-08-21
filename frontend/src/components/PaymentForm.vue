@@ -2,7 +2,7 @@
 import { ref, onMounted, reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { nowForInput, inputToUtc } from '@/utils/formatters'
+import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters'
 import type { AccountOption } from '@/types/account'
 import { getAccountOptions } from '@/api/accounts'
 import type { Payment } from '@/types/jobOrder'
@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     save: [payment: Payment]
+    close: []
 }>()
 
 // UI Variables
@@ -52,14 +53,14 @@ const resetForm = () => {
     Object.assign(state, getInitialState())
 }
 const handleCancel = () => {
-    resetForm()
     isOpen.value = false
+    emit('close')
 }
 
 // Data Functions
 watch(() => props.editingPayment, (payment) => {
     if (payment) {
-        state.dateReceived = inputToUtc(payment.date_received.toISOString())
+        state.dateReceived = utcToInput(payment.date_received.toISOString())
         state.referenceNumber = payment.reference_number
         state.amount = payment.amount
         state.notes = payment.notes
