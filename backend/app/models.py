@@ -1,8 +1,9 @@
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from pydantic import EmailStr
-from sqlalchemy import Column, DateTime, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.enums import (
@@ -97,7 +98,7 @@ class ServiceOption(SQLModel, table=True):
     service_id: uuid.UUID = Field(foreign_key="services.id")
 
     name: str
-    base_rate: float
+    base_rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
     minimum_consumption: float | None = Field(default=None)
     # For AREA services whose stock only comes in whole-unit increments along
@@ -173,7 +174,7 @@ class ServicePriceTier(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
 
-    rate: float = Field(default=0.0)
+    rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
 
     service_option: ServiceOption = Relationship(back_populates="price_tiers")
 
@@ -184,7 +185,7 @@ class ExtraService(SQLModel, table=True):
     __tablename__ = "extra_services"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(unique=True, index=True)
-    price: float = Field(default=0.0)
+    price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -253,12 +254,16 @@ class JobOrder(JobOrderBase, table=True):
     )
 
     @property
-    def total_due(self) -> float:
-        return sum(item.subtotal for item in self.job_items)
+    def total_due(self) -> Decimal:
+        return sum((item.subtotal for item in self.job_items), Decimal(0))
 
     @property
-    def total_paid(self) -> float:
-        return sum(p.amount for p in self.payments)
+    def total_paid(self) -> Decimal:
+        return sum((p.amount for p in self.payments), Decimal(0))
+
+    @property
+    def balance(self) -> Decimal:
+        return self.total_due - self.total_paid
 
     @property
     def computed_payment_status(self) -> PaymentStatus:
@@ -334,7 +339,7 @@ class JobItemExtra(SQLModel, table=True):
     extra_service_id: uuid.UUID = Field(foreign_key="extra_services.id")
 
     quantity: int
-    price_snapshot: float
+    price_snapshot: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     name_snapshot: str
 
     job_item: JobItem = Relationship(back_populates="extras")
@@ -364,9 +369,8 @@ class JobItemBase(SQLModel):
 
     # Pricing data
     # extra_charge is used for rounding up, discount can also be used to round down
-    discount_amount: float = Field(default=0.0)
-    extra_charge: float = Field(default=0.0)
-
+    discount_amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    extra_charge: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
 
 class JobItem(JobItemBase, table=True):
     __tablename__ = "job_items"  # type: ignore
@@ -388,8 +392,8 @@ class JobItem(JobItemBase, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
-    unit_price: float = Field(default=0.0)
-    subtotal: float = Field(default=0.0)
+    unit_price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    subtotal: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     service_name_snapshot: str
     service_option_name_snapshot: str
     service_abbreviation_snapshot: str
@@ -414,7 +418,7 @@ class PaymentBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     reference_number: str | None = Field(default=None)
-    amount: float = Field(default=0.0)
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     notes: str | None = Field(default=None)
     account_name_snapshot: str
 
@@ -467,7 +471,7 @@ class ExpenseBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     category: ExpenseCategory
-    amount: float = Field()
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     description: str = Field()
     is_archived: bool = Field(default=False)
 
@@ -491,7 +495,7 @@ class MiscSaleBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     description: str = Field()
-    amount: float = Field()
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_archived: bool = Field(default=False)
 
 
@@ -506,9 +510,9 @@ class Account(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(unique=True, index=True)  # "Cash on Hand", "BPI Savings", "GCash"
     type: AccountType = Field()
-    beginning_balance: float = Field(default=0.0)
+    beginning_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     beginning_balance_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    current_balance: float = Field(default=0.0)
+    current_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
 
     payments: list[Payment] = Relationship(back_populates="account")
@@ -526,8 +530,8 @@ class AccountTransaction(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     description: str = Field()
-    amount: float = Field()  # positive = in, negative = out
-    running_balance: float = Field()
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))  # positive = in, negative = out
+    running_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -571,7 +575,7 @@ class UnlinkedPayment(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     reference_number: str | None = Field(default=None)
-    amount: float = Field(default=0.0)
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     customer_name: str | None = Field(default=None)
     description: str | None = Field(default=None)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)

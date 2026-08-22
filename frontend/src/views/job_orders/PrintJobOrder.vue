@@ -9,8 +9,11 @@ const route = useRoute()
 const jobOrder = ref<JobOrder>()
 
 onMounted(async () => {
-	jobOrder.value = await getJobOrder(Number(route.params.jo_number))
-	console.log(jobOrder.value)
+	const jobOrderId = route.params.job_order_id
+	if (typeof jobOrderId !== 'string') {
+		throw new Error('Invalid job order ID')
+	}
+	jobOrder.value = await getJobOrder(jobOrderId)
 	await nextTick()
 	window.print()
 })
@@ -479,12 +482,14 @@ body {
 }
 
 .job-table td {
-    border-bottom: 1px solid #d0d0d0;
-    border-right: 1px solid #d0d0d0;
-    min-height: 9mm;  /* change height to min-height */
-    padding: 2mm 3mm;  /* add some vertical padding */
-    vertical-align: middle;
-    font-size: 9px;
+	border-bottom: 1px solid #d0d0d0;
+	border-right: 1px solid #d0d0d0;
+	min-height: 9mm;
+	/* change height to min-height */
+	padding: 2mm 3mm;
+	/* add some vertical padding */
+	vertical-align: middle;
+	font-size: 9px;
 }
 
 .job-table td:last-child {

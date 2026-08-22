@@ -1,7 +1,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import String, cast, func, or_
 from sqlmodel import Session, col, select
 
@@ -70,12 +71,25 @@ def _get_job_item_by_item_id(db: Session, item_id: str):
 
 
 def _build_job_item(
-    db: Session, job_order_id: uuid.UUID, data: JobItemCreate, extras: list[tuple[JobItemExtraCreate, ExtraService]]
+    db: Session,
+    job_order_id: uuid.UUID,
+    data: JobItemCreate,
+    extras: list[tuple[JobItemExtraCreate, ExtraService]],
 ) -> JobItem:
     option, service = _get_service_data_from_option(db, data.service_option_id)
-    pricing_data = compute_unit_price(data.height, data.width, service, option, data.size_unit, data.quantity)
-    extra_total = sum(extra_service.price * extra.quantity for extra, extra_service in extras)
-    subtotal = round((pricing_data.unit_price * data.quantity) + extra_total + (data.extra_charge * data.quantity) - data.discount_amount, 2,)
+    pricing_data = compute_unit_price(
+        data.height, data.width, service, option, data.size_unit, data.quantity
+    )
+    extra_total = sum(
+        extra_service.price * extra.quantity for extra, extra_service in extras
+    )
+    subtotal = round(
+        (pricing_data.unit_price * data.quantity)
+        + extra_total
+        + (data.extra_charge * data.quantity)
+        - data.discount_amount,
+        2,
+    )
     return JobItem(
         description=data.description,
         discount_amount=data.discount_amount,
@@ -113,7 +127,9 @@ def _build_job_item_extra(
     )
 
 
-def _build_payment(db: Session, job_order_id: uuid.UUID, data: PaymentCreate) -> Payment:
+def _build_payment(
+    db: Session, job_order_id: uuid.UUID, data: PaymentCreate
+) -> Payment:
     account = _get_account_by_id(db, data.account_id)
     return Payment(
         date_received=data.date_received,
@@ -126,7 +142,9 @@ def _build_payment(db: Session, job_order_id: uuid.UUID, data: PaymentCreate) ->
     )
 
 
-def _build_claiming_history(db: Session, job_order_id: uuid.UUID, item_id: str, data: ClaimCreate) -> ClaimingHistory:
+def _build_claiming_history(
+    db: Session, job_order_id: uuid.UUID, item_id: str, data: ClaimCreate
+) -> ClaimingHistory:
     job_item = _get_job_item_by_item_id(db, item_id)
     return ClaimingHistory(
         date_claimed=data.date_claimed,
@@ -303,11 +321,12 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         db.add(job_order)
         db.flush()
 
-
         for item in data.job_items:
             extra_services = []
             for extra in item.extras:
-                extra_service = _get_extra_service_data_by_id(db, extra.extra_service_id)
+                extra_service = _get_extra_service_data_by_id(
+                    db, extra.extra_service_id
+                )
                 extra_services.append((extra, extra_service))
             job_item = _build_job_item(db, job_order.id, item, extra_services)
             db.add(job_item)
@@ -319,7 +338,11 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 db.add(_build_payment(db, job_order.id, payment))
         if data.claiming_history:
             for claim in data.claiming_history:
-                db.add(_build_claiming_history(db, job_order.id, claim.claimed_item_id, claim))
+                db.add(
+                    _build_claiming_history(
+                        db, job_order.id, claim.claimed_item_id, claim
+                    )
+                )
         db.flush()
         job_order.sync_computed_fields()
 
@@ -443,15 +466,19 @@ def update_job_item(
                 db.delete(existing_extra)
 
             for extra in data.extras:
-                extra_service = _get_extra_service_data_by_id(db, extra.extra_service_id)
-                job_item_extra = _build_job_item_extra(job_item.id, extra, extra_service)
+                extra_service = _get_extra_service_data_by_id(
+                    db, extra.extra_service_id
+                )
+                job_item_extra = _build_job_item_extra(
+                    job_item.id, extra, extra_service
+                )
                 db.add(job_item_extra)
                 new_extras.append(job_item_extra)
             # Make sure the new extras are available for extras total calculation
             db.flush()
 
         if job_item.job_status == JobStatus.CANCELLED:
-            job_item.subtotal = 0
+            job_item.subtotal = Decimal(0)
 
         else:
             option, service = _get_service_data_from_option(
@@ -488,8 +515,7 @@ def update_job_item(
         # Audit
         if job_item.job_status == JobStatus.CANCELLED:
             audit = AuditLog(
-                action=f"Updated job item {job_item.item_id}",
-                user_id=current_user_id
+                action=f"Updated job item {job_item.item_id}", user_id=current_user_id
             )
         else:
             audit = AuditLog(
@@ -504,6 +530,46 @@ def update_job_item(
         db.refresh(job_item)
 
         return job_item
+
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def create_payment(
+    db: Session,
+    job_order_id: uuid.UUID,
+    data: PaymentCreate,
+    current_user_id: uuid.UUID,
+):
+    try:
+        job_order = db.exec(
+            select(JobOrder).where(JobOrder.id == job_order_id).with_for_update()
+        ).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=404,
+                detail="Job order not found.",
+            )
+        if data.amount > job_order.balance:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment amount exceeds remaining balance.",
+            )
+        payment = _build_payment(db, job_order_id, data)
+        db.add(payment)
+        db.flush()
+        job_order.sync_computed_fields()
+        audit = AuditLog(
+            action=f"Created payment amounting to {payment.amount}",
+            user_id=current_user_id,
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(job_order)
+        return job_order
 
     except HTTPException:
         raise

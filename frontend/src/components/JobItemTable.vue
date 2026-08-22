@@ -7,10 +7,10 @@ import type { TableColumn } from '@nuxt/ui';
 const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
-	jobItems?: JobItemTableRow[]
-	joNumber?: number
-	totalClaimedByItem?: Map<string, number>
-	getTotalClaimed: (itemId: string) => number
+    jobItems?: JobItemTableRow[]
+    joNumber?: number
+    totalClaimedByItem?: Map<string, number>
+    getTotalClaimed?: (itemId: string) => number
 }>()
 const emit = defineEmits<{
     openForm: []
@@ -93,7 +93,8 @@ const columns: TableColumn<JobItemTableRow>[] = [
     {
         accessorKey: 'total_claimed',
         header: 'Claimed',
-        cell: ({ row }) => `${props.getTotalClaimed(row.original.item_id)} / ${row.original.quantity}`
+        cell: ({ row }) =>
+            `${props.getTotalClaimed?.(row.original.item_id) ?? row.original.total_claimed} / ${row.original.quantity}`
     },
     {
         accessorKey: 'job_status',

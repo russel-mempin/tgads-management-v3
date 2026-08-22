@@ -171,26 +171,22 @@ const saveToDb = async () => {
 		jo_number: joNumber.value,
 		date_received: inputToUtc(dateReceived.value),
 		...(isWalkIn.value ? {} : { customer_info: customerInfo.value }),
-
 		job_items: jobItems.value.map(item => {
 			const serviceId = resolveServiceId(item.service_name_snapshot)
 			const serviceOptionId = resolveOptionId(
 				item.service_name_snapshot,
 				item.service_option_name_snapshot
 			)
-
 			if (!serviceId) {
 				throw new Error(
 					`Service "${item.service_name_snapshot}" could not be found.`
 				)
 			}
-
 			if (!serviceOptionId) {
 				throw new Error(
 					`Service option "${item.service_option_name_snapshot}" could not be found.`
 				)
 			}
-
 			return {
 				item_id: item.item_id,
 				description: item.description,
@@ -202,27 +198,21 @@ const saveToDb = async () => {
 				discount_amount: item.discount_amount,
 				width: item.width,
 				height: item.height,
-				size_unit: item.size_unit,
-				
+				size_unit: item.size_unit,	
 				service_id: serviceId,
 				service_option_id: serviceOptionId,
-
 				extras: item.extras.map(extra => ({
 					extra_service_id: extra.extra_service_id,
 					quantity: extra.quantity,
 				})),
 			}
 		}),
-
 		payments: payments.value,
 		claiming_history: claimingHistory.value
 	}
 
-	console.log(payload)
-
 	try {
 		await createJobOrder(payload)
-
 		toast.add({
 			title: 'Job Order Saved',
 			description: `Job Order #${joNumber.value} was created successfully.`,
@@ -232,7 +222,6 @@ const saveToDb = async () => {
 	}
 	catch (error: any) {
 		console.error(error)
-
 		toast.add({
 			title: 'Failed to Save',
 			description: error.response?.data?.detail

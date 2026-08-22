@@ -32,6 +32,7 @@ declare module 'vue' {
     OJobItemTable: typeof import('./src/components/oJobItemTable.vue')['default']
     OPaymentTable: typeof import('./src/components/oPaymentTable.vue')['default']
     OrderInfoInput: typeof import('./src/components/OrderInfoInput.vue')['default']
+    OrderSummary: typeof import('./src/components/OrderSummary.vue')['default']
     PaymentForm: typeof import('./src/components/PaymentForm.vue')['default']
     PaymentsTable: typeof import(./src/components/oPaymentTable.vue/index.jsue')['default']
     PaymentTable: typeof import('./src/components/PaymentTable.vue')['default']

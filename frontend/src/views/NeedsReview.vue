@@ -14,7 +14,6 @@ const UTooltip = resolveComponent('UTooltip')
 
 const fetchData = async () => {
     data.value = await getAllForReview()
-    console.log(data.value)
 }
 
 onMounted(async () => {

@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from sqlmodel import Field, SQLModel
 
@@ -9,15 +10,15 @@ from app.models import ClaimingHistoryBase, JobItemBase, JobOrderBase, PaymentBa
 class PricingData(SQLModel):
     consumption: float
     consumption_unit: PriceUnit | None = None
-    rate: float
-    unit_price: float
+    rate: Decimal
+    unit_price: Decimal
 
 
 class JobItemExtraPublic(SQLModel):
     id: uuid.UUID
     extra_service_id: uuid.UUID
     quantity: int
-    price_snapshot: float
+    price_snapshot: Decimal
     name_snapshot: str
     
     
@@ -33,8 +34,8 @@ class JobItemPublic(JobItemBase):
     extras: list[JobItemExtraPublic] = Field(default_factory=list)
     service_id: uuid.UUID
     service_option_id: uuid.UUID
-    unit_price: float
-    subtotal: float
+    unit_price: Decimal
+    subtotal: Decimal
     service_name_snapshot: str
     service_option_name_snapshot: str
     service_abbreviation_snapshot: str
@@ -50,8 +51,8 @@ class JobItemUpdate(SQLModel):
     quantity: int | None = None
     job_status: JobStatus | None = None
     notes: str | None = None
-    extra_charge: float | None = None
-    discount_amount: float | None = None
+    extra_charge: Decimal | None = None
+    discount_amount: Decimal | None = None
     extras: list[JobItemExtraCreate] | None = None
     
     
@@ -76,8 +77,8 @@ class JobOrderPublic(JobOrderBase):
     job_items: list[JobItemPublic] = Field(default_factory=list)
     payments: list[PaymentPublic] = Field(default_factory=list)
     claiming_history: list[ClaimPublic] = Field(default_factory=list)
-    total_due: float
-    total_paid: float
+    total_due: Decimal
+    total_paid: Decimal
     customer_name: str | None = None
     customer_email: str | None = None
     customer_contact_no: str | None = None
