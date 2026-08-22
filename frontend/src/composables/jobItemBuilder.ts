@@ -19,7 +19,7 @@ export function useJobItemBuilder(
     serviceList.value.find((s) => s.name === name)?.id
 
   const resolveOptionId = (serviceName: string, optionName: string): string | undefined =>
-    serviceList.value.find((s) => s.id === serviceName)?.options.find((o) => o.name === optionName)
+    serviceList.value.find((s) => s.name === serviceName)?.options.find((o) => o.name === optionName)
       ?.id
 
   const buildJobItem = async (item: JobItemCreate): Promise<JobItemTableRow> => {

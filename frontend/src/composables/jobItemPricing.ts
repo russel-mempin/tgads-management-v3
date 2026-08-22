@@ -24,13 +24,12 @@ export const useJobItemPricing = (
         ],
         () => {
             clearTimeout(debounceTimer)
+
             debounceTimer = setTimeout(async () => {
                 if (!serviceId.value || !serviceOptionId.value || !quantity.value) {
                     return
                 }
-                if (!width.value || !height.value || !unit.value) {
-                    return
-                }
+
                 pricingData.value = await getUnitPrice({
                     height: height.value ?? 0,
                     width: width.value ?? 0,
@@ -40,7 +39,8 @@ export const useJobItemPricing = (
                     quantity: quantity.value
                 })
             }, 400)
-        }, { immediate: true }
+        },
+        { immediate: true }
     )
 
     return {

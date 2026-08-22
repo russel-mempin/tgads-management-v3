@@ -101,7 +101,6 @@ const isAreaBased = computed(() =>
 )
 // Edit watcher
 watch(() => props.editingItem, (item) => {
-    console.log("Hi")
     if (item) {
         Object.assign(state, {
             selectedService: item.service_id,

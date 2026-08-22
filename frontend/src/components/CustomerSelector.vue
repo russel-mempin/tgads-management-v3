@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { useCustomerSearch } from '@/composables/customerSearch';
+import type { Customer } from '@/types/customer'
 
 const props = defineProps<{
-	isWalkIn: boolean
-	hasJobItems: boolean
+  isWalkIn: boolean
+  hasJobItems: boolean
+  customerList: string[]
+  isNewCustomer: boolean
+  filteredCustomers: string[]
+  handleBlur: () => void
+  selectCustomerToSearch: (name: string) => void
 }>()
 
-const {
-  customerNameToSearch,
-  showCustomerSuggestions,
-  customerList,
-  isNewCustomer,
-  customerInfo,
-  filteredCustomers,
-  handleBlur,
-  selectCustomerToSearch,
-} = useCustomerSearch()
+const customerNameToSearch = defineModel<string>('customerNameToSearch', { required: true })
+const showCustomerSuggestions = defineModel<boolean>('showCustomerSuggestions', { required: true })
+const customerInfo = defineModel<Customer>('customerInfo', { required: true })
 </script>
 
 <template>

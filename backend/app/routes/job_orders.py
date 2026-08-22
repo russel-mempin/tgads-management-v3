@@ -118,12 +118,12 @@ def read_kpis(
 
 @router.get("/compute-unit-price", response_model=PricingData)
 def compute_unit_price_route(
-    height: float | None,
-    width: float | None,
     service_id: uuid.UUID,
     option_id: uuid.UUID,
-    size_unit: SizeUnit | None,
     quantity: int,
+    height: float | None = None,
+    width: float | None = None,
+    size_unit: SizeUnit | None = None,
     db: Session = Depends(get_session),
 ):
     return get_price(

@@ -48,7 +48,16 @@ const selectedClaim = ref<ClaimingHistory | null>(null)
 
 const { totalDue, totalPaid, balance, hasJobItems, canSave, getTotalClaimed } =
 	useJobOrderTotals(joNumber, jobItems, payments, claimingHistory)
-const { customerInfo } = useCustomerSearch()
+const {
+	customerInfo,
+	customerNameToSearch,
+	showCustomerSuggestions,
+	customerList,
+	isNewCustomer,
+	filteredCustomers,
+	handleBlur,
+	selectCustomerToSearch,
+} = useCustomerSearch()
 const { buildJobItem, resolveServiceId, resolveOptionId } = useJobItemBuilder(serviceList, extraList, getUnitPrice)
 
 
@@ -162,30 +171,58 @@ const saveToDb = async () => {
 		jo_number: joNumber.value,
 		date_received: inputToUtc(dateReceived.value),
 		...(isWalkIn.value ? {} : { customer_info: customerInfo.value }),
-		job_items: jobItems.value.map(item => ({
-			item_id: item.item_id,
-			description: item.description,
-			quantity: item.quantity,
-			job_status: item.job_status,
-			due_date: item.due_date,
-			notes: item.notes,
-			extra_charge: item.extra_charge,
-			discount_amount: item.discount_amount,
 
-			service_id: resolveServiceId(item.service_name_snapshot),
-			service_option_id: resolveOptionId(item.service_name_snapshot, item.service_option_name_snapshot),
+		job_items: jobItems.value.map(item => {
+			const serviceId = resolveServiceId(item.service_name_snapshot)
+			const serviceOptionId = resolveOptionId(
+				item.service_name_snapshot,
+				item.service_option_name_snapshot
+			)
 
-			extras: item.extras.map(extra => ({
-				extra_service_id: extra.extra_service_id,
-				quantity: extra.quantity,
-			})),
-		})),
+			if (!serviceId) {
+				throw new Error(
+					`Service "${item.service_name_snapshot}" could not be found.`
+				)
+			}
+
+			if (!serviceOptionId) {
+				throw new Error(
+					`Service option "${item.service_option_name_snapshot}" could not be found.`
+				)
+			}
+
+			return {
+				item_id: item.item_id,
+				description: item.description,
+				quantity: item.quantity,
+				job_status: item.job_status,
+				due_date: item.due_date,
+				notes: item.notes,
+				extra_charge: item.extra_charge,
+				discount_amount: item.discount_amount,
+				width: item.width,
+				height: item.height,
+				size_unit: item.size_unit,
+				
+				service_id: serviceId,
+				service_option_id: serviceOptionId,
+
+				extras: item.extras.map(extra => ({
+					extra_service_id: extra.extra_service_id,
+					quantity: extra.quantity,
+				})),
+			}
+		}),
+
 		payments: payments.value,
 		claiming_history: claimingHistory.value
 	}
+
 	console.log(payload)
+
 	try {
-		// await createJobOrder(payload)
+		await createJobOrder(payload)
+
 		toast.add({
 			title: 'Job Order Saved',
 			description: `Job Order #${joNumber.value} was created successfully.`,
@@ -194,10 +231,13 @@ const saveToDb = async () => {
 		})
 	}
 	catch (error: any) {
-		console.error()
+		console.error(error)
+
 		toast.add({
 			title: 'Failed to Save',
-			description: error.response?.data?.detail ?? 'An unexpected error occurred.',
+			description: error.response?.data?.detail
+				?? error.message
+				?? 'An unexpected error occurred.',
 			color: 'error',
 			icon: 'i-lucide-circle-x'
 		})
@@ -217,10 +257,13 @@ const saveToDb = async () => {
 
 	<OrderInfoInput :has-job-items="hasJobItems" v-model:jo-number="joNumber" v-model:date-received="dateReceived" />
 
-	<CustomerSelector :is-walk-in="isWalkIn" :has-job-items="hasJobItems" />
+	<CustomerSelector :is-walk-in="isWalkIn" :has-job-items="hasJobItems"
+		v-model:customer-name-to-search="customerNameToSearch" v-model:customer-info="customerInfo"
+		v-model:show-customer-suggestions="showCustomerSuggestions" :customer-list="customerList"
+		:is-new-customer="isNewCustomer" :filtered-customers="filteredCustomers" :handle-blur="handleBlur"
+		:select-customer-to-search="selectCustomerToSearch" />
 
 	<div class="flex flex-col gap-8 m-8">
-		<!-- Job Items -->
 		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm"
 			:get-total-claimed="getTotalClaimed">
 			<template #actions="{ item, index }">
@@ -229,7 +272,6 @@ const saveToDb = async () => {
 					@click="deleteJobItem(index)" />
 			</template>
 		</JobItemTable>
-		<!-- Payments -->
 		<PaymentTable :payments="payments" :balance="balance" @open-form="openAddPaymentForm">
 			<template #actions="{ item, index }">
 				<UButton icon="i-lucide-square-pen" variant="ghost" size="md"
