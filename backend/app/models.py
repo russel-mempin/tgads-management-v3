@@ -20,14 +20,6 @@ from app.enums import (
 )
 
 
-def _utc_now_field(**kwargs) -> datetime:
-    return Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_type=DateTime(timezone=True),
-        **kwargs
-    )
-
-
 # ====================== AUDIT LOGS =========================
 # For storing changes made by users on the database
 class AuditLog(SQLModel, table=True):
@@ -36,7 +28,10 @@ class AuditLog(SQLModel, table=True):
     user_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     )
-    timestamp: datetime = _utc_now_field()
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
     user: User = Relationship(back_populates="audit_logs")
 
@@ -65,11 +60,11 @@ class User(UserBase, table=True):
     void_job_orders: list[VoidJobOrder] = Relationship(back_populates="voided_by")
     created_for_reviews: list[ForReview] = Relationship(
         back_populates="created_by",
-        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"},
     )
     resolved_for_reviews: list[ForReview] = Relationship(
         back_populates="resolved_by",
-        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"},
     )
     hashed_password: str = Field()
 
@@ -135,8 +130,14 @@ class ServiceBase(SQLModel):
     pricing_strategy: PricingStrategy
     unit: PriceUnit
     is_active: bool = Field(default=True)
-    created_at: datetime = _utc_now_field()
-    updated_at: datetime = _utc_now_field()
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
 
 class Service(ServiceBase, table=True):
@@ -163,8 +164,14 @@ class ServicePriceTier(SQLModel, table=True):
     min_threshold: float
     max_threshold: float | None = None
 
-    created_at: datetime = _utc_now_field()
-    updated_at: datetime = _utc_now_field()
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
     rate: float = Field(default=0.0)
 
@@ -179,8 +186,14 @@ class ExtraService(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     price: float = Field(default=0.0)
     is_active: bool = Field(default=True)
-    created_at: datetime = _utc_now_field()
-    updated_at: datetime = _utc_now_field()
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
     job_item_extras: list[JobItemExtra] = Relationship(back_populates="extra_service")
 
@@ -188,13 +201,22 @@ class ExtraService(SQLModel, table=True):
 # ====================== JOB ORDERS =========================
 class JobOrderBase(SQLModel):
     jo_number: int = Field(unique=True, index=True)
-    date_received: datetime = _utc_now_field()
+    date_received: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     override_payment_status: PaymentStatus | None = Field(default=None)
     is_active: bool = Field(default=True)
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
-    created_at: datetime = _utc_now_field()
-    updated_at: datetime = _utc_now_field()
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
 
 class JobOrder(JobOrderBase, table=True):
@@ -334,7 +356,10 @@ class JobItemBase(SQLModel):
 
     # Workflow related
     job_status: JobStatus
-    due_date: datetime = _utc_now_field()
+    due_date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     notes: str | None = Field(default=None)
 
     # Pricing data
@@ -362,7 +387,7 @@ class JobItem(JobItemBase, table=True):
         back_populates="job_item",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    
+
     unit_price: float = Field(default=0.0)
     subtotal: float = Field(default=0.0)
     service_name_snapshot: str
@@ -384,7 +409,10 @@ class JobItem(JobItemBase, table=True):
 
 # ====================== PAYMENTS =========================
 class PaymentBase(SQLModel):
-    date_received: datetime = _utc_now_field()
+    date_received: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     reference_number: str | None = Field(default=None)
     amount: float = Field(default=0.0)
     notes: str | None = Field(default=None)
@@ -405,10 +433,12 @@ class Payment(PaymentBase, table=True):
     job_order: JobOrder = Relationship(back_populates="payments")
 
 
-
 # ====================== CLAIMING HISTORY =========================
 class ClaimingHistoryBase(SQLModel):
-    date_claimed: datetime = _utc_now_field()
+    date_claimed: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     name: str = Field()
     pcs_claimed: int = Field(default=0)
     claimed_item_id: str = Field()
@@ -432,7 +462,10 @@ class ClaimingHistory(ClaimingHistoryBase, table=True):
 
 # ====================== EXPENSES =========================
 class ExpenseBase(SQLModel):
-    date: datetime = _utc_now_field()
+    date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     category: ExpenseCategory
     amount: float = Field()
     description: str = Field()
@@ -453,7 +486,10 @@ class Expense(ExpenseBase, table=True):
 
 # ====================== MISC SALES =========================
 class MiscSaleBase(SQLModel):
-    date: datetime = _utc_now_field()
+    date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     description: str = Field()
     amount: float = Field()
     is_archived: bool = Field(default=False)
@@ -471,9 +507,7 @@ class Account(SQLModel, table=True):
     name: str = Field(unique=True, index=True)  # "Cash on Hand", "BPI Savings", "GCash"
     type: AccountType = Field()
     beginning_balance: float = Field(default=0.0)
-    beginning_balance_date: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    beginning_balance_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
     current_balance: float = Field(default=0.0)
     is_active: bool = Field(default=True)
 
@@ -487,7 +521,10 @@ class AccountTransaction(SQLModel, table=True):
     __tablename__ = "account_transactions"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id")
-    date: datetime = _utc_now_field()
+    date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     description: str = Field()
     amount: float = Field()  # positive = in, negative = out
     running_balance: float = Field()
@@ -505,8 +542,14 @@ class VoidJobOrder(SQLModel, table=True):
     __tablename__ = "void_job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     jo_number: int = Field(unique=True, index=True)
-    job_date: datetime = _utc_now_field()
-    voided_at: datetime = _utc_now_field()
+    job_date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    voided_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     reason: str
     created_by_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
 
@@ -516,19 +559,26 @@ class VoidJobOrder(SQLModel, table=True):
     def voided_by_name(self) -> str:
         return self.voided_by.username if self.voided_by else "N/A"
 
+
 # ====================== UNLINKED PAYMENTS =========================
 # For payments known to be for a real job order, but where that job order
 # can't be identified from past records.
 class UnlinkedPayment(SQLModel, table=True):
     __tablename__ = "unlinked_payments"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    date_received: datetime = _utc_now_field()
+    date_received: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     reference_number: str | None = Field(default=None)
     amount: float = Field(default=0.0)
     customer_name: str | None = Field(default=None)
     description: str | None = Field(default=None)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
-    created_at: datetime = _utc_now_field()
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
     account: Account = Relationship(back_populates="unlinked_payments")
 
@@ -547,16 +597,19 @@ class ForReview(SQLModel, table=True):
     resolution_note: str | None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by_id: uuid.UUID | None = Field(foreign_key="users.id")
-    resolved_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    resolved_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
     resolved_by_id: uuid.UUID | None = Field(default=None, foreign_key="users.id")
 
     created_by: User = Relationship(
         back_populates="created_for_reviews",
-        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"},
     )
     resolved_by: User = Relationship(
         back_populates="resolved_for_reviews",
-        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"}
+        sa_relationship_kwargs={"foreign_keys": "[ForReview.resolved_by_id]"},
     )
 
     @property
