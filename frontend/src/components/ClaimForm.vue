@@ -2,11 +2,11 @@
 import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { JobItemTableRow, ClaimingHistory } from '@/types/jobOrder';
+import type { ClaimingHistory } from '@/types/jobOrder';
 import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters';
 
 const props = defineProps<{
-	jobItems: JobItemTableRow[]
+	claimableItemIds: string[]
 	editingClaim?: ClaimingHistory | null
 }>()
 
@@ -81,10 +81,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 			<UForm :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSubmit">
 				<div class="grid grid-cols-2 gap-6">
 					<UFormField label="Claimed Item" name="claimed_item_id" required class="w-full">
-						<USelect v-model="state.claimed_item_id" :items="props.jobItems.map(item => ({
-							label: `${item.item_id}`,
-							value: item.item_id
-						}))" placeholder="Select item to claim" class="w-full" value-key="value" />
+						<USelect v-model="state.claimed_item_id" :items="claimableItemIds" placeholder="Select item to claim" class="w-full" value-key="value" />
 					</UFormField>
 					<UFormField label="Pieces Claimed" name="pcs_claimed" required class="w-full">
 						<UInputNumber v-model="state.pcs_claimed" class="w-full" :increment="false" :decrement="false"

@@ -6,8 +6,10 @@ from sqlmodel import Session
 
 from app.crud.job_order import (
     archive_job_order,
+    create_claim,
     create_job_item,
     create_job_order,
+    create_payment,
     get_all_job_orders,
     get_business_kpis,
     get_job_order,
@@ -28,10 +30,12 @@ from app.database import get_session
 from app.enums import JobStatus, PaymentStatus, SizeUnit, UserRoles
 from app.models import User
 from app.schemas.job_order import (
+    ClaimCreate,
     JobItemCreate,
     JobItemUpdate,
     JobOrderCreate,
     JobOrderPublic,
+    PaymentCreate,
     PricingData,
 )
 from app.services.dependencies import get_current_active_user
@@ -154,7 +158,7 @@ def archive(
     return archive_job_order(db, jo_number, current_user.id)
 
 
-@router.post("/job-items/{job_order_id}")
+@router.post("/{job_order_id}/job-items")
 def create_item(job_order_id: uuid.UUID, data: JobItemCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_job_item(db, job_order_id, data, current_user.id)
 
@@ -167,3 +171,13 @@ def update(
     current_user: User = Depends(get_current_active_user),
 ):
     return update_job_item(db, id, data, current_user.id)
+
+
+@router.post("/{job_order_id}/payments")
+def create_payment_db(job_order_id: uuid.UUID, data: PaymentCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_payment(db, job_order_id, data, current_user.id)
+
+
+@router.post("/{job_order_id}/claiming_history")
+def create_claim_db(job_order_id: uuid.UUID, data: ClaimCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_claim(db, job_order_id, data, current_user.id)

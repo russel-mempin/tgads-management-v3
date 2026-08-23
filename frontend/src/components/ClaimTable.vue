@@ -6,6 +6,8 @@ import { formatDate } from '@/utils/formatters.ts';
 const props = defineProps<{
 	jobItems: JobItemTableRow[]
 	claimingHistory: ClaimingHistory[]
+	claimableItems: string[]
+	isJobCancelled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -40,9 +42,9 @@ const columns: TableColumn<ClaimingHistory>[] = [
 				<UIcon name="i-lucide-scroll-text" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
 				<h2 class="text-highlighted font-semibold">Claiming History</h2>
 			</div>
-			<UTooltip :text="jobItems.length <= 0 ? 'Customer has no balance.' : 'Log payment record.'">
+			<UTooltip :text="(jobItems.length <= 0 || claimableItems.length <= 0 || isJobCancelled) ? 'No available items to claim.' : 'Log payment record.'">
 				<span>
-					<UButton @click="emit('openForm')" :disabled="jobItems.length <= 0" icon="i-lucide-plus"
+					<UButton @click="emit('openForm')" :disabled="jobItems.length <= 0 || claimableItems.length <= 0 || isJobCancelled" icon="i-lucide-plus"
 						label="Add Item" variant="outline" />
 				</span>
 			</UTooltip>

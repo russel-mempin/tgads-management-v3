@@ -79,6 +79,7 @@ class JobOrderPublic(JobOrderBase):
     claiming_history: list[ClaimPublic] = Field(default_factory=list)
     total_due: Decimal
     total_paid: Decimal
+    balance: Decimal
     customer_name: str | None = None
     customer_email: str | None = None
     customer_contact_no: str | None = None

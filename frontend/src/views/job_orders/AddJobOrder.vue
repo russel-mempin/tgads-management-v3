@@ -46,7 +46,7 @@ const selectedPayment = ref<Payment | null>(null)
 const isClaimFormOpen = ref(false)
 const selectedClaim = ref<ClaimingHistory | null>(null)
 
-const { totalDue, totalPaid, balance, hasJobItems, canSave, getTotalClaimed } =
+const { totalDue, totalPaid, balance, hasJobItems, canSave, getTotalClaimed, claimableItemIds } =
 	useJobOrderTotals(joNumber, jobItems, payments, claimingHistory)
 const {
 	customerInfo,
@@ -239,7 +239,7 @@ const saveToDb = async () => {
 		:editing-item="selectedJobItem" @save="saveJobItem" />
 	<PaymentForm v-model:is-open="isPaymentFormOpen" :balance="balance" :editing-payment="selectedPayment"
 		@save="savePayment" @close="closePaymentForm" />
-	<ClaimForm v-model:is-open="isClaimFormOpen" :job-items="jobItems" :editing-claim="selectedClaim"
+	<ClaimForm v-model:is-open="isClaimFormOpen" :claimable-item-ids="claimableItemIds" :editing-claim="selectedClaim"
 		@save="saveClaim" />
 
 	<AddJobOrderHeader v-model:is-walk-in="isWalkIn" />
@@ -269,7 +269,7 @@ const saveToDb = async () => {
 					@click="deletePayment(index)" />
 			</template>
 		</PaymentTable>
-		<ClaimTable :claiming-history="claimingHistory" :job-items="jobItems" @open-form="openAddClaimForm">
+		<ClaimTable :claiming-history="claimingHistory" :job-items="jobItems" :claimable-items="claimableItemIds" @open-form="openAddClaimForm">
 			<template #actions="{ item, index }">
 				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditClaimForm(item, index)" />
 				<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" @click="deleteClaim(index)" />

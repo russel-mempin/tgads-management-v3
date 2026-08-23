@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios';
 // Type imports
-import type { JobOrder, JobItem, JobItemCreate, JobItemTableRow, JobItemUpdate } from '@/types/jobOrder'
+import type { JobOrder, JobItem, JobItemCreate, JobItemTableRow, JobItemUpdate, Payment, ClaimingHistory } from '@/types/jobOrder'
 import type { Service } from '@/types/service'
 // API call imports
-import { getJobOrder, createJobItem, updateJobItem } from '@/api/jobOrders'
+import { getJobOrder, createJobItem, updateJobItem, createPayment, createClaim } from '@/api/jobOrders'
 import { getAllServices } from '@/api/services'
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -14,8 +15,8 @@ import EditJobItemForm from '@/components/job-item-form/EditJobItemForm.vue'
 import OrderSummary from '@/components/OrderSummary.vue'
 import PaymentTable from '@/components/PaymentTable.vue'
 import PaymentForm from '@/components/PaymentForm.vue'
-
-import { formatDate } from '@/utils/formatters'
+import ClaimTable from '@/components/ClaimTable.vue'
+import { useJobOrderTotals } from '@/composables/jobOrderTotals'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +35,14 @@ const currentItemIds = computed(() =>
 const selectedJobItem = ref<JobItem | null>(null)
 const serviceList = ref<Service[]>([])
 const isPaymentFormOpen = ref(false)
+const isClaimFormOpen = ref(false)
+
+const joNumber = computed(() => jobOrder.value?.jo_number ?? 0)
+const jobItems = computed(() => jobOrder.value?.job_items ?? [])
+const payments = computed(() => jobOrder.value?.payments ?? [])
+const claimingHistory = computed(() => jobOrder.value?.claiming_history ?? [])
+const { claimableItemIds, balance } = useJobOrderTotals(joNumber, jobItems, payments, claimingHistory)
+const isCancelled = computed(() => jobOrder.value?.overall_job_status === 'Cancelled')
 
 // Data functions 
 const fetchJobOrder = async () => {
@@ -55,7 +64,6 @@ onMounted(async () => {
 })
 
 // UI functions
-const balance = computed(() => (jobOrder.value ? jobOrder.value.total_due - jobOrder.value.total_paid : 0))
 const printJobOrder = () => {
     const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
     window.open(resolved.href, '_blank')
@@ -107,10 +115,18 @@ const saveNewItemToDb = async (item: JobItemCreate) => {
         })
         await fetchJobOrder()
     }
-    catch (error) {
-        console.error('Failed to create job item:', error)
+    catch (error: unknown) {
+        console.error('Failed to create payment:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to create payment.'
+        }
+
         toast.add({
             title: 'Saving data failed.',
+            description: message,
             color: 'error',
             icon: 'i-lucide-x'
         })
@@ -141,6 +157,71 @@ const saveUpdatedItemToDb = async (payload: { id: string; changes: JobItemUpdate
 const openAddPaymentForm = () => {
     isPaymentFormOpen.value = true
 }
+const saveNewPaymentToDb = async (item: Payment) => {
+    if (!jobOrder.value) {
+        console.error('Cannot save job item: Job order not loaded.')
+        return
+    }
+    try {
+        await createPayment(item, jobOrder.value.id)
+        toast.add({
+            title: 'Payment data saved.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await fetchJobOrder()
+    }
+    catch (error: unknown) {
+        console.error('Failed to create payment:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to create payment.'
+        }
+
+        toast.add({
+            title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+}
+const openAddClaimForm = () => {
+    isClaimFormOpen.value = true
+}
+const saveNewClaimToDb = async (item: ClaimingHistory) => {
+    if (!jobOrder.value) {
+        console.error('Cannot save job item: Job order not loaded.')
+        return
+    }
+    try {
+        await createClaim(item, jobOrder.value.id)
+        toast.add({
+            title: 'Claim data saved.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await fetchJobOrder()
+    }
+    catch (error: unknown) {
+        console.error('Failed to create payment:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to create payment.'
+        }
+
+        toast.add({
+            title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+}
 </script>
 
 <template>
@@ -148,7 +229,8 @@ const openAddPaymentForm = () => {
         @save="saveNewItemToDb" />
     <EditJobItemForm v-model:is-open="isEditFormOpen" :job-item="selectedJobItem" v-if="selectedJobItem"
         @submit="saveUpdatedItemToDb" />
-    <PaymentForm :balance="balance" :is-open="isPaymentFormOpen" />
+    <PaymentForm :balance="balance" :is-open="isPaymentFormOpen" @save="saveNewPaymentToDb" />
+    <ClaimForm :claimable-item-ids="claimableItemIds" v-model:is-open="isClaimFormOpen" @save="saveNewClaimToDb" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -164,7 +246,7 @@ const openAddPaymentForm = () => {
 
             <!-- Order Summary With Customer Info -->
             <OrderSummary :job-order="jobOrder" :balance="balance" />
-            
+
             <!-- Job Items -->
             <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"
                 @added="fetchJobOrder" @updated="fetchJobOrder" @open-form="openAddItemForm">
@@ -174,41 +256,11 @@ const openAddPaymentForm = () => {
             </JobItemTable>
 
             <!-- Payments -->
-            <PaymentTable :balance="balance" :payments="jobOrder.payments" @open-form="openAddPaymentForm" />
+            <PaymentTable :balance="balance" :payments="jobOrder.payments" :is-job-cancelled="isCancelled" @open-form="openAddPaymentForm" />
 
             <!-- Claiming History -->
-            <section class="bg-default border border-default rounded-md">
-                <div class="rounded-tl-md rounded-tr-md flex items-center justify-between p-4 border-b border-default">
-                    <div class="flex items-center gap-2">
-                        <UIcon name="i-lucide-scroll-text"
-                            class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-                        <h2 class="text-highlighted font-semibold">Claiming History</h2>
-                    </div>
-                    <UButton icon="i-lucide-plus" label="Add Claim" variant="outline" />
-                </div>
-                <div v-if="jobOrder.claiming_history.length">
-                    <table class="w-full text-base">
-                        <thead class="bg-elevated">
-                            <tr class="text-left text-sm text-muted uppercase">
-                                <th class="p-3">Date Claimed</th>
-                                <th class="p-3">Name</th>
-                                <th class="p-3">Item Claimed</th>
-                                <th class="p-3">Pieces Claimed</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="claim in jobOrder.claiming_history" :key="claim.claimed_item_id"
-                                class="odd:bg-elevated/20">
-                                <td class="p-3 text-highlighted">{{ formatDate(claim.date_claimed) }}</td>
-                                <td class="p-3 text-highlighted">{{ claim.name }}</td>
-                                <td class="p-3 text-highlighted">{{ claim.claimed_item_id }}</td>
-                                <td class="p-3 text-highlighted">{{ claim.pcs_claimed }} pc(s)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p v-else class="text-muted text-base p-4 text-center">No claims recorded yet.</p>
-            </section>
+            <ClaimTable :claiming-history="jobOrder.claiming_history" :job-items="jobOrder.job_items"
+                :claimable-items="claimableItemIds" :is-job-cancelled="isCancelled" @open-form="openAddClaimForm" />
         </div>
     </Transition>
 </template>

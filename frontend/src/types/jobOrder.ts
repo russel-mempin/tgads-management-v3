@@ -104,6 +104,7 @@ export interface JobOrder extends JobOrderBase {
   claiming_history: ClaimingHistory[]
   total_due: number
   total_paid: number
+  balance: number
   customer_name: string
   customer_email: string
   customer_contact_no: string

@@ -25,6 +25,12 @@ export function useJobOrderTotals(
 
   const getTotalClaimed = (itemId: string) => totalClaimedByItem.value.get(itemId) ?? 0
 
+  const claimableItemIds = computed(() =>
+    jobItems.value
+      .filter((item) => getTotalClaimed(item.item_id) < item.quantity)
+      .map((item) => item.item_id),
+  )
+
   const hasValidJoNumber = computed(() => joNumber.value > 0)
 
   const hasJobItems = computed(() => jobItems.value.length > 0)
@@ -48,6 +54,7 @@ export function useJobOrderTotals(
     balance,
     totalClaimedByItem,
     getTotalClaimed,
+    claimableItemIds,
     hasValidJoNumber,
     hasJobItems,
     hasValidPayments,

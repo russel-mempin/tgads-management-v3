@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from sqlmodel import Session, select
@@ -119,7 +120,7 @@ def compute_unit_price(height: float | None, width: float | None, service_type: 
 			rate = applicable_tier.rate
 		else:
 			rate = option.base_rate
-		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate=round(rate, 2), unit_price=round(billable_area * rate, 2))
+		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate=round(rate, 3), unit_price= Decimal(str(billable_area)) * rate)
 	else:
 		# For Fixed Pricing (Desktop Printing, Digital Print, Riso)
 		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate)

@@ -558,7 +558,14 @@ def create_payment(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Payment amount exceeds remaining balance.",
             )
+        if job_order.overall_job_status == JobStatus.CANCELLED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot add payment data for a cancelled job.",
+            )
+
         payment = _build_payment(db, job_order_id, data)
+        job_order.payments.append(payment)
         db.add(payment)
         db.flush()
         job_order.sync_computed_fields()
@@ -569,7 +576,68 @@ def create_payment(
         db.add(audit)
         db.commit()
         db.refresh(job_order)
-        return job_order
+        return payment
+
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def create_claim(
+    db: Session, job_order_id: uuid.UUID, data: ClaimCreate, current_user_id: uuid.UUID
+):
+    try:
+        job_order = db.exec(
+            select(JobOrder).where(JobOrder.id == job_order_id).with_for_update()
+        ).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=404,
+                detail="Job order not found.",
+            )
+        job_item = db.exec(
+            select(JobItem)
+            .where(
+                JobItem.item_id == data.claimed_item_id,
+                JobItem.job_order_id == job_order_id,
+            )
+            .with_for_update()
+        ).first()
+
+        if not job_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job item not found on this job order.",
+            )
+        if job_item.is_fully_claimed == True:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Job item is already all claimed.",
+            )
+        if data.pcs_claimed > job_item.remaining_on_hand:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pieces claimed is more than available quantity.",
+            )
+        if job_item.job_status == JobStatus.CANCELLED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot add claim data for a cancelled job.",
+            )
+        claim = _build_claiming_history(db, job_order.id, job_item.item_id, data)
+        db.add(claim)
+        db.flush()
+        job_order.sync_computed_fields()
+        audit = AuditLog(
+            action=f"Created claim for {job_item.item_id}",
+            user_id=current_user_id,
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(job_order)
+        return claim
 
     except HTTPException:
         raise

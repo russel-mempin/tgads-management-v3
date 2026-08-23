@@ -6,6 +6,7 @@ import { formatDate, formatCurrency } from '@/utils/formatters';
 const props = defineProps<{
 	balance: number
 	payments: Payment[]
+	isJobCancelled?: boolean
 }>()
 const emit = defineEmits<{
 	openForm: []
@@ -41,9 +42,9 @@ const columns: TableColumn<Payment>[] = [
 					class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
 				<h2 class="text-highlighted font-semibold">Payments</h2>
 			</div>
-			<UTooltip :text="balance <= 0 ? 'Customer has no balance.' : 'Log payment record.'">
+			<UTooltip :text="(balance <= 0 || isJobCancelled)? 'Customer has no balance.' : 'Log payment record.'">
 				<span>
-					<UButton @click="emit('openForm')" :disabled="balance <= 0" icon="i-lucide-plus" label="Add Item"
+					<UButton @click="emit('openForm')" :disabled="balance <= 0 || isJobCancelled" icon="i-lucide-plus" label="Add Item"
 						variant="outline" />
 				</span>
 			</UTooltip>
