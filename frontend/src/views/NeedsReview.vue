@@ -42,7 +42,7 @@ const columns: TableColumn<ForReview>[] = [
                 'Needs Verification': 'neutral' as const,
             }[row.getValue('reason_category') as string]
 
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'soft', color }, () =>
+            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color }, () =>
                 row.getValue('reason_category')
             )
         }

@@ -117,8 +117,18 @@ const jobStatusColors: Record<string, BadgeColor> = {
     'Cancelled': 'error',
 }
 
+const reviewCategoryColors: Record<string, BadgeColor> = {
+    'Missing Data': 'warning',
+    'Pricing Discrepancy': 'error',
+    'Status Issue': 'info',
+    'Needs Verification': 'neutral',
+}
+
 export const getPaymentStatusColor = (status?: string): BadgeColor =>
     paymentStatusColors[status ?? 'Unpaid'] ?? 'error'
 
 export const getJobStatusColor = (status?: string): BadgeColor =>
     jobStatusColors[status ?? 'Pending'] ?? 'warning'
+
+export const getReviewCategoryColor = (category?: string): BadgeColor =>
+    reviewCategoryColors[category ?? ''] ?? 'neutral'

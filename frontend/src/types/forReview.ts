@@ -23,6 +23,7 @@ export interface ForReview {
     created_by_name: string
     resolved_at?: Date
     resolved_by_id?: string | null
+    resolved_by_name?: string | null
 }
 
 export interface UnlinkedPayment {
@@ -36,6 +37,6 @@ export interface UnlinkedPayment {
     account_name?: string | null
 }
 
-export interface ForReviewDetails extends ForReview {
-    entity: UnlinkedPayment | JobOrder
+export interface PaymentForReview extends ForReview {
+    entity: UnlinkedPayment
 }
