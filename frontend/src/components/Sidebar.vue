@@ -57,6 +57,7 @@ const allItems = computed<NavItem[]>(() => [
     icon: 'i-lucide-scan-eye',
     category: 'Operations',
     ownerOnly: true,
+    active: route.path.startsWith('/review-data'),
     badge:
       forReviewStore.count > 99
         ? '99+'
