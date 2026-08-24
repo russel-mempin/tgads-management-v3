@@ -4,7 +4,6 @@ import { getPaymentStatusColor, getJobStatusColor, formatCurrency, formatDate } 
 
 const props = defineProps<{
 	jobOrder: JobOrder
-	balance: number
 }>()
 </script>
 
@@ -30,12 +29,12 @@ const props = defineProps<{
 			<p class="text-2xl font-bold text-highlighted mt-1">{{ formatCurrency(jobOrder.total_paid) }}</p>
 		</div>
 		<div class="border border-default bg-default rounded-md p-4"
-			:class="balance > 0 ? 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30' : 'border-default bg-default'">
+			:class="jobOrder.balance > 0 ? 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30' : 'border-default bg-default'">
 			<p class="text-sm uppercase font-semibold"
-				:class="balance > 0 ? 'text-red-700 dark:text-red-400' : 'text-muted'">Balance</p>
+				:class="jobOrder.balance > 0 ? 'text-red-700 dark:text-red-400' : 'text-muted'">Balance</p>
 			<p class="text-2xl font-bold mt-1"
-				:class="balance > 0 ? 'text-red-700 dark:text-red-400' : 'text-highlighted'">
-				{{ formatCurrency(balance) }}
+				:class="jobOrder.balance > 0 ? 'text-red-700 dark:text-red-400' : 'text-highlighted'">
+				{{ formatCurrency(jobOrder.balance) }}
 			</p>
 		</div>
 	</section>

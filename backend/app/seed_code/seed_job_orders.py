@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from sqlmodel import Session, select
@@ -55,6 +56,11 @@ def parse_date(value: str) -> datetime:
     return datetime.strptime(value.strip(), "%m/%d/%y").replace(tzinfo=timezone.utc)  # noqa: UP017
 
 
+def to_decimal(value: str | None, default: str = "0.00") -> Decimal:
+    value = (value or "").strip().replace(",", "")
+    return Decimal(value or default)
+
+
 def get_or_create_customer(session: Session, customer_name: str) -> Customer | None:
     customer_name = customer_name.strip()
     if not customer_name:
@@ -80,30 +86,31 @@ def unit_converter(source_unit: SizeUnit, value: float, target_unit: SizeUnit) -
 
 def get_computed_unit_price_from_area(
     price_unit: PriceUnit,
-    base_rate: float,
+    base_rate: Decimal,
     height: float,
     width: float,
     size_unit: SizeUnit,
-) -> float:
-    # Only use if the service's pricing strategy is "Area"
-    # Convert height and width to appropriate unit based on unit from Service
-    # Then, compute for the area and multiply by the base_rate from ServiceOption
+) -> Decimal:
     try:
         target_size_unit = PRICE_UNIT_TO_SIZE_UNIT[price_unit]
     except KeyError:
         raise ValueError(f"Unsupported price unit: {price_unit}")
+
     converted_height = unit_converter(
         value=height,
         source_unit=size_unit,
         target_unit=target_size_unit,
     )
+
     converted_width = unit_converter(
         value=width,
         source_unit=size_unit,
         target_unit=target_size_unit,
     )
+
     area = converted_height * converted_width
-    return area * base_rate
+
+    return Decimal(str(area)) * base_rate
 
 
 def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
@@ -202,15 +209,15 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
 
             # Getting fields from csv that have a use other than insertion
             review_reason = (row.get("review_category") or "").strip()
-            csv_unit_price = to_float(row["unit_price"].strip())
             extra_service = row["extra_service"].strip()
             extra_quantity = to_int(row["extra_quantity"])
-            discount = to_float(row.get("discount", 0.0))
-            extra_charge = to_float(row.get("extra_charge", 0.0))
+            csv_unit_price = to_decimal(row["unit_price"])
+            discount = to_decimal(row.get("discount"))
+            extra_charge = to_decimal(row.get("extra_charge"))
 
             # Initialize variables for use
-            extra_service_price = 0.0
-            computed_unit_price = 0.0
+            extra_service_price = Decimal("0.00")
+            computed_unit_price = Decimal("0.00")
 
             # Dependency checks for job items, find the data that matches from the database and get it. If none, skip and report.
             job_order = session.exec(

@@ -5,8 +5,9 @@ from datetime import UTC, datetime
 from sqlmodel import Session, select
 
 from app.database import engine
-from app.models import Account, JobOrder, Payment, UnlinkedPayment
-from app.utils.utils import to_float
+from app.enums import ReasonCategory, ReviewEntityType
+from app.models import Account, ForReview, JobOrder, Payment, UnlinkedPayment
+from app.utils.utils import get_system_admin, to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "payments.csv")
@@ -50,6 +51,7 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
     unlinked_refs: list[str] = []
 
     with Session(engine) as session:
+        sysadmin = get_system_admin(session)
         with open(file_path, newline="") as f:
             for row in csv.DictReader(f):
                 account = get_account(session, row.get("method", ""))
@@ -100,15 +102,25 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                     if jo_number_raw:
                         note = f"[JO {jo_number_raw} referenced but not found] "
                         description = note + (description or "")
-
+                    unlinked_payment = UnlinkedPayment(
+                        date_received=date_received,
+                        reference_number=reference_number,
+                        amount=amount,
+                        customer_name=row.get("name", "").strip() or None,
+                        description=description,
+                        account_id=account.id,
+                    )
+                    session.add(unlinked_payment)
+                    
                     session.add(
-                        UnlinkedPayment(
-                            date_received=date_received,
-                            reference_number=reference_number,
-                            amount=amount,
-                            customer_name=row.get("name", "").strip() or None,
-                            description=description,
-                            account_id=account.id,
+                        ForReview(
+                            entity_type=ReviewEntityType.PAYMENT,
+                            entity_id=unlinked_payment.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=reference_number,
+                            reason="No links to any job.",
+                            reason_category=ReasonCategory.MISSING_DATA,
+                            resolution_note="Pending"
                         )
                     )
                     unlinked_count += 1

@@ -245,7 +245,7 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
             </div>
 
             <!-- Order Summary With Customer Info -->
-            <OrderSummary :job-order="jobOrder" :balance="balance" />
+            <OrderSummary :job-order="jobOrder" />
 
             <!-- Job Items -->
             <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"

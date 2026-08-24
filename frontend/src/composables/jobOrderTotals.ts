@@ -7,9 +7,13 @@ export function useJobOrderTotals(
   payments: Ref<Payment[]>,
   claimingHistory: Ref<ClaimingHistory[]>,
 ) {
-  const totalDue = computed(() => jobItems.value.reduce((sum, item) => sum + item.subtotal, 0))
+  const totalDue = computed(() =>
+    jobItems.value.reduce((sum, item) => sum + Number(item.subtotal), 0)
+  )
 
-  const totalPaid = computed(() => payments.value.reduce((sum, item) => sum + item.amount, 0))
+  const totalPaid = computed(() =>
+    payments.value.reduce((sum, item) => sum + Number(item.amount), 0)
+  )
 
   const balance = computed(() => totalDue.value - totalPaid.value)
 

@@ -585,6 +585,10 @@ class UnlinkedPayment(SQLModel, table=True):
     )
 
     account: Account = Relationship(back_populates="unlinked_payments")
+    
+    @property
+    def account_name(self) -> str | None:
+        return self.account.name if self.account else None
 
 
 # ====================== FOR REVIEW =========================
@@ -600,7 +604,7 @@ class ForReview(SQLModel, table=True):
     reason: str = Field()
     resolution_note: str | None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    created_by_id: uuid.UUID | None = Field(foreign_key="users.id")
+    created_by_id: uuid.UUID = Field(foreign_key="users.id")
     resolved_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True),
