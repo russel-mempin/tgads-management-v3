@@ -22,6 +22,7 @@ const fetchReviewDetails = async () => {
             throw new Error('Invalid entity id.')
         }
         reviewData.value = await getPaymentForReviewDetails(forReviewId)
+        console.log(reviewData.value)
     }
     finally {
         loading.value = false
@@ -38,7 +39,16 @@ onMounted(async () => {
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
         </div>
         <div v-else-if="reviewData" class="m-6 flex flex-col gap-6">
-            <p>HELLO</p>
+            <!-- Back + Title -->
+            <div class="flex items-center justify-between">
+                <UButton icon="i-lucide-arrow-left" label="Back to Needs Review" color="neutral" variant="outline"
+                    to="/review-data" />
+                <UButton icon="i-lucide-square-check-big" label="Mark as Resolved" color="success" variant="subtle" />
+            </div>
+            <div>
+                <p class="text-2xl font-semibold text-highlighted">{{ `${reviewData.entity_type} · Reference Number #${reviewData.entity_reference}` }}</p>
+                <UBadge />
+            </div>
         </div>
     </Transition>
 </template>
