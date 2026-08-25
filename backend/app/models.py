@@ -306,11 +306,11 @@ class JobOrder(JobOrderBase, table=True):
 
     @property
     def customer_email(self) -> str | None:
-        return self.customer.email
+        return self.customer.email if self.customer else None
 
     @property
     def customer_contact_no(self) -> str | None:
-        return self.customer.contact_no
+        return self.customer.contact_no if self.customer else None
 
     @property
     def created_by_name(self) -> str | None:

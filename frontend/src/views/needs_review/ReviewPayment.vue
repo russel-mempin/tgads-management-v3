@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-
 // Type imports
 import type { PaymentForReview } from '@/types/forReview';
+import type { MiscSaleCreate } from '@/types/miscSale';
 // Component imports
 import { getPaymentForReviewDetails } from '@/api/forReviews';
-import { formatCurrency, matchPercentage, formatJobItem, matchPercentageClass } from '@/utils/formatters';
+import MatchesList from '@/components/MatchesList.vue';
+import MiscSaleForm from '@/components/MiscSaleForm.vue';
+import { utcToInput } from '@/utils/formatters';
 
 const route = useRoute()
 // Data variables
 const reviewData = ref<PaymentForReview>()
 const selectedMatchId = ref<string | null>(null)
+const miscSale = ref<MiscSaleCreate>({
+    amount: 0,
+    date: '',
+    description: '',
+})
 
 // UI Variables
 const loading = ref(true)
@@ -26,7 +33,15 @@ const fetchReviewDetails = async () => {
         if (typeof forReviewId !== 'string') {
             throw new Error('Invalid entity id.')
         }
-        reviewData.value = await getPaymentForReviewDetails(forReviewId)
+        const data = await getPaymentForReviewDetails(forReviewId)
+        reviewData.value = data
+        console.log(data)
+        miscSale.value = {
+            amount: data.entity.amount,
+            date: utcToInput(data.entity.date_received),
+            description: data.entity.description ?? '',
+        }
+        console.log(miscSale.value)
     }
     finally {
         loading.value = false
@@ -56,6 +71,7 @@ onMounted(async () => {
                 <PaymentDetails :entity="reviewData.entity" />
                 <FlagDetails :flag-data="reviewData" />
             </div>
+            <!-- Resolve this payment -->
             <section class="bg-default border border-default rounded-md p-4 flex flex-col gap-4">
                 <div class="flex items-center gap-3">
                     <UIcon name="i-lucide-square-check-big"
@@ -71,51 +87,33 @@ onMounted(async () => {
                         :variant="resolutionType === 'misc_sale' ? 'solid' : 'outline'"
                         @click="resolutionType = 'misc_sale'" />
                 </div>
-                <div>
-                    <div>
+                <div class="border-b border-default pb-4">
+                    <!-- Controls -->
+                    <div v-if="resolutionType === 'job_order'">
                         <div v-if="!isSearchingManually" class="flex items-center justify-between mb-4">
                             <p class="text-muted">Suggested matches, ranked by score</p>
-                            <UButton label="Search manually" variant="outline" color="neutral" />
+                            <UButton label="Search manually" variant="outline" color="neutral"
+                                @click="() => { isSearchingManually = true }" />
                         </div>
-                        <UInput v-else="" icon="i-lucide-search" placeholder="Search job order number or customer name"
-                            class="w-full mb-4" />
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <div v-for="match in reviewData.entity.possible_matches" :key="match.id"
-                            @click="selectedMatchId = match.id" :class="[
-                                'rounded-sm border px-4 py-2 flex justify-between mb-2 cursor-pointer transition-colors',
-                                selectedMatchId === match.id
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-default hover:bg-elevated'
-                            ]">
-                            <div class="flex flex-col justify-between">
-                                <p class="font-semibold text-highlighted">{{ match.jo_number }}</p>
-                                <p>{{ match.customer_name }}</p>
-
-                                <div class="flex gap-2">
-                                    <p v-for="item in match.job_items" :key="item.item_id">
-                                        {{ formatJobItem(item) }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="text-right">
-                                <p class="font-semibold" :class="matchPercentageClass(match.match_score)">
-                                    {{ matchPercentage(match.match_score) }}% match
-                                </p>
-
-                                <p>Balance: {{ formatCurrency(match.remaining_balance) }}</p>
-
-                                <div class="mt-2 flex gap-2 justify-end">
-                                    <p v-for="matchReason in match.match_reasons" :key="matchReason"
-                                        class="w-fit uppercase text-xs font-semibold rounded-md px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
-                                        {{ matchReason }}
-                                    </p>
-                                </div>
-                            </div>
+                        <div v-else class="flex items-center gap-4 mb-4">
+                            <UInput icon="i-lucide-search" placeholder="Search job order number or customer name"
+                                class="w-full" />
+                            <UButton label="Back to Suggestions" variant="outline" color="neutral"
+                                @click="() => { isSearchingManually = false }" />
                         </div>
                     </div>
+                    <!-- Form -->
+                    <MatchesList v-if="resolutionType === 'job_order'"
+                        :matches-list="reviewData.entity.possible_matches"
+                        v-model:selected-match-id="selectedMatchId" />
+                    <MiscSaleForm v-else-if="resolutionType === 'misc_sale'" v-model:amount="miscSale.amount"
+                        v-model:date="miscSale.date" v-model:description="miscSale.description" />
                 </div>
+                <UFormField label="Resolution note" required>
+                    <UTextarea class="w-full" />
+                </UFormField>
+                <UButton label="Confirm and mark as resolved" icon="i-lucide-check"
+                    class="flex w-full justify-center" />
             </section>
         </div>
     </Transition>

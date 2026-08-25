@@ -28,6 +28,8 @@ declare module 'vue' {
     JobOrderFooter: typeof import('./src/components/JobOrderFooter.vue')['default']
     JobOrderList: typeof import('./src/components/JobOrderList.vue')['default']
     JobOrderTable: typeof import('./src/components/JobOrderTable.vue')['default']
+    MatchesList: typeof import('./src/components/MatchesList.vue')['default']
+    MiscSaleForm: typeof import('./src/components/MiscSaleForm.vue')['default']
     NJobItemTable: typeof import('./src/components/nJobItemTable.vue')['default']
     OJobItemForm: typeof import('./src/components/oJobItemForm.vue')['default']
     OJobItemTable: typeof import('./src/components/oJobItemTable.vue')['default']
