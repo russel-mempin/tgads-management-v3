@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlmodel import SQLModel
 
 from app.enums import ReasonCategory, ReviewEntityType
-from app.schemas.job_order import JobOrderPublic
+from app.schemas.job_order import JobItemPublic, JobOrderPublic
 
 
 class ForReviewPublic(SQLModel):
@@ -22,6 +22,19 @@ class ForReviewPublic(SQLModel):
     resolved_by_id: uuid.UUID | None
     resolved_by_name: str | None = None
     
+    
+class PossibleJobOrder(SQLModel):
+    id: uuid.UUID
+    jo_number: int
+    job_items: list[JobItemPublic]
+    customer_name: str | None
+    date_received: datetime
+    total_due: Decimal
+    total_paid: Decimal
+    remaining_balance: Decimal
+    match_score: int
+    match_reasons: list[str]
+    
 
 class UnlinkedPaymentReviewData(SQLModel):
     id: uuid.UUID
@@ -32,6 +45,7 @@ class UnlinkedPaymentReviewData(SQLModel):
     description: str | None
     account_id: uuid.UUID
     account_name: str | None
+    possible_matches: list[PossibleJobOrder]
     
     
 class ForReviewDetails(ForReviewPublic):

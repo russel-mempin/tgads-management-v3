@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getJobOrderKpis, getAllJobOrders, getJobOrderCount } from '@/api/jobOrders'
 import type { JobOrder } from '@/types/jobOrder'
 import type { TableColumn } from '@nuxt/ui'
+import type { TableRow } from '@nuxt/ui'
 import { formatDate, formatCurrency, formatDateNoYear, getPaymentStatusColor, getJobStatusColor } from '@/utils/formatters'
 import { useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
@@ -239,7 +240,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             label="Add Job Order" color="primary" variant="solid" />
     </section>
     <section class="mx-6 mt-6 border border-default bg-default rounded-md">
-        <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(e, row) => row.toggleExpanded()">
+        <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(_: any, row: TableRow<JobOrder>) => row.toggleExpanded()">
             <template #expanded="{ row }">
                 <div class="p-2 flex flex-col gap-6">
                     <!-- Job Items -->

@@ -1,4 +1,4 @@
-import type { JobOrder } from "./jobOrder"
+import type { JobOrder, JobItem } from "./jobOrder"
 
 export type ReviewEntityType =
     | 'Job Order'
@@ -26,6 +26,19 @@ export interface ForReview {
     resolved_by_name?: string | null
 }
 
+interface PossibleMatches {
+    id: string
+    jo_number: number
+    job_items: JobItem[]
+    customer_name?: string
+    date_received: Date
+    total_due: number
+    total_paid: number
+    remaining_balance: number
+    match_score: number
+    match_reasons: string[]
+}
+
 export interface UnlinkedPayment {
     id: string
     date_received: string
@@ -35,6 +48,7 @@ export interface UnlinkedPayment {
     description?: string | null
     account_id: string
     account_name?: string | null
+    possible_matches: PossibleMatches[]
 }
 
 export interface PaymentForReview extends ForReview {

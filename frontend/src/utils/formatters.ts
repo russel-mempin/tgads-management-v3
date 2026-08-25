@@ -1,3 +1,5 @@
+import type { JobItem } from "@/types/jobOrder"
+
 export const formatCurrency = (value: number | undefined) => {
   if (value === undefined) return '₱ 0.00'
   return new Intl.NumberFormat('en-PH', {
@@ -132,3 +134,35 @@ export const getJobStatusColor = (status?: string): BadgeColor =>
 
 export const getReviewCategoryColor = (category?: string): BadgeColor =>
     reviewCategoryColors[category ?? ''] ?? 'neutral'
+
+export const matchPercentage = (score: number) =>
+  Math.min(100, Math.round((score / 105) * 100))
+
+export const matchPercentageClass = (score: number): string => {
+  const percentage = matchPercentage(score)
+
+  if (percentage >= 80) {
+    return 'text-green-600'
+  }
+
+  if (percentage <= 40) {
+    return 'text-red-600'
+  }
+
+  return 'text-yellow-600'
+}
+
+export const formatJobItem = (item: JobItem): string => {
+  const dimensions =
+    item.width && item.height
+      ? `${item.width} × ${item.height} ${item.size_unit}`
+      : ''
+
+  const service = item.service_option_name_snapshot
+    ? `${item.service_name_snapshot} - ${item.service_option_name_snapshot}`
+    : item.service_name_snapshot
+
+  return [`${item.quantity} pc(s)`, dimensions, service]
+    .filter(Boolean)
+    .join(' ')
+}

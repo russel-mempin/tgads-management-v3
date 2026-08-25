@@ -18,6 +18,7 @@ declare module 'vue' {
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
+    FlagDetails: typeof import('./src/components/FlagDetails.vue')['default']
     JobItemExtrasFields: typeof import('./src/components/job-item-form/JobItemExtrasFields.vue')['default']
     JobItemPriceAdjustFields: typeof import('./src/components/job-item-form/JobItemPriceAdjustFields.vue')['default']
     JobItemPricingBreakdown: typeof import('./src/components/job-item-form/JobItemPricingBreakdown.vue')['default']
@@ -33,6 +34,7 @@ declare module 'vue' {
     OPaymentTable: typeof import('./src/components/oPaymentTable.vue')['default']
     OrderInfoInput: typeof import('./src/components/OrderInfoInput.vue')['default']
     OrderSummary: typeof import('./src/components/OrderSummary.vue')['default']
+    PaymentDetails: typeof import('./src/components/PaymentDetails.vue')['default']
     PaymentForm: typeof import('./src/components/PaymentForm.vue')['default']
     PaymentsTable: typeof import(./src/components/oPaymentTable.vue/index.jsue')['default']
     PaymentTable: typeof import('./src/components/PaymentTable.vue')['default']
@@ -65,6 +67,7 @@ declare module 'vue' {
     USidebar: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Sidebar.vue')['default']
     USwitch: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
+    UTextarea: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
     UTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }
 }

@@ -9,9 +9,11 @@ from app.crud.for_review import (
     get_count_of_for_reviews,
     get_job_for_review_details,
     get_payment_for_review_details,
+    get_possible_job_orders_for_payment,
 )
 from app.database import get_session
-from app.schemas.for_review import ForReviewDetails, ForReviewPublic
+from app.models import UnlinkedPayment
+from app.schemas.for_review import ForReviewDetails, ForReviewPublic, PossibleJobOrder
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/for-reviews", tags=["for-reviews"], dependencies=[Depends(get_current_active_user)])
@@ -35,3 +37,8 @@ def read_job_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_
 @router.get("/payments/{entity_id}", response_model=ForReviewDetails)
 def read_payment_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_session)):
     return get_payment_for_review_details(db, entity_id)
+
+
+@router.get("/payments/{entity_id}/possible-job-orders", response_model=list[PossibleJobOrder])
+def get_all_possible_matches(payment: UnlinkedPayment, db: Session = Depends(get_session)):
+    return get_possible_job_orders_for_payment(db, payment)

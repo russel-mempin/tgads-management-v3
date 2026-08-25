@@ -239,7 +239,7 @@ class JobOrder(JobOrderBase, table=True):
     updated_by: User = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
     )
-    customer: Customer = Relationship(back_populates="job_orders")
+    customer: Customer | None = Relationship(back_populates="job_orders")
     job_items: list[JobItem] = Relationship(
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
@@ -302,7 +302,7 @@ class JobOrder(JobOrderBase, table=True):
 
     @property
     def customer_name(self) -> str | None:
-        return self.customer.name
+        return self.customer.name if self.customer else None
 
     @property
     def customer_email(self) -> str | None:
