@@ -434,10 +434,6 @@ class Payment(PaymentBase, table=True):
     )
     account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
-    source_unlinked_payment_id: uuid.UUID | None = Field(
-        default=None,
-        index=True,
-    )
 
     job_order: JobOrder = Relationship(back_populates="payments")
 

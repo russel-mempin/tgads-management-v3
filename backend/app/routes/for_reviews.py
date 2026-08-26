@@ -14,7 +14,7 @@ from app.crud.for_review import (
     get_possible_job_orders_for_payment,
 )
 from app.database import get_session
-from app.models import Payment, UnlinkedPayment, User
+from app.models import UnlinkedPayment, User
 from app.schemas.for_review import (
     ForReviewDetails,
     ForReviewPublic,
@@ -62,6 +62,6 @@ def search_possible_job_orders(entity_id: uuid.UUID, search_value: str, db: Sess
     return find_possible_job_orders(db, payment, search_value)
 
 
-@router.post("/payments/{entity_id}/", response_model=Payment)
+@router.post("/payments/{entity_id}/")
 def create_payment_data_to_job(payment_data: UnlinkedPaymentWithJobMatch, match_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return assign_payment_to_job_order(db, payment_data, match_id, current_user.id)
