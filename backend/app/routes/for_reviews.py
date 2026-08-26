@@ -1,10 +1,11 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from app.crud.for_review import (
+    find_possible_job_orders,
     get_all_for_review_items,
     get_count_of_for_reviews,
     get_job_for_review_details,
@@ -42,3 +43,14 @@ def read_payment_for_review_details(entity_id: uuid.UUID, db: Session = Depends(
 @router.get("/payments/{entity_id}/possible-job-orders", response_model=list[PossibleJobOrder])
 def get_all_possible_matches(payment: UnlinkedPayment, db: Session = Depends(get_session)):
     return get_possible_job_orders_for_payment(db, payment)
+
+
+@router.get("/payments/{entity_id}/possible-job-orders/search", response_model=list[PossibleJobOrder])
+def search_possible_job_orders(entity_id: uuid.UUID, search_value: str, db: Session = Depends(get_session)):
+    payment = db.get(UnlinkedPayment, entity_id)
+    if not payment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Unlinked Payment not found."
+        )
+    return find_possible_job_orders(db, payment, search_value)

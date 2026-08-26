@@ -2,28 +2,17 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 // Type imports
-import type { PaymentForReview } from '@/types/forReview';
-import type { MiscSaleCreate } from '@/types/miscSale';
-// Component imports
+import type { PaymentForReview, PossibleMatch } from '@/types/forReview';
+// API call imports
 import { getPaymentForReviewDetails } from '@/api/forReviews';
-import MatchesList from '@/components/MatchesList.vue';
-import MiscSaleForm from '@/components/MiscSaleForm.vue';
-import { utcToInput } from '@/utils/formatters';
 
 const route = useRoute()
 // Data variables
 const reviewData = ref<PaymentForReview>()
-const selectedMatchId = ref<string | null>(null)
-const miscSale = ref<MiscSaleCreate>({
-    amount: 0,
-    date: '',
-    description: '',
-})
+const possibleJobOrders = ref<PossibleMatch[]>([])
 
 // UI Variables
 const loading = ref(true)
-const resolutionType = ref<'job_order' | 'misc_sale'>('job_order')
-const isSearchingManually = ref(false)
 
 // Data functions
 const fetchReviewDetails = async () => {
@@ -35,20 +24,14 @@ const fetchReviewDetails = async () => {
         }
         const data = await getPaymentForReviewDetails(forReviewId)
         reviewData.value = data
-        console.log(data)
-        miscSale.value = {
-            amount: data.entity.amount,
-            date: utcToInput(data.entity.date_received),
-            description: data.entity.description ?? '',
-        }
-        console.log(miscSale.value)
+        possibleJobOrders.value = data.entity.possible_matches
     }
     finally {
         loading.value = false
     }
 }
 onMounted(async () => {
-    fetchReviewDetails()
+    await fetchReviewDetails()
 })
 </script>
 
@@ -71,50 +54,7 @@ onMounted(async () => {
                 <PaymentDetails :entity="reviewData.entity" />
                 <FlagDetails :flag-data="reviewData" />
             </div>
-            <!-- Resolve this payment -->
-            <section class="bg-default border border-default rounded-md p-4 flex flex-col gap-4">
-                <div class="flex items-center gap-3">
-                    <UIcon name="i-lucide-square-check-big"
-                        class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-                    <h2 class="text-highlighted font-semibold">Resolve this payment</h2>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <UButton label="Link to Job Order" icon="i-lucide-briefcase" class="flex justify-center py-2"
-                        :variant="resolutionType === 'job_order' ? 'solid' : 'outline'"
-                        @click="resolutionType = 'job_order'" />
-
-                    <UButton label="Mark as Misc Sale" icon="i-lucide-receipt-text" class="flex justify-center py-2"
-                        :variant="resolutionType === 'misc_sale' ? 'solid' : 'outline'"
-                        @click="resolutionType = 'misc_sale'" />
-                </div>
-                <div class="border-b border-default pb-4">
-                    <!-- Controls -->
-                    <div v-if="resolutionType === 'job_order'">
-                        <div v-if="!isSearchingManually" class="flex items-center justify-between mb-4">
-                            <p class="text-muted">Suggested matches, ranked by score</p>
-                            <UButton label="Search manually" variant="outline" color="neutral"
-                                @click="() => { isSearchingManually = true }" />
-                        </div>
-                        <div v-else class="flex items-center gap-4 mb-4">
-                            <UInput icon="i-lucide-search" placeholder="Search job order number or customer name"
-                                class="w-full" />
-                            <UButton label="Back to Suggestions" variant="outline" color="neutral"
-                                @click="() => { isSearchingManually = false }" />
-                        </div>
-                    </div>
-                    <!-- Form -->
-                    <MatchesList v-if="resolutionType === 'job_order'"
-                        :matches-list="reviewData.entity.possible_matches"
-                        v-model:selected-match-id="selectedMatchId" />
-                    <MiscSaleForm v-else-if="resolutionType === 'misc_sale'" v-model:amount="miscSale.amount"
-                        v-model:date="miscSale.date" v-model:description="miscSale.description" />
-                </div>
-                <UFormField label="Resolution note" required>
-                    <UTextarea class="w-full" />
-                </UFormField>
-                <UButton label="Confirm and mark as resolved" icon="i-lucide-check"
-                    class="flex w-full justify-center" />
-            </section>
+            <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches" :entity-id="reviewData.entity_id" />
         </div>
     </Transition>
 </template>

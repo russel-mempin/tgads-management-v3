@@ -1,7 +1,8 @@
-from sqlmodel import Session, select
-from app.models import Customer
 from fastapi import HTTPException
 from sqlalchemy import func
+from sqlmodel import Session, select
+
+from app.models import Customer
 
 
 def get_all_customer_names(

@@ -1,12 +1,12 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import String, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
 from app.enums import PaymentStatus, ReviewEntityType
-from app.models import ForReview, JobOrder, UnlinkedPayment
+from app.models import Customer, ForReview, JobOrder, UnlinkedPayment
 from app.schemas.for_review import (
     ForReviewDetails,
     JobOrderPublic,
@@ -259,3 +259,61 @@ def get_payment_for_review_details(
         resolved_by_name=for_review_item.resolved_by_name,
         entity=entity_data,
     )
+
+
+def find_possible_job_orders(
+    db: Session,
+    payment: UnlinkedPayment,
+    search_value: str,
+) -> list[PossibleJobOrder]:
+    search_value = search_value.strip()
+
+    query = (
+        select(JobOrder)
+        .join(Customer, isouter=True)
+        .where(
+            JobOrder.is_active,
+            JobOrder.payment_status != PaymentStatus.FULLY_PAID,
+            or_(
+                JobOrder.jo_number.cast(String).ilike(f"%{search_value}%"),
+                Customer.name.ilike(f"%{search_value}%"),
+            ),
+        )
+        .options(
+            selectinload(JobOrder.customer),
+            selectinload(JobOrder.job_items),
+            selectinload(JobOrder.payments),
+        )
+    )
+
+    job_orders = db.exec(query).all()
+
+    results = []
+
+    for job_order in job_orders:
+        score, reasons = _calculate_job_order_match(
+            payment,
+            job_order,
+        )
+
+        results.append(
+            PossibleJobOrder(
+                id=job_order.id,
+                jo_number=job_order.jo_number,
+                job_items=job_order.job_items,
+                customer_name=(job_order.customer.name if job_order.customer else None),
+                date_received=job_order.date_received,
+                total_due=job_order.total_due,
+                total_paid=job_order.total_paid,
+                remaining_balance=(job_order.total_due - job_order.total_paid),
+                match_score=score,
+                match_reasons=reasons,
+            )
+        )
+
+    results.sort(
+        key=lambda result: result.match_score,
+        reverse=True,
+    )
+
+    return results

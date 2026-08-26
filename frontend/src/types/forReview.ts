@@ -26,7 +26,7 @@ export interface ForReview {
     resolved_by_name?: string | null
 }
 
-export interface PossibleMatches {
+export interface PossibleMatch {
     id: string
     jo_number: number
     job_items: JobItem[]
@@ -48,7 +48,7 @@ export interface UnlinkedPayment {
     description?: string | null
     account_id: string
     account_name?: string | null
-    possible_matches: PossibleMatches[]
+    possible_matches: PossibleMatch[]
 }
 
 export interface PaymentForReview extends ForReview {
