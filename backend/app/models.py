@@ -372,6 +372,7 @@ class JobItemBase(SQLModel):
     discount_amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     extra_charge: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
 
+
 class JobItem(JobItemBase, table=True):
     __tablename__ = "job_items"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -433,6 +434,10 @@ class Payment(PaymentBase, table=True):
     )
     account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    source_unlinked_payment_id: uuid.UUID | None = Field(
+        default=None,
+        index=True,
+    )
 
     job_order: JobOrder = Relationship(back_populates="payments")
 
@@ -530,7 +535,9 @@ class AccountTransaction(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     description: str = Field()
-    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))  # positive = in, negative = out
+    amount: Decimal = Field(
+        sa_column=Column(Numeric(12, 2), nullable=False)
+    )  # positive = in, negative = out
     running_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
@@ -585,7 +592,7 @@ class UnlinkedPayment(SQLModel, table=True):
     )
 
     account: Account = Relationship(back_populates="unlinked_payments")
-    
+
     @property
     def account_name(self) -> str | None:
         return self.account.name if self.account else None

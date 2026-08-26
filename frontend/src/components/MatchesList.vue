@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { PossibleMatches } from '@/types/forReview';
+import type { PossibleMatch } from '@/types/forReview';
 import { formatJobItem, matchPercentageClass, matchPercentage, formatCurrency } from '@/utils/formatters';
 
 const props = defineProps<{
-	matchesList: PossibleMatches[]
+	matchesList: PossibleMatch[]
 }>()
 
 const selectedMatchId = defineModel<string | null>('selectedMatchId', { required: true })

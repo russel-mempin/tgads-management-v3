@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import axios from 'axios'
 // Type imports
-import type { PaymentForReview, PossibleMatch } from '@/types/forReview';
+import type { PaymentForReview } from '@/types/forReview';
+import type { MiscSaleCreate } from '@/types/miscSale';
 // API call imports
-import { getPaymentForReviewDetails } from '@/api/forReviews';
+import { getPaymentForReviewDetails, assignPaymentDataToJob } from '@/api/forReviews';
 
 const route = useRoute()
+const toast = useToast()
 // Data variables
-const reviewData = ref<PaymentForReview>()
-const possibleJobOrders = ref<PossibleMatch[]>([])
+const reviewData = ref<PaymentForReview | null>(null)
 
 // UI Variables
 const loading = ref(true)
@@ -24,7 +26,6 @@ const fetchReviewDetails = async () => {
         }
         const data = await getPaymentForReviewDetails(forReviewId)
         reviewData.value = data
-        possibleJobOrders.value = data.entity.possible_matches
     }
     finally {
         loading.value = false
@@ -33,6 +34,49 @@ const fetchReviewDetails = async () => {
 onMounted(async () => {
     await fetchReviewDetails()
 })
+
+type Resolution =
+    | {
+        type: 'job_order'
+        match: string
+    }
+    | {
+        type: 'misc_sale'
+        sale: MiscSaleCreate
+    }
+const saveToDb = async (resolution: Resolution) => {
+    if (resolution.type === 'job_order') {
+        if (!reviewData.value?.entity) return
+        try {
+            await assignPaymentDataToJob(reviewData.value.entity, resolution.match)
+            toast.add({
+                title: 'Payment data linked to job.',
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+            await fetchReviewDetails()
+        }
+        catch (error: unknown) {
+            console.error('Failed to create payment:', error)
+
+            let message = 'An unexpected error occurred.'
+
+            if (axios.isAxiosError(error)) {
+                message = error.response?.data?.detail ?? 'Failed to create payment.'
+            }
+
+            toast.add({
+                title: 'Saving data failed.',
+                description: message,
+                color: 'error',
+                icon: 'i-lucide-x'
+            })
+        }
+    } else {
+        console.log(resolution.sale)
+        // resolve with misc sale
+    }
+}
 </script>
 
 <template>
@@ -54,7 +98,8 @@ onMounted(async () => {
                 <PaymentDetails :entity="reviewData.entity" />
                 <FlagDetails :flag-data="reviewData" />
             </div>
-            <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches" :entity-id="reviewData.entity_id" />
+            <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches"
+                :entity-id="reviewData.entity_id" @resolve="saveToDb" />
         </div>
     </Transition>
 </template>

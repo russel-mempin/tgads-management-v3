@@ -1,3 +1,4 @@
+import type { UnlinkedPayment } from '@/types/forReview'
 import http from './http'
 
 export const getAllForReview = async () => {
@@ -29,5 +30,10 @@ export const searchPossibleJobOrders = async (entity_id: string, search_value: s
             },
         },
     )
+    return res.data
+}
+
+export const assignPaymentDataToJob = async (entity: UnlinkedPayment, match_id: string) => {
+    const res = await http.post(`/for-reviews/payments/${entity.id}/`, entity, { params: { match_id: match_id } })
     return res.data
 }

@@ -1,17 +1,27 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import String, func, or_
+from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
 from app.enums import PaymentStatus, ReviewEntityType
-from app.models import Customer, ForReview, JobOrder, UnlinkedPayment
+from app.models import (
+    Account,
+    AuditLog,
+    Customer,
+    ForReview,
+    JobOrder,
+    Payment,
+    UnlinkedPayment,
+)
 from app.schemas.for_review import (
     ForReviewDetails,
+    JobItemPublic,
     JobOrderPublic,
     PossibleJobOrder,
     UnlinkedPaymentReviewData,
+    UnlinkedPaymentWithJobMatch,
 )
 
 
@@ -21,8 +31,22 @@ def _normalize_name(value: str | None) -> str:
     return " ".join(value.lower().split())
 
 
-def _build_for_review_details():
-    print("Do something")
+def _build_for_review_details(for_review_item: ForReview, entity_data: UnlinkedPaymentReviewData | JobOrderPublic) -> ForReviewDetails:
+    return ForReviewDetails(
+        id=for_review_item.id,
+        entity_type=for_review_item.entity_type,
+        entity_id=for_review_item.entity_id,
+        entity_reference=for_review_item.entity_reference,
+        reason=for_review_item.reason,
+        reason_category=for_review_item.reason_category,
+        resolution_note=for_review_item.resolution_note,
+        created_at=for_review_item.created_at,
+        created_by_name=for_review_item.created_by_name,
+        resolved_at=for_review_item.resolved_at,
+        resolved_by_id=for_review_item.resolved_by_id,
+        resolved_by_name=for_review_item.resolved_by_name,
+        entity=entity_data,
+    )
 
 
 def _calculate_job_order_match(
@@ -89,20 +113,15 @@ def get_count_of_for_reviews(db: Session) -> int:
 
 def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
     for_review_item = db.exec(
-        select(ForReview)
-        .where(ForReview.entity_id == entity_id)
-        .options(
-            selectinload(ForReview.created_by),
-            selectinload(ForReview.resolved_by),
-        )
+        select(ForReview).where(ForReview.entity_id == entity_id)
     ).first()
     if not for_review_item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
         )
-    if not for_review_item.entity_type == ReviewEntityType.JOB_ORDER:
+    if for_review_item.entity_type != ReviewEntityType.JOB_ORDER:
         raise HTTPException(
-            status_code=status.HTTP_400_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Entity type should be Job Order.",
         )
     entity = db.exec(
@@ -113,21 +132,7 @@ def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDe
             status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
         )
     entity_data = JobOrderPublic.model_validate(entity, from_attributes=True)
-    return ForReviewDetails(
-        id=for_review_item.id,
-        entity_type=for_review_item.entity_type,
-        entity_id=for_review_item.entity_id,
-        entity_reference=for_review_item.entity_reference,
-        reason=for_review_item.reason,
-        reason_category=for_review_item.reason_category,
-        resolution_note=for_review_item.resolution_note,
-        created_at=for_review_item.created_at,
-        created_by_name=for_review_item.created_by_name,
-        resolved_at=for_review_item.resolved_at,
-        resolved_by_id=for_review_item.resolved_by_id,
-        resolved_by_name=for_review_item.resolved_by_name,
-        entity=entity_data,
-    )
+    return _build_for_review_details(for_review_item, entity_data)
 
 
 def get_possible_job_orders_for_payment(
@@ -143,9 +148,9 @@ def get_possible_job_orders_for_payment(
             JobOrder.payment_status != PaymentStatus.FULLY_PAID,
         )
         .options(
-            selectinload(JobOrder.customer),
-            selectinload(JobOrder.job_items),
-            selectinload(JobOrder.payments),
+            selectinload(JobOrder.customer),  # type: ignore
+            selectinload(JobOrder.job_items),  # type: ignore
+            selectinload(JobOrder.payments),  # type: ignore
         )
     )
 
@@ -170,7 +175,13 @@ def get_possible_job_orders_for_payment(
             PossibleJobOrder(
                 id=job_order.id,
                 jo_number=job_order.jo_number,
-                job_items=job_order.job_items,
+                job_items=[
+                    JobItemPublic.model_validate(
+                        item,
+                        from_attributes=True,
+                    )
+                    for item in job_order.job_items
+                ],
                 customer_name=job_order.customer_name,
                 date_received=job_order.date_received,
                 total_due=job_order.total_due,
@@ -194,12 +205,7 @@ def get_payment_for_review_details(
     entity_id: uuid.UUID,
 ) -> ForReviewDetails:
     for_review_item = db.exec(
-        select(ForReview)
-        .where(ForReview.entity_id == entity_id)
-        .options(
-            selectinload(ForReview.created_by),
-            selectinload(ForReview.resolved_by),
-        )
+        select(ForReview).where(ForReview.entity_id == entity_id)
     ).first()
 
     if not for_review_item:
@@ -217,7 +223,7 @@ def get_payment_for_review_details(
     entity = db.exec(
         select(UnlinkedPayment)
         .where(UnlinkedPayment.id == for_review_item.entity_id)
-        .options(selectinload(UnlinkedPayment.account))
+        .options(selectinload(UnlinkedPayment.account))  # type: ignore
     ).first()
 
     if not entity:
@@ -244,21 +250,7 @@ def get_payment_for_review_details(
         possible_matches=possible_matches,
     )
 
-    return ForReviewDetails(
-        id=for_review_item.id,
-        entity_type=for_review_item.entity_type,
-        entity_id=for_review_item.entity_id,
-        entity_reference=for_review_item.entity_reference,
-        reason=for_review_item.reason,
-        reason_category=for_review_item.reason_category,
-        resolution_note=for_review_item.resolution_note,
-        created_at=for_review_item.created_at,
-        created_by_name=for_review_item.created_by_name,
-        resolved_at=for_review_item.resolved_at,
-        resolved_by_id=for_review_item.resolved_by_id,
-        resolved_by_name=for_review_item.resolved_by_name,
-        entity=entity_data,
-    )
+    return _build_for_review_details(for_review_item, entity_data)
 
 
 def find_possible_job_orders(
@@ -275,14 +267,14 @@ def find_possible_job_orders(
             JobOrder.is_active,
             JobOrder.payment_status != PaymentStatus.FULLY_PAID,
             or_(
-                JobOrder.jo_number.cast(String).ilike(f"%{search_value}%"),
-                Customer.name.ilike(f"%{search_value}%"),
+                cast(JobOrder.jo_number, String).ilike(f"%{search_value}%"),
+                Customer.name.ilike(f"%{search_value}%"),  # type: ignore
             ),
         )
         .options(
-            selectinload(JobOrder.customer),
-            selectinload(JobOrder.job_items),
-            selectinload(JobOrder.payments),
+            selectinload(JobOrder.customer),  # type: ignore
+            selectinload(JobOrder.job_items),  # type: ignore
+            selectinload(JobOrder.payments),  # type: ignore
         )
     )
 
@@ -300,7 +292,13 @@ def find_possible_job_orders(
             PossibleJobOrder(
                 id=job_order.id,
                 jo_number=job_order.jo_number,
-                job_items=job_order.job_items,
+                job_items=[
+                    JobItemPublic.model_validate(
+                        item,
+                        from_attributes=True,
+                    )
+                    for item in job_order.job_items
+                ],
                 customer_name=(job_order.customer.name if job_order.customer else None),
                 date_received=job_order.date_received,
                 total_due=job_order.total_due,
@@ -317,3 +315,43 @@ def find_possible_job_orders(
     )
 
     return results
+
+
+def assign_payment_to_job_order(db: Session, payment_data: UnlinkedPaymentWithJobMatch, match_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        job_order = db.exec(select(JobOrder).where(JobOrder.id == match_id)).first()
+        if not job_order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job Order not found.")
+
+        unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == payment_data.id)).first()
+        if not unlinked_payment:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unlinked Payment not found.")
+    
+        account = db.exec(select(Account).where(Account.name == payment_data.account_name)).first()
+        if not account:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+        payment = Payment(
+            date_received=unlinked_payment.date_received,
+            reference_number=unlinked_payment.reference_number,
+            amount=unlinked_payment.amount,
+            notes="Assigned from unlinked payments.",
+            account_name_snapshot=account.name,
+            job_order_id=job_order.id,
+            account_id=account.id
+        )
+        db.add(payment)
+        db.delete(unlinked_payment)
+        db.flush()
+        job_order.sync_computed_fields()
+        audit = AuditLog(
+            action=f"Linked payment {unlinked_payment.reference_number} to job order {job_order.jo_number}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(job_order)
+        return job_order
+    except HTTPException:
+            raise
+    except Exception:
+        db.rollback()
+        raise   

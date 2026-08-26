@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from app.crud.for_review import (
+    assign_payment_to_job_order,
     find_possible_job_orders,
     get_all_for_review_items,
     get_count_of_for_reviews,
@@ -13,8 +14,13 @@ from app.crud.for_review import (
     get_possible_job_orders_for_payment,
 )
 from app.database import get_session
-from app.models import UnlinkedPayment
-from app.schemas.for_review import ForReviewDetails, ForReviewPublic, PossibleJobOrder
+from app.models import Payment, UnlinkedPayment, User
+from app.schemas.for_review import (
+    ForReviewDetails,
+    ForReviewPublic,
+    PossibleJobOrder,
+    UnlinkedPaymentWithJobMatch,
+)
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/for-reviews", tags=["for-reviews"], dependencies=[Depends(get_current_active_user)])
@@ -54,3 +60,8 @@ def search_possible_job_orders(entity_id: uuid.UUID, search_value: str, db: Sess
             detail="Unlinked Payment not found."
         )
     return find_possible_job_orders(db, payment, search_value)
+
+
+@router.post("/payments/{entity_id}/", response_model=Payment)
+def create_payment_data_to_job(payment_data: UnlinkedPaymentWithJobMatch, match_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return assign_payment_to_job_order(db, payment_data, match_id, current_user.id)

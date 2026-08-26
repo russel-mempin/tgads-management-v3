@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useDebounceFn } from '@vueuse/core';
 import { searchPossibleJobOrders } from '@/api/forReviews';
 import type { PossibleMatch } from '@/types/forReview'
@@ -13,7 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     resolve: [
         value:
-        | { type: 'job_order'; match: PossibleMatch }
+        | { type: 'job_order'; match: string }
         | { type: 'misc_sale'; sale: MiscSaleCreate }
     ]
 }>()
@@ -28,8 +28,21 @@ const miscSale = ref<MiscSaleCreate>({
     date: '',
     description: '',
 })
+const resolutionNote = ref('')
 
 let latestSearch = ''
+
+const canConfirm = computed(() => {
+    if (resolutionType.value === 'job_order') {
+        return selectedMatchId.value !== null
+    }
+
+    return (
+        miscSale.value.amount > 0 &&
+        !!miscSale.value.date &&
+        !!miscSale.value.description.trim()
+    )
+})
 
 const backToSuggestions = () => {
     isSearchingManually.value = false
@@ -41,17 +54,15 @@ const backToSuggestions = () => {
 
 const searchJobOrders = useDebounceFn(async (value: string) => {
     const trimmedValue = value.trim()
-    if (!trimmedValue) {
-        possibleJobOrders.value = props.initialMatches ?? []
-        return
-    }
     if (!props.entityId) {
         return
     }
+    possibleJobOrders.value = props.initialMatches
     const results = await searchPossibleJobOrders(
         props.entityId,
         trimmedValue,
     )
+    latestSearch = trimmedValue
     if (latestSearch === trimmedValue) {
         possibleJobOrders.value = results
     }
@@ -62,17 +73,20 @@ watch(dataToSearch, (value) => {
     }
     searchJobOrders(value)
 })
+watch(
+    () => props.initialMatches,
+    (matches) => {
+        if (!isSearchingManually.value) {
+            possibleJobOrders.value = matches
+        }
+    }
+)
 const confirmResolution = () => {
     if (resolutionType.value === 'job_order') {
-        const match = possibleJobOrders.value.find(
-            match => match.id === selectedMatchId.value
-        )
-        if (!match) {
-            return
-        }
+        if (!selectedMatchId.value) return
         emit('resolve', {
             type: 'job_order',
-            match,
+            match: selectedMatchId.value,
         })
         return
     }
@@ -117,8 +131,9 @@ const confirmResolution = () => {
                 v-model:date="miscSale.date" v-model:description="miscSale.description" />
         </div>
         <UFormField label="Resolution note" required>
-            <UTextarea class="w-full" />
+            <UTextarea v-model="resolutionNote" class="w-full" />
         </UFormField>
-        <UButton label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center" @click="confirmResolution" />
+        <UButton :disabled="!canConfirm" label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center"
+            @click="confirmResolution" />
     </section>
 </template>

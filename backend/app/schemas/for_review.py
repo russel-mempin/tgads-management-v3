@@ -34,9 +34,9 @@ class PossibleJobOrder(SQLModel):
     remaining_balance: Decimal
     match_score: int
     match_reasons: list[str]
-    
 
-class UnlinkedPaymentReviewData(SQLModel):
+
+class UnlinkedPaymentWithJobMatch(SQLModel):
     id: uuid.UUID
     date_received: datetime
     reference_number: str | None
@@ -45,6 +45,9 @@ class UnlinkedPaymentReviewData(SQLModel):
     description: str | None
     account_id: uuid.UUID
     account_name: str | None
+
+
+class UnlinkedPaymentReviewData(UnlinkedPaymentWithJobMatch):
     possible_matches: list[PossibleJobOrder]
     
     
