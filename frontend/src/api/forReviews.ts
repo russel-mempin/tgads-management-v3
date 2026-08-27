@@ -33,7 +33,12 @@ export const searchPossibleJobOrders = async (entity_id: string, search_value: s
     return res.data
 }
 
-export const assignPaymentDataToJob = async (entity: UnlinkedPayment, match_id: string) => {
-    const res = await http.post(`/for-reviews/payments/${entity.id}/`, entity, { params: { match_id: match_id } })
+export const assignPaymentDataToJob = async (entity_id: string, match_id: string) => {
+    const res = await http.post(`/for-reviews/payments/${entity_id}/job-assign`, null, { params: { match_id: match_id } })
+    return res.data
+}
+
+export const assignPaymentDataToMisc = async (entity_id: string) => {
+    const res = await http.post(`/for-reviews/payments/${entity_id}/misc-assign`)
     return res.data
 }

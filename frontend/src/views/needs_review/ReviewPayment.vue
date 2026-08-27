@@ -6,7 +6,7 @@ import axios from 'axios'
 import type { PaymentForReview } from '@/types/forReview';
 import type { MiscSaleCreate } from '@/types/miscSale';
 // API call imports
-import { getPaymentForReviewDetails, assignPaymentDataToJob } from '@/api/forReviews';
+import { getPaymentForReviewDetails, assignPaymentDataToJob, assignPaymentDataToMisc } from '@/api/forReviews';
 import router from '@/router';
 
 const route = useRoute()
@@ -46,36 +46,38 @@ type Resolution =
         sale: MiscSaleCreate
     }
 const saveToDb = async (resolution: Resolution) => {
+    if (!reviewData.value?.entity) return
     if (resolution.type === 'job_order') {
-        if (!reviewData.value?.entity) return
         try {
-            await assignPaymentDataToJob(reviewData.value.entity, resolution.match)
+            const res = await assignPaymentDataToJob(reviewData.value.entity_id, resolution.match)
             toast.add({
-                title: 'Payment data linked to job.',
+                title: res.message,
                 color: 'success',
                 icon: 'i-lucide-circle-check'
             })
             await router.push('/review-data')
         }
-        catch (error: unknown) {
-            console.error('Failed to create payment:', error)
-
-            let message = 'An unexpected error occurred.'
-
+        catch (error) {
             if (axios.isAxiosError(error)) {
-                message = error.response?.data?.detail ?? 'Failed to create payment.'
+                console.log(error.response?.data)
             }
-
-            toast.add({
-                title: 'Saving data failed.',
-                description: message,
-                color: 'error',
-                icon: 'i-lucide-x'
-            })
         }
-    } else {
-        console.log(resolution.sale)
-        // resolve with misc sale
+    } 
+    else if (resolution.type === 'misc_sale') {
+        try {
+            const res = await assignPaymentDataToMisc(reviewData.value.entity_id)
+            toast.add({
+                title: res.message,
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+            await router.push('/review-data')
+        }
+        catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.log(error.response?.data)
+            }
+        }
     }
 }
 </script>
@@ -99,8 +101,8 @@ const saveToDb = async (resolution: Resolution) => {
                 <PaymentDetails :entity="reviewData.entity" />
                 <FlagDetails :flag-data="reviewData" />
             </div>
-            <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches"
-                :entity="reviewData.entity" @resolve="saveToDb" />
+            <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches" :entity="reviewData.entity"
+                @resolve="saveToDb" />
         </div>
     </Transition>
 </template>

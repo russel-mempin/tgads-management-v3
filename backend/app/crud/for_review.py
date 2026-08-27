@@ -12,6 +12,7 @@ from app.models import (
     Customer,
     ForReview,
     JobOrder,
+    MiscSale,
     Payment,
     UnlinkedPayment,
 )
@@ -21,7 +22,6 @@ from app.schemas.for_review import (
     JobOrderPublic,
     PossibleJobOrder,
     UnlinkedPaymentReviewData,
-    UnlinkedPaymentWithJobMatch,
 )
 
 
@@ -312,16 +312,15 @@ def find_possible_job_orders(
     return results
 
 
-# manual made
-def assign_payment_to_job_order(db: Session, payment_data: UnlinkedPaymentWithJobMatch, match_id: uuid.UUID, current_user_id: uuid.UUID):
+def assign_payment_to_job_order(db: Session, entity_id: uuid.UUID, match_id: uuid.UUID, current_user_id: uuid.UUID):
     try:
         job_order = db.exec(select(JobOrder).where(JobOrder.id == match_id)).first()
         if not job_order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job Order not found.")
-        unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == payment_data.id)).first()
+        unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)).first()
         if not unlinked_payment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unlinked Payment not found.")
-        account = db.exec(select(Account).where(Account.name == payment_data.account_name)).first()
+        account = db.exec(select(Account).where(Account.name == unlinked_payment.account_name)).first()
         if not account:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
         for_review_data = db.exec(select(ForReview).where(ForReview.entity_id == unlinked_payment.id)).first()
@@ -352,13 +351,48 @@ def assign_payment_to_job_order(db: Session, payment_data: UnlinkedPaymentWithJo
         )
         db.add(audit)
         db.commit()
-        db.refresh(job_order)
-        return job_order
+        return { "message": f"Payment successfully assigned to JO-{job_order.jo_number}." }
     except HTTPException:
-            raise
+        raise
     except Exception:
         db.rollback()
         raise   
 
 
-def assign_payment_to_misc_sale(db: Session, payment_data: UnlinkedPayment)
+def assign_payment_to_misc_sale(db: Session, entity_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)).first()
+        if not unlinked_payment:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unlinked Payment not found.")
+        account = db.exec(select(Account).where(Account.name == unlinked_payment.account_name)).first()
+        if not account:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+        for_review_data = db.exec(select(ForReview).where(ForReview.entity_id == unlinked_payment.id)).first()
+        if not for_review_data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="For Review data not found.")
+        if not unlinked_payment.description:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Payment description is required")
+        misc_sale = MiscSale(
+            date = unlinked_payment.date_received,
+            description= unlinked_payment.description,
+            amount = unlinked_payment.amount,
+        )
+        db.add(misc_sale)
+        db.delete(for_review_data)
+        db.delete(unlinked_payment)
+        audit = AuditLog(
+            action=(
+                f"Marked unlinked payment to Misc Sale Ref. No. "
+                f"{unlinked_payment.reference_number} "
+                f"(₱{unlinked_payment.amount}) "
+            ),
+            user_id=current_user_id,
+        )
+        db.add(audit)
+        db.commit()
+        return { "message": "Payment successfully marked as Misc Sale." }
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise

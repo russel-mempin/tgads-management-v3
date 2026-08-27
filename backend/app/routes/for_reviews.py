@@ -6,6 +6,7 @@ from sqlmodel import Session
 
 from app.crud.for_review import (
     assign_payment_to_job_order,
+    assign_payment_to_misc_sale,
     find_possible_job_orders,
     get_all_for_review_items,
     get_count_of_for_reviews,
@@ -18,7 +19,6 @@ from app.schemas.for_review import (
     ForReviewDetails,
     ForReviewPublic,
     PossibleJobOrder,
-    UnlinkedPaymentWithJobMatch,
 )
 from app.services.dependencies import get_current_active_user
 
@@ -56,6 +56,11 @@ def search_possible_job_orders(entity_id: uuid.UUID, search_value: str, db: Sess
     return find_possible_job_orders(db, payment, search_value)
 
 
-@router.post("/payments/{entity_id}/")
-def create_payment_data_to_job(payment_data: UnlinkedPaymentWithJobMatch, match_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return assign_payment_to_job_order(db, payment_data, match_id, current_user.id)
+@router.post("/payments/{entity_id}/job-assign")
+def create_payment_data_to_job(entity_id: uuid.UUID, match_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return assign_payment_to_job_order(db, entity_id, match_id, current_user.id)
+
+
+@router.post("/payments/{entity_id}/misc-assign")
+def create_payment_data_to_misc(entity_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return assign_payment_to_misc_sale(db, entity_id, current_user.id)
