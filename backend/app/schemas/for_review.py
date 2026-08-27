@@ -15,12 +15,8 @@ class ForReviewPublic(SQLModel):
     entity_reference: str
     reason: str
     reason_category: ReasonCategory
-    resolution_note: str | None
     created_at: datetime
     created_by_name: str
-    resolved_at: datetime | None
-    resolved_by_id: uuid.UUID | None
-    resolved_by_name: str | None = None
     
     
 class PossibleJobOrder(SQLModel):

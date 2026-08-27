@@ -101,39 +101,39 @@ export const mapExpenseCategory = (category: string): string => {
 type BadgeColor = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary'
 
 const paymentStatusColors: Record<string, BadgeColor> = {
-    'Fully Paid': 'success',
-    'Partial': 'warning',
-    'Unpaid': 'error',
-    'Credit': 'info',
-    'Refunded': 'neutral',
-    'Overcharged': 'warning',
+  'Fully Paid': 'success',
+  'Partial': 'warning',
+  'Unpaid': 'error',
+  'Credit': 'info',
+  'Refunded': 'neutral',
+  'Overcharged': 'warning',
 }
 
 const jobStatusColors: Record<string, BadgeColor> = {
-    'Pending': 'warning',
-    'For Layout': 'info',
-    'For Approval': 'primary',
-    'For Printing': 'primary',
-    'For Pickup': 'success',
-    'Released': 'neutral',
-    'Cancelled': 'error',
+  'Pending': 'warning',
+  'For Layout': 'info',
+  'For Approval': 'primary',
+  'For Printing': 'primary',
+  'For Pickup': 'success',
+  'Released': 'neutral',
+  'Cancelled': 'error',
 }
 
 const reviewCategoryColors: Record<string, BadgeColor> = {
-    'Missing Data': 'warning',
-    'Pricing Discrepancy': 'error',
-    'Status Issue': 'info',
-    'Needs Verification': 'neutral',
+  'Missing Data': 'warning',
+  'Pricing Discrepancy': 'error',
+  'Status Issue': 'info',
+  'Needs Verification': 'neutral',
 }
 
 export const getPaymentStatusColor = (status?: string): BadgeColor =>
-    paymentStatusColors[status ?? 'Unpaid'] ?? 'error'
+  paymentStatusColors[status ?? 'Unpaid'] ?? 'error'
 
 export const getJobStatusColor = (status?: string): BadgeColor =>
-    jobStatusColors[status ?? 'Pending'] ?? 'warning'
+  jobStatusColors[status ?? 'Pending'] ?? 'warning'
 
 export const getReviewCategoryColor = (category?: string): BadgeColor =>
-    reviewCategoryColors[category ?? ''] ?? 'neutral'
+  reviewCategoryColors[category ?? ''] ?? 'neutral'
 
 export const matchPercentage = (score: number) =>
   Math.min(100, Math.round((score / 105) * 100))
@@ -165,4 +165,14 @@ export const formatJobItem = (item: JobItem): string => {
   return [`${item.quantity} pc(s)`, dimensions, service]
     .filter(Boolean)
     .join(' ')
+}
+
+export const toDatetimeLocal = (value: string) => {
+  const date = new Date(value)
+
+  const offset = date.getTimezoneOffset() * 60_000
+
+  return new Date(date.getTime() - offset)
+    .toISOString()
+    .slice(0, 16)
 }

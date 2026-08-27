@@ -21,9 +21,6 @@ export interface ForReview {
     reason_category: ReasonCategory
     created_at: Date
     created_by_name: string
-    resolved_at?: Date
-    resolved_by_id?: string | null
-    resolved_by_name?: string | null
 }
 
 export interface PossibleMatch {
@@ -41,7 +38,7 @@ export interface PossibleMatch {
 
 export interface UnlinkedPayment {
     id: string
-    date_received: Date
+    date_received: string
     reference_number?: string | null
     amount: number
     customer_name?: string | null

@@ -9,8 +9,6 @@ const props = defineProps<{
         | 'created_at'
         | 'created_by_name'
         | 'reason'
-        | 'resolved_at'
-        | 'resolved_by_name'
     >
 }>()
 </script>
@@ -38,14 +36,6 @@ const props = defineProps<{
             <div>
                 <p class="text-sm uppercase text-muted">Reason</p>
                 <p class="text-highlighted">{{ props.flagData.reason }}</p>
-            </div>
-            <div>
-                <p class="text-sm uppercase text-muted">Resolved At</p>
-                <p class="text-highlighted">{{ formatDate(props.flagData.resolved_at) ?? '-' }}</p>
-            </div>
-            <div>
-                <p class="text-sm uppercase text-muted">Resolved By</p>
-                <p class="text-highlighted">{{ props.flagData.resolved_by_name ?? '-' }}</p>
             </div>
         </div>
     </section>

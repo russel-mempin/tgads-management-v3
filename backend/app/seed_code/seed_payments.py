@@ -120,7 +120,6 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             entity_reference=reference_number,
                             reason="No links to any job.",
                             reason_category=ReasonCategory.MISSING_DATA,
-                            resolution_note="Pending"
                         )
                     )
                     unlinked_count += 1

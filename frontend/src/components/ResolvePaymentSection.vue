@@ -2,12 +2,13 @@
 import { ref, watch, computed } from 'vue'
 import { useDebounceFn } from '@vueuse/core';
 import { searchPossibleJobOrders } from '@/api/forReviews';
-import type { PossibleMatch } from '@/types/forReview'
+import type { PossibleMatch, UnlinkedPayment } from '@/types/forReview'
 import type { MiscSaleCreate } from '@/types/miscSale'
+import { toDatetimeLocal } from '@/utils/formatters';
 
 const props = defineProps<{
     initialMatches: PossibleMatch[]
-    entityId: string
+    entity: UnlinkedPayment
 }>()
 
 const emit = defineEmits<{
@@ -24,11 +25,10 @@ const dataToSearch = ref('')
 const selectedMatchId = ref<string | null>(null)
 const possibleJobOrders = ref<PossibleMatch[]>(props.initialMatches)
 const miscSale = ref<MiscSaleCreate>({
-    amount: 0,
-    date: '',
-    description: '',
+    amount: props.entity.amount,
+    date: toDatetimeLocal(props.entity.date_received),
+    description: props.entity.description ?? '',
 })
-const resolutionNote = ref('')
 
 let latestSearch = ''
 
@@ -54,12 +54,12 @@ const backToSuggestions = () => {
 
 const searchJobOrders = useDebounceFn(async (value: string) => {
     const trimmedValue = value.trim()
-    if (!props.entityId) {
+    if (!props.entity.id) {
         return
     }
     possibleJobOrders.value = props.initialMatches
     const results = await searchPossibleJobOrders(
-        props.entityId,
+        props.entity.id,
         trimmedValue,
     )
     latestSearch = trimmedValue
@@ -110,7 +110,7 @@ const confirmResolution = () => {
             <UButton label="Mark as Misc Sale" icon="i-lucide-receipt-text" class="flex justify-center py-2"
                 :variant="resolutionType === 'misc_sale' ? 'solid' : 'outline'" @click="resolutionType = 'misc_sale'" />
         </div>
-        <div class="border-b border-default pb-4">
+        <div>
             <!-- Controls -->
             <div v-if="resolutionType === 'job_order'">
                 <div v-if="!isSearchingManually" class="flex items-center justify-between mb-4">
@@ -130,9 +130,6 @@ const confirmResolution = () => {
             <MiscSaleForm v-else-if="resolutionType === 'misc_sale'" v-model:amount="miscSale.amount"
                 v-model:date="miscSale.date" v-model:description="miscSale.description" />
         </div>
-        <UFormField label="Resolution note" required>
-            <UTextarea v-model="resolutionNote" class="w-full" />
-        </UFormField>
         <UButton :disabled="!canConfirm" label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center"
             @click="confirmResolution" />
     </section>

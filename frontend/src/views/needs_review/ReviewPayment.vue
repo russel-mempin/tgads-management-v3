@@ -7,6 +7,7 @@ import type { PaymentForReview } from '@/types/forReview';
 import type { MiscSaleCreate } from '@/types/miscSale';
 // API call imports
 import { getPaymentForReviewDetails, assignPaymentDataToJob } from '@/api/forReviews';
+import router from '@/router';
 
 const route = useRoute()
 const toast = useToast()
@@ -54,7 +55,7 @@ const saveToDb = async (resolution: Resolution) => {
                 color: 'success',
                 icon: 'i-lucide-circle-check'
             })
-            await fetchReviewDetails()
+            await router.push('/review-data')
         }
         catch (error: unknown) {
             console.error('Failed to create payment:', error)
@@ -99,7 +100,7 @@ const saveToDb = async (resolution: Resolution) => {
                 <FlagDetails :flag-data="reviewData" />
             </div>
             <ResolvePaymentSection :initial-matches="reviewData.entity.possible_matches"
-                :entity-id="reviewData.entity_id" @resolve="saveToDb" />
+                :entity="reviewData.entity" @resolve="saveToDb" />
         </div>
     </Transition>
 </template>
