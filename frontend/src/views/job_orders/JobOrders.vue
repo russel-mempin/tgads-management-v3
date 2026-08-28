@@ -110,7 +110,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'payment_status',
         header: 'Payment',
         cell: ({ row }) => {
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getPaymentStatusColor(row.original.payment_status) }, () =>
+            return h(UBadge, { color: getPaymentStatusColor(row.original.payment_status) }, () =>
                 row.getValue('payment_status')
             )
         }
@@ -119,7 +119,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'overall_job_status',
         header: 'Status',
         cell: ({ row }) => {
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getJobStatusColor(row.original.overall_job_status) }, () =>
+            return h(UBadge, { color: getJobStatusColor(row.original.overall_job_status) }, () =>
                 row.getValue('overall_job_status')
             )
         }
@@ -280,8 +280,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                         <td class="p-2.5 font-semibold text-highlighted">{{
                                             formatCurrency(item.subtotal) }}</td>
                                         <td class="p-2.5">
-                                            <UBadge variant="solid" :color="getJobStatusColor(item.job_status)" class="font-semibold">{{
-                                                item.job_status }}</UBadge>
+                                            <UBadge :color="getJobStatusColor(item.job_status)">{{item.job_status }}</UBadge>
                                         </td>
                                     </tr>
                                 </tbody>

@@ -124,38 +124,33 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
             for_review = row["for_review"].strip().lower()
             reason = row["for_review_reason"].strip()
 
-            # If no customer and has void choice, inserts job data to void table and determines void reason.
-            if void_choice:
-                reason = VOID_REASONS[void_choice]
-                print(
-                    f"JO {jo_number} has been marked as void."
-                )
-                session.add(
-                    JobOrder(
-                        jo_number=jo_number,
-                        job_date=date_received,
-                        void_reason=reason,
-                        voided_at=datetime.now(UTC),
-                        created_by_id=sysadmin.id,
-                        voided_by_id=sysadmin.id
-                    )
-                )
-                session.commit()
-                continue
-
-            # Else, determine customer and insert job order data to job orders table
             customer = get_or_create_customer(session, customer_name)
-            job_order = JobOrder(
-                date_received=date_received,
-                jo_number=jo_number,
-                customer_id=customer.id if customer else None,
-                created_by_id=sysadmin.id,
-                updated_by_id=sysadmin.id,
-                overall_job_status=JobStatus.RELEASED,
-            )
-            session.add(job_order)
 
-            # Then, if marked for review in spreadsheet, mark for review in the database.
+            if void_choice:
+                void_reason = VOID_REASONS[void_choice]
+                job_order = JobOrder(
+                    date_received=date_received,
+                    jo_number=jo_number,
+                    customer_id=customer.id if customer else None,
+                    created_by_id=sysadmin.id,
+                    updated_by_id=sysadmin.id,
+                    overall_job_status=JobStatus.RELEASED,
+                    voided_at=datetime.now(UTC),
+                    void_reason=void_reason,
+                    voided_by_id=sysadmin.id
+                )
+                print(f"JO {jo_number} has been VOIDED. Reason: {void_reason}")
+            else:
+                job_order = JobOrder(
+                    date_received=date_received,
+                    jo_number=jo_number,
+                    customer_id=customer.id if customer else None,
+                    created_by_id=sysadmin.id,
+                    updated_by_id=sysadmin.id,
+                    overall_job_status=JobStatus.RELEASED,
+                )
+            session.add(job_order)
+            # If marked for review in spreadsheet, mark for review in the database.
             if for_review:
                 session.add(
                     ForReview(
@@ -167,7 +162,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                         reason_category=ReasonCategory(row["review_category"].strip()),
                     )
                 )
-                print(f"JO {jo_number} has been marked for review.")
+                print(f"JO {jo_number} has been marked FOR REVIEW. Reason: {reason}")
         session.commit()
 
 
@@ -238,65 +233,6 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             if extra:
                 extra_service_price = extra.price
 
-            # Compute pricing and generate item_id before insertion
-            if service_requires_size:
-                if height is None or width is None or size_unit is None:
-                    print(
-                        f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
-                    )
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ORDER,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=row["jo_number"].strip(),
-                            reason=f"Missing size information for job item ({service.name}). Item data has been skipped.",
-                            reason_category=ReasonCategory(
-                                review_reason if review_reason else "Missing Data"
-                            ),
-                        )
-                    )
-                    continue
-                # After validating data, compute unit price and check if the listed price is different
-                # If the computed unit price is different, mark job for review.
-                computed_unit_price = get_computed_unit_price_from_area(
-                    price_unit=service.unit,
-                    base_rate=option.base_rate,
-                    height=height,
-                    width=width,
-                    size_unit=size_unit,
-                )
-                if (computed_unit_price + extra_service_price) > csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ORDER,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=row["jo_number"].strip(),
-                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
-                elif (computed_unit_price + extra_service_price) < csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ORDER,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=row["jo_number"].strip(),
-                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
-
             sequence = (
                 item_sequence_by_jo_and_abbr.get((jo_number, service.abbreviation), 0)
                 + 1
@@ -308,6 +244,65 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 )
                 continue
             item_id = f"{jo_number}-{service.abbreviation}-{sequence}"
+
+            # Compute pricing and generate item_id before insertion
+            if service_requires_size:
+                if height is None or width is None or size_unit is None:
+                    print(
+                        f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
+                    )
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason=f"Missing size information for job item ({service.name}).",
+                            reason_category=ReasonCategory(
+                                review_reason if review_reason else "Missing Data"
+                            ),
+                        )
+                    )
+                # After validating data, compute unit price and check if the listed price is different
+                # If the computed unit price is different, mark job for review.
+                if service_requires_size and height is not None and width is not None and size_unit is not None:
+                    computed_unit_price = get_computed_unit_price_from_area(
+                        price_unit=service.unit,
+                        base_rate=option.base_rate,
+                        height=height,
+                        width=width,
+                        size_unit=size_unit,
+                    )
+                if (computed_unit_price + extra_service_price) > csv_unit_price:
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
+                        )
+                    )
+                elif (computed_unit_price + extra_service_price) < csv_unit_price:
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=job_order.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
+                        )
+                    )
 
             item = JobItem(
                 item_id=item_id,

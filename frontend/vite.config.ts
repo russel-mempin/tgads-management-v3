@@ -108,6 +108,11 @@ export default defineConfig({
             },
           },
         },
+        badge: {
+          slots: {
+            base: 'font-semibold uppercase',
+          },
+        },
       },
     }),
   ],

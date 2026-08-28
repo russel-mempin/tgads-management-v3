@@ -3,7 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import selectinload
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.enums import PaymentStatus, ReviewEntityType
 from app.models import (
@@ -102,7 +102,7 @@ def _get_possible_job_orders_for_payment(
     query = (
         select(JobOrder)
         .where(
-            JobOrder.is_active,
+            col(JobOrder.voided_at).is_(None),
             JobOrder.payment_status != PaymentStatus.FULLY_PAID,
         )
         .options(
@@ -235,7 +235,7 @@ def find_possible_job_orders(
         select(JobOrder)
         .join(Customer, isouter=True)
         .where(
-            JobOrder.is_active,
+            col(JobOrder.voided_at).is_(None),
             JobOrder.payment_status != PaymentStatus.FULLY_PAID,
             or_(
                 cast(JobOrder.jo_number, String).ilike(f"%{search_value}%"),

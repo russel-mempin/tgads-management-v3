@@ -23,8 +23,8 @@ onMounted(async () => {
 const columns: TableColumn<ForReview>[] = [
     {
         accessorKey: 'entity_reference',
-        header: '#',
-        cell: ({ row }) => `#${row.getValue('entity_reference')}`
+        header: 'ID',
+        cell: ({ row }) => `${row.getValue('entity_reference')}`
     },
     {
         accessorKey: 'entity_type',
@@ -42,7 +42,7 @@ const columns: TableColumn<ForReview>[] = [
                 'Needs Verification': 'neutral' as const,
             }[row.getValue('reason_category') as string]
 
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color }, () =>
+            return h(UBadge, { color }, () =>
                 row.getValue('reason_category')
             )
         }
@@ -53,7 +53,7 @@ const columns: TableColumn<ForReview>[] = [
         cell: ({ row }) => {
             const reason = row.getValue('reason') as string
             return h(UTooltip, { text: reason, delayDuration: 300 }, () =>
-                h('span', { class: 'truncate block max-w-72 cursor-help' }, reason)
+                h('span', { class: 'truncate block max-w-120 cursor-help' }, reason)
             )
         }
     },

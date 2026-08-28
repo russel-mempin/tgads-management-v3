@@ -27,6 +27,7 @@ declare module 'vue' {
     JobItemTable: typeof import('./src/components/JobItemTable.vue')['default']
     JobItemWorkflowFields: typeof import('./src/components/job-item-form/JobItemWorkflowFields.vue')['default']
     JobOrderFooter: typeof import('./src/components/JobOrderFooter.vue')['default']
+    JobOrderHeader: typeof import('./src/components/JobOrderHeader.vue')['default']
     JobOrderList: typeof import('./src/components/JobOrderList.vue')['default']
     JobOrderTable: typeof import('./src/components/JobOrderTable.vue')['default']
     MatchesList: typeof import('./src/components/MatchesList.vue')['default']

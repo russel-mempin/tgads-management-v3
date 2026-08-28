@@ -6,6 +6,10 @@ import { useRoute } from 'vue-router';
 import type { JobForReview } from '@/types/forReview';
 import { getJobForReviewDetails } from '@/api/forReviews';
 import FlagHeader from '@/components/FlagHeader.vue';
+import JobOrderHeader from '@/components/JobOrderHeader.vue';
+import OrderSummary from '@/components/OrderSummary.vue';
+import PaymentTable from '@/components/PaymentTable.vue';
+import ClaimTable from '@/components/ClaimTable.vue';
 
 const route = useRoute()
 // Data variables
@@ -23,7 +27,6 @@ const fetchReviewDetails = async () => {
             throw new Error('Invalid entity id.')
         }
         reviewData.value = await getJobForReviewDetails(forReviewId)
-        console.log(reviewData.value)
     }
     finally {
         loading.value = false
@@ -45,11 +48,12 @@ onMounted(async () => {
                 <UButton icon="i-lucide-arrow-left" label="Back to Needs Review" color="neutral" variant="outline"
                     to="/review-data" />
             </div>
-            <div>
-                <h2 class="text-xl text-highlighted font-semibold">Review Job Order</h2>
-                <p>Job Order No. {{ reviewData.entity_reference }}</p>
-            </div>
-            <FlagHeader />
+            <FlagHeader :flag-data="reviewData" />
+            <!-- <JobOrderHeader :entity-data="reviewData.entity" /> -->
+            <OrderSummary :job-order="reviewData.entity" />
+            <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number" />
+            <PaymentTable :payments="reviewData.entity.payments" :balance="reviewData.entity.balance" />
+            <!-- <ClaimTable :claiming-history="reviewData.entity.claiming_history" :job-items="reviewData.entity.job_items"  /> -->
         </div>
     </Transition>
 </template>

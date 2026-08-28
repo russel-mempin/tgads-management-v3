@@ -11,11 +11,9 @@ const props = defineProps<{
 	<section class="flex items-center gap-6">
 		<h1 class="text-2xl font-semibold text-highlighted">Job Order #{{ jobOrder.jo_number }}</h1>
 		<div class="flex gap-2">
-			<UBadge :color="getPaymentStatusColor(jobOrder.payment_status)" variant="subtle" size="lg"
-				class="font-semibold">{{
+			<UBadge :color="getPaymentStatusColor(jobOrder.payment_status)">{{
 					jobOrder.payment_status }}</UBadge>
-			<UBadge :color="getJobStatusColor(jobOrder.overall_job_status)" variant="subtle" size="lg"
-				class="font-semibold">{{
+			<UBadge :color="getJobStatusColor(jobOrder.overall_job_status)">{{
 					jobOrder.overall_job_status }}</UBadge>
 		</div>
 	</section>
@@ -48,15 +46,15 @@ const props = defineProps<{
 		<div class="m-6 grid grid-cols-3 gap-6">
 			<div>
 				<p class="text-sm text-muted uppercase">Name</p>
-				<p class="text-base text-highlighted">{{ jobOrder.customer_name ?? 'Walk-in' }}</p>
+				<p class="text-base text-highlighted">{{ jobOrder.customer_name ?? 'Anonymous Customer' }}</p>
 			</div>
 			<div>
 				<p class="text-sm text-muted uppercase">Contact No.</p>
-				<p class="text-base text-highlighted">{{ jobOrder.customer_contact_no ?? '—' }}</p>
+				<p class="text-base text-highlighted">{{ jobOrder.customer_contact_no || 'N/A' }}</p>
 			</div>
 			<div>
 				<p class="text-sm text-muted uppercase">Email</p>
-				<p class="text-base text-highlighted">{{ jobOrder.customer_email ?? '—' }}</p>
+				<p class="text-base text-highlighted">{{ jobOrder.customer_email || 'N/A' }}</p>
 			</div>
 			<div>
 				<p class="text-sm text-muted uppercase">Date Received</p>
@@ -68,7 +66,7 @@ const props = defineProps<{
 			</div>
 			<div>
 				<p class="text-sm text-muted uppercase">Last Update By</p>
-				<p class="text-base text-highlighted">{{ jobOrder.updated_by_name }}</p>
+				<p class="text-base text-highlighted cursor-help underline decoration-dotted underline-offset-4" :title="`Job data created by ${jobOrder.created_by_name}`">{{ jobOrder.updated_by_name }}</p>
 			</div>
 		</div>
 	</section>

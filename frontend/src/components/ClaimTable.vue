@@ -6,7 +6,7 @@ import { formatDate } from '@/utils/formatters.ts';
 const props = defineProps<{
 	jobItems: JobItemTableRow[]
 	claimingHistory: ClaimingHistory[]
-	claimableItems: string[]
+	claimableItems?: string[]
 	isJobCancelled?: boolean
 }>()
 
