@@ -58,7 +58,12 @@ class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     audit_logs: list[AuditLog] = Relationship(back_populates="user")
-    void_job_orders: list[VoidJobOrder] = Relationship(back_populates="voided_by")
+    voided_job_orders: list[JobOrder] = Relationship(
+        back_populates="voided_by",
+        sa_relationship_kwargs={
+            "foreign_keys": "[JobOrder.voided_by_id]"
+        },
+    )
     created_for_reviews: list[ForReview] = Relationship(
         back_populates="created_by",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"},
@@ -203,7 +208,10 @@ class JobOrderBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     override_payment_status: PaymentStatus | None = Field(default=None)
-    is_active: bool = Field(default=True)
+    
+    voided_at: datetime | None = Field(default=None)
+    void_reason: str | None = Field(default=None)
+    
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
     created_at: datetime = Field(
@@ -214,7 +222,6 @@ class JobOrderBase(SQLModel):
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
-
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
@@ -235,6 +242,20 @@ class JobOrder(JobOrderBase, table=True):
     updated_by: User = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
     )
+    voided_by_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+    )
+
+    voided_by: User | None = Relationship(
+        back_populates="voided_job_orders",
+        sa_relationship_kwargs={
+            "foreign_keys": "[JobOrder.voided_by_id]"
+        },
+    )
     customer: Customer | None = Relationship(back_populates="job_orders")
     job_items: list[JobItem] = Relationship(
         back_populates="job_order",
@@ -248,6 +269,10 @@ class JobOrder(JobOrderBase, table=True):
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    
+    @property
+    def is_void(self) -> bool:
+        return self.voided_at is not None
 
     @property
     def total_due(self) -> Decimal:
@@ -536,31 +561,6 @@ class AccountTransaction(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     account: Account = Relationship(back_populates="transactions")
-
-
-# ====================== VOID JOB ORDERS =========================
-# For Jobs that are either cancelled or the physical paper is missing
-# This table exists purely so the users can verify every JO number is accounted for
-class VoidJobOrder(SQLModel, table=True):
-    __tablename__ = "void_job_orders"  # type: ignore
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    jo_number: int = Field(unique=True, index=True)
-    job_date: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    voided_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    reason: str
-    created_by_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
-
-    voided_by: User = Relationship(back_populates="void_job_orders")
-
-    @property
-    def voided_by_name(self) -> str:
-        return self.voided_by.username if self.voided_by else "N/A"
 
 
 # ====================== UNLINKED PAYMENTS =========================

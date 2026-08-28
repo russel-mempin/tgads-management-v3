@@ -19,6 +19,7 @@ declare module 'vue' {
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
     FlagDetails: typeof import('./src/components/FlagDetails.vue')['default']
+    FlagHeader: typeof import('./src/components/FlagHeader.vue')['default']
     JobItemExtrasFields: typeof import('./src/components/job-item-form/JobItemExtrasFields.vue')['default']
     JobItemPriceAdjustFields: typeof import('./src/components/job-item-form/JobItemPriceAdjustFields.vue')['default']
     JobItemPricingBreakdown: typeof import('./src/components/job-item-form/JobItemPricingBreakdown.vue')['default']

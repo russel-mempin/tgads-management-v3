@@ -160,7 +160,7 @@ def get_all_job_orders(
     db: Session,
     offset: int = 0,
     limit: int = 100,
-    include_archived: bool = False,
+    include_voided: bool = False,
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
@@ -169,8 +169,8 @@ def get_all_job_orders(
         Customer, col(JobOrder.customer_id) == col(Customer.id)
     )
 
-    if not include_archived:
-        query = query.where(JobOrder.is_active)
+    if not include_voided:
+        query = query.where(JobOrder.voided_at.is_(None))
 
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
@@ -196,7 +196,7 @@ def get_all_job_orders(
 
 def get_job_order_count(
     db: Session,
-    include_archived: bool = False,
+    include_voided: bool = False,
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
@@ -207,8 +207,8 @@ def get_job_order_count(
         .outerjoin(Customer, col(JobOrder.customer_id) == col(Customer.id))
     )
 
-    if not include_archived:
-        query = query.where(JobOrder.is_active)
+    if not include_voided:
+        query = query.where(JobOrder.voided_at.is_(None))
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
     if job_status:
@@ -358,32 +358,33 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         raise
 
 
-def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
-    try:
-        job_order = db.exec(
-            select(JobOrder).where(JobOrder.jo_number == jo_number)
-        ).first()
-        if not job_order:
-            raise HTTPException(
-                status_code=404, detail=f"Job order with number {jo_number} not found"
-            )
+# TODO: Change to void job order
+# def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
+#     try:
+#         job_order = db.exec(
+#             select(JobOrder).where(JobOrder.jo_number == jo_number)
+#         ).first()
+#         if not job_order:
+#             raise HTTPException(
+#                 status_code=404, detail=f"Job order with number {jo_number} not found"
+#             )
 
-        job_order.is_active = False
-        db.add(job_order)
+#         job_order.is_active = False
+#         db.add(job_order)
 
-        audit = AuditLog(
-            action=f"Deleted job order {job_order.jo_number}", user_id=current_user_id
-        )
-        db.add(audit)
+#         audit = AuditLog(
+#             action=f"Deleted job order {job_order.jo_number}", user_id=current_user_id
+#         )
+#         db.add(audit)
 
-        db.commit()
-        db.refresh(job_order)
-        return "Job order deleted."
-    except HTTPException:
-        raise
-    except Exception:
-        db.rollback()
-        raise
+#         db.commit()
+#         db.refresh(job_order)
+#         return "Job order deleted."
+#     except HTTPException:
+#         raise
+#     except Exception:
+#         db.rollback()
+#         raise
 
 
 def create_job_item(
@@ -650,7 +651,7 @@ def get_business_kpis(db: Session) -> dict:
     # Outstanding balance — sum of (total_due - total_paid) for unpaid/partial orders
     job_orders = db.exec(
         select(JobOrder).where(
-            JobOrder.is_active,
+            JobOrder.voided_at.is_(None),
             col(JobOrder.payment_status).in_(
                 [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
             ),
@@ -662,7 +663,10 @@ def get_business_kpis(db: Session) -> dict:
     unpaid_count = db.exec(
         select(func.count())
         .select_from(JobOrder)
-        .where(JobOrder.is_active, JobOrder.payment_status == PaymentStatus.UNPAID)
+        .where(
+            JobOrder.voided_at.is_(None),
+            JobOrder.payment_status == PaymentStatus.UNPAID,
+        )
     ).one()
 
     # Count of overdue jobs — job items past due_date and not released/cancelled
@@ -710,7 +714,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active,
+            JobOrder.voided_at.is_(None),
         )
     ).one()
 
@@ -729,7 +733,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active,
+            JobOrder.voided_at.is_(None),
         )
     ).one()
 
@@ -745,7 +749,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.is_active,
+            JobOrder.voided_at.is_(None),
         )
     ).one()
 
@@ -755,7 +759,7 @@ def get_operation_kpis(db: Session) -> dict:
         .select_from(JobOrder)
         .where(
             JobOrder.overall_job_status == JobStatus.FOR_PICKUP,
-            JobOrder.is_active,
+            JobOrder.voided_at.is_(None),
         )
     ).one()
 
@@ -771,7 +775,7 @@ def get_jobs_with_outstanding_balance(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
                 col(JobOrder.payment_status).in_(
                     [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
                 ),
@@ -784,7 +788,7 @@ def get_unpaid_job_orders(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
                 JobOrder.payment_status == PaymentStatus.UNPAID,
             )
         ).all()
@@ -803,7 +807,7 @@ def get_overdue_job_orders(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder).where(
                 col(JobOrder.id).in_(overdue_job_order_ids),  # ← wrap with col()
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
             )
         ).all()
     )
@@ -821,7 +825,7 @@ def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                col(JobOrder.id).in_(job_order_ids), JobOrder.is_active
+                col(JobOrder.id).in_(job_order_ids), JobOrder.voided_at.is_(None),
             )
         ).all()
     )
@@ -842,7 +846,7 @@ def get_overdue_jobs(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -862,7 +866,7 @@ def get_jobs_in_progress(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
             )
             .order_by(col(JobOrder.jo_number).desc())
         ).all()
@@ -888,7 +892,7 @@ def get_jobs_due_today(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.is_active,
+                JobOrder.voided_at.is_(None),
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -901,7 +905,7 @@ def get_jobs_ready_for_pickup(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder)
             .join(JobItem, col(JobOrder.id) == col(JobItem.job_order_id))
-            .where(JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.is_active)
+            .where(JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.voided_at.is_(None),)
             .distinct()
         ).all()
     )

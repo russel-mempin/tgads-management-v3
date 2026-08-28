@@ -3,12 +3,13 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 // Type imports
-import type { ForReviewDetails } from '@/types/forReview';
+import type { JobForReview } from '@/types/forReview';
 import { getJobForReviewDetails } from '@/api/forReviews';
+import FlagHeader from '@/components/FlagHeader.vue';
 
 const route = useRoute()
 // Data variables
-const reviewData = ref<ForReviewDetails>()
+const reviewData = ref<JobForReview>()
 
 // UI Variables
 const loading = ref(true)
@@ -22,6 +23,7 @@ const fetchReviewDetails = async () => {
             throw new Error('Invalid entity id.')
         }
         reviewData.value = await getJobForReviewDetails(forReviewId)
+        console.log(reviewData.value)
     }
     finally {
         loading.value = false
@@ -37,8 +39,17 @@ onMounted(async () => {
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
         </div>
-        <div v-else-if="reviewData" class="m-6 flex flex-col gap-6">
-            <p>HELLO</p>
+        <div v-else-if="reviewData" class="m-6 flex flex-col gap-4">
+            <!-- Back + Title -->
+            <div class="flex items-center justify-between">
+                <UButton icon="i-lucide-arrow-left" label="Back to Needs Review" color="neutral" variant="outline"
+                    to="/review-data" />
+            </div>
+            <div>
+                <h2 class="text-xl text-highlighted font-semibold">Review Job Order</h2>
+                <p>Job Order No. {{ reviewData.entity_reference }}</p>
+            </div>
+            <FlagHeader />
         </div>
     </Transition>
 </template>

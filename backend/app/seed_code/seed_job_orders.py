@@ -1,6 +1,6 @@
 import csv
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -24,7 +24,6 @@ from app.models import (
     JobOrder,
     Service,
     ServiceOption,
-    VoidJobOrder,
 )
 from app.utils.utils import get_system_admin, to_float, to_int
 
@@ -127,27 +126,22 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
 
             # If no customer and has void choice, inserts job data to void table and determines void reason.
             if void_choice:
-                existing_in_void = session.exec(
-                    select(VoidJobOrder).where(VoidJobOrder.jo_number == jo_number)
-                ).first()
-                if not existing_in_void:
-                    # If and elif block could be deleted for automation
-                    if void_choice:
-                        # Determine reason here
-                        reason = VOID_REASONS[void_choice]
-                        print(
-                            f"JO {jo_number} has been inserted to void job orders table."
-                        )
-                    session.add(
-                        VoidJobOrder(
-                            jo_number=jo_number,
-                            job_date=date_received,
-                            reason=reason,
-                            created_by_id=sysadmin.id,
-                        )
+                reason = VOID_REASONS[void_choice]
+                print(
+                    f"JO {jo_number} has been marked as void."
+                )
+                session.add(
+                    JobOrder(
+                        jo_number=jo_number,
+                        job_date=date_received,
+                        void_reason=reason,
+                        voided_at=datetime.now(UTC),
+                        created_by_id=sysadmin.id,
+                        voided_by_id=sysadmin.id
                     )
-                    session.commit()
-                    continue
+                )
+                session.commit()
+                continue
 
             # Else, determine customer and insert job order data to job orders table
             customer = get_or_create_customer(session, customer_name)

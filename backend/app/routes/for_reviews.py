@@ -35,11 +35,6 @@ def read_count_of_for_review_items(db: Session = Depends(get_session)):
     return get_count_of_for_reviews(db)
 
 
-@router.get("/job-orders/{entity_id}", response_model=ForReviewDetails)
-def read_job_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_session)):
-    return get_job_for_review_details(db, entity_id)
-
-
 @router.get("/payments/{entity_id}", response_model=ForReviewDetails)
 def read_payment_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_session)):
     return get_payment_for_review_details(db, entity_id)
@@ -64,3 +59,8 @@ def create_payment_data_to_job(entity_id: uuid.UUID, match_id: uuid.UUID, db: Se
 @router.post("/payments/{entity_id}/misc-assign")
 def create_payment_data_to_misc(entity_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return assign_payment_to_misc_sale(db, entity_id, current_user.id)
+
+
+@router.get("/job-orders/{entity_id}", response_model=ForReviewDetails)
+def read_job_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_session)):
+    return get_job_for_review_details(db, entity_id)

@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.crud.job_order import (
-    archive_job_order,
     create_claim,
     create_job_item,
     create_job_order,
@@ -51,7 +50,7 @@ router = APIRouter(
 def read_all(
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
-    include_archived: bool = False,
+    include_voided: bool = False,
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
@@ -81,7 +80,7 @@ def read_all(
         db,
         offset=offset,
         limit=limit,
-        include_archived=include_archived and current_user.role == UserRoles.ADMIN,
+        include_voided=include_voided and current_user.role == UserRoles.ADMIN,
         payment_status=payment_status,
         job_status=job_status,
         search=search,
@@ -90,7 +89,7 @@ def read_all(
 
 @router.get("/count")
 def read_job_order_count(
-    include_archived: bool = False,
+    include_voided: bool = False,
     payment_status: PaymentStatus | None = None,
     job_status: JobStatus | None = None,
     search: str | None = None,
@@ -99,7 +98,7 @@ def read_job_order_count(
 ):
     return get_job_order_count(
         db,
-        include_archived=include_archived and current_user.role == UserRoles.ADMIN,
+        include_voided=include_voided and current_user.role == UserRoles.ADMIN,
         payment_status=payment_status,
         job_status=job_status,
         search=search,
@@ -149,13 +148,14 @@ def create(
     return create_job_order(db, data, current_user.id)
 
 
-@router.patch("/{jo_number}/archive")
-def archive(
-    jo_number: int,
-    db: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user),
-):
-    return archive_job_order(db, jo_number, current_user.id)
+# TODO: Change to void job order
+# @router.patch("/{jo_number}/archive")
+# def archive(
+#     jo_number: int,
+#     db: Session = Depends(get_session),
+#     current_user: User = Depends(get_current_active_user),
+# ):
+#     return archive_job_order(db, jo_number, current_user.id)
 
 
 @router.post("/{job_order_id}/job-items")

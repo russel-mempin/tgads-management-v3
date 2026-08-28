@@ -1,4 +1,3 @@
-import type { UnlinkedPayment } from '@/types/forReview'
 import http from './http'
 
 export const getAllForReview = async () => {
@@ -8,11 +7,6 @@ export const getAllForReview = async () => {
 
 export const getForReviewCount = async () => {
     const res = await http.get('/for-reviews/count')
-    return res.data
-}
-
-export const getJobForReviewDetails = async (entity_id: string) => {
-    const res = await http.get(`/for-reviews/job-orders/${entity_id}`)
     return res.data
 }
 
@@ -40,5 +34,10 @@ export const assignPaymentDataToJob = async (entity_id: string, match_id: string
 
 export const assignPaymentDataToMisc = async (entity_id: string) => {
     const res = await http.post(`/for-reviews/payments/${entity_id}/misc-assign`)
+    return res.data
+}
+
+export const getJobForReviewDetails = async (entity_id: string) => {
+    const res = await http.get(`/for-reviews/job-orders/${entity_id}`)
     return res.data
 }

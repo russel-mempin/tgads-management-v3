@@ -171,30 +171,6 @@ def get_count_of_for_reviews(db: Session) -> int:
     ).one()
 
 
-def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
-    for_review_item = db.exec(
-        select(ForReview).where(ForReview.entity_id == entity_id)
-    ).first()
-    if not for_review_item:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
-        )
-    if for_review_item.entity_type != ReviewEntityType.JOB_ORDER:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Entity type should be Job Order.",
-        )
-    entity = db.exec(
-        select(JobOrder).where(JobOrder.id == for_review_item.entity_id)
-    ).first()
-    if not entity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
-        )
-    entity_data = JobOrderPublic.model_validate(entity, from_attributes=True)
-    return _build_for_review_details(for_review_item, entity_data)
-
-
 def get_payment_for_review_details(
     db: Session,
     entity_id: uuid.UUID,
@@ -396,3 +372,27 @@ def assign_payment_to_misc_sale(db: Session, entity_id: uuid.UUID, current_user_
     except Exception:
         db.rollback()
         raise
+    
+    
+def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
+    for_review_item = db.exec(
+        select(ForReview).where(ForReview.entity_id == entity_id)
+    ).first()
+    if not for_review_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
+        )
+    if for_review_item.entity_type != ReviewEntityType.JOB_ORDER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Entity type should be Job Order.",
+        )
+    entity = db.exec(
+        select(JobOrder).where(JobOrder.id == for_review_item.entity_id)
+    ).first()
+    if not entity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
+        )
+    entity_data = JobOrderPublic.model_validate(entity, from_attributes=True)
+    return _build_for_review_details(for_review_item, entity_data)

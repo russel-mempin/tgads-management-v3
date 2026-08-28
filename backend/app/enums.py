@@ -77,6 +77,7 @@ class AccountType(str, Enum):
 
 class ReviewEntityType(str, Enum):
     JOB_ORDER = "Job Order"
+    JOB_ITEM = "Job Item"
     PAYMENT = "Payment"
     EXPENSE = "Expense"
     MISC_SALE = "Misc Sale"

@@ -51,3 +51,7 @@ export interface UnlinkedPayment {
 export interface PaymentForReview extends ForReview {
     entity: UnlinkedPayment
 }
+
+export interface JobForReview extends ForReview {
+    entity: JobOrder
+}
