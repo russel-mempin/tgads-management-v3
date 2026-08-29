@@ -16,15 +16,15 @@ export function nowForInput(): string {
   return date.toISOString().slice(0, 16)
 }
 
-// API to form
+// API -> Form
 export function utcToInput(value: string): string {
   const date = new Date(value)
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
   return date.toISOString().slice(0, 16)
 }
-// Form to front end Date
-export function inputToUtc(value: string): Date {
-  return new Date(value)
+// Form -> API
+export function inputToUtc(value: string): string {
+  return new Date(value).toISOString()
 }
 
 export const formatDate = (date: string | Date | undefined) => {

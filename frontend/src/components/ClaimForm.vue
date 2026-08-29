@@ -50,7 +50,7 @@ watch([() => props.editingClaim, isOpen], ([claim, open]) => {
         Object.assign(state, {
             claimed_item_id: claim.claimed_item_id,
             pcs_claimed: claim.pcs_claimed,
-            date_claimed: utcToInput(claim.date_claimed.toISOString()),
+            date_claimed: utcToInput(claim.date_claimed),
             name: claim.name,
         })
     } 
@@ -63,7 +63,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 	const payload: ClaimingHistory = {
 		claimed_item_id: event.data.claimed_item_id,
 		pcs_claimed: event.data.pcs_claimed,
-		date_claimed: new Date(inputToUtc(event.data.date_claimed)),
+		date_claimed: event.data.date_claimed,
 		name: event.data.name
 	}
 

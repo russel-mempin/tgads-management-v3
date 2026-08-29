@@ -433,14 +433,14 @@ def create_job_item(
 
 
 def update_job_item(
-    db: Session, id: uuid.UUID, data: JobItemUpdate, current_user_id: uuid.UUID
+    db: Session, id: uuid.UUID, job_order_id: uuid.UUID, data: JobItemUpdate, current_user_id: uuid.UUID
 ):
     try:
-        job_item = db.exec(select(JobItem).where(JobItem.id == id)).first()
+        job_item = db.exec(select(JobItem).where(JobItem.id == id, JobItem.job_order_id == job_order_id)).first()
 
         if not job_item:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Job item not found.",
             )
 

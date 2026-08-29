@@ -8,12 +8,8 @@ const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
     jobItems?: JobItemTableRow[]
-    joNumber?: number
     totalClaimedByItem?: Map<string, number>
     getTotalClaimed?: (itemId: string) => number
-}>()
-const emit = defineEmits<{
-    openForm: []
 }>()
 // Table data
 const columns: TableColumn<JobItemTableRow>[] = [
@@ -119,12 +115,7 @@ const columns: TableColumn<JobItemTableRow>[] = [
                 <UIcon name="i-lucide-briefcase" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
                 <h2 class="text-highlighted font-semibold">Job Items</h2>
             </div>
-            <UTooltip :text="!joNumber ? 'A valid job order number is required' : 'Add an item'">
-                <span>
-                    <UButton @click="emit('openForm')" :disabled="!joNumber || joNumber <= 0" icon="i-lucide-plus"
-                        label="Add Item" variant="outline" />
-                </span>
-            </UTooltip>
+            <slot name="header-actions" />
         </div>
         <UTable :data="props.jobItems" :columns="columns">
             <template #actions-cell="{ row }">

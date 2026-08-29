@@ -111,11 +111,11 @@ watch(() => props.editingItem, (item) => {
             unit: item.size_unit ?? 'ft.',
             quantity: item.quantity,
             jobStatus: item.job_status,
-            dueDate: utcToInput(item.due_date.toISOString()),
+            dueDate: utcToInput(item.due_date),
             description: item.description,
             notes: item.notes,
-            extraCharge: item.extra_charge,
-            discount: item.discount_amount,
+            extraCharge: Number(item.extra_charge),
+            discount: Number(item.discount_amount),
         })
     } else {
         resetForm()
@@ -139,7 +139,7 @@ const handleSave = (event: FormSubmitEvent<Schema>) => {
         size_unit: isAreaBased.value ? d.unit : undefined,
         quantity: d.quantity,
         job_status: d.jobStatus,
-        due_date: new Date(d.dueDate),
+        due_date: d.dueDate,
         description: d.description,
         notes: d.notes,
         extras: d.extras.map((e): JobItemExtraCreate => ({

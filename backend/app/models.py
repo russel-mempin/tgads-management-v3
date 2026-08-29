@@ -524,6 +524,9 @@ class MiscSaleBase(SQLModel):
 class MiscSale(MiscSaleBase, table=True):
     __tablename__ = "misc_sales"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False, index=True)
+    
+    account: Account = Relationship(back_populates="misc_sales")
 
 
 # ====================== ACCOUNTS =========================
@@ -541,6 +544,7 @@ class Account(SQLModel, table=True):
     unlinked_payments: list[UnlinkedPayment] = Relationship(back_populates="account")
     transactions: list[AccountTransaction] = Relationship(back_populates="account")
     expenses: list[Expense] = Relationship(back_populates="account")
+    misc_sales: list[MiscSale] = Relationship(back_populates="account")
 
 
 class AccountTransaction(SQLModel, table=True):

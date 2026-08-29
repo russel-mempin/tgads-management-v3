@@ -53,12 +53,12 @@ export const createJobOrder = async(payload: JobOrderCreate) => {
 }
 
 export const createJobItem = async(payload: JobItemCreate, job_order_id: string): Promise<JobItem> => {
-  const res = await http.post(`/job-orders/job-items/${job_order_id}`, payload)
+  const res = await http.post(`/job-orders/${job_order_id}/job-items`, payload)
   return res.data
 }
 
-export const updateJobItem = async (payload: JobItemUpdate, id: string): Promise<JobItem> => {
-  const res = await http.patch(`/job-orders/job-items/${id}`, payload)
+export const updateJobItem = async (payload: JobItemUpdate, job_order_id: string, id: string): Promise<JobItem> => {
+  const res = await http.patch(`/job-orders/${job_order_id}/job-items/${id}`, payload)
   return res.data
 }
 

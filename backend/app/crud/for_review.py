@@ -7,7 +7,6 @@ from sqlmodel import Session, col, select
 
 from app.enums import PaymentStatus, ReviewEntityType
 from app.models import (
-    Account,
     AuditLog,
     Customer,
     ForReview,
@@ -296,9 +295,7 @@ def assign_payment_to_job_order(db: Session, entity_id: uuid.UUID, match_id: uui
         unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)).first()
         if not unlinked_payment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unlinked Payment not found.")
-        account = db.exec(select(Account).where(Account.name == unlinked_payment.account_name)).first()
-        if not account:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+        account = unlinked_payment.account
         for_review_data = db.exec(select(ForReview).where(ForReview.entity_id == unlinked_payment.id)).first()
         if not for_review_data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="For Review data not found.")
@@ -340,9 +337,7 @@ def assign_payment_to_misc_sale(db: Session, entity_id: uuid.UUID, current_user_
         unlinked_payment = db.exec(select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)).first()
         if not unlinked_payment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unlinked Payment not found.")
-        account = db.exec(select(Account).where(Account.name == unlinked_payment.account_name)).first()
-        if not account:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+        account = unlinked_payment.account
         for_review_data = db.exec(select(ForReview).where(ForReview.entity_id == unlinked_payment.id)).first()
         if not for_review_data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="For Review data not found.")
@@ -352,6 +347,7 @@ def assign_payment_to_misc_sale(db: Session, entity_id: uuid.UUID, current_user_
             date = unlinked_payment.date_received,
             description= unlinked_payment.description,
             amount = unlinked_payment.amount,
+            account_id=account.id
         )
         db.add(misc_sale)
         db.delete(for_review_data)

@@ -37,7 +37,7 @@ interface JobItemBase extends Dimensions {
   description: string
   quantity: number
   job_status: JobStatus
-  due_date: Date
+  due_date: string
   notes: string
   extra_charge: number
   discount_amount: number
@@ -77,7 +77,7 @@ export interface JobItem extends JobItemBase, ServiceRef, ServiceSnapshot, JobIt
 }
 
 export interface Payment {
-  date_received: Date
+  date_received: string
   reference_number: string
   amount: number
   notes: string
@@ -86,7 +86,7 @@ export interface Payment {
 }
 
 export interface ClaimingHistory {
-  date_claimed: Date
+  date_claimed: string
   name: string
   pcs_claimed: number
   claimed_item_id: string
@@ -94,7 +94,7 @@ export interface ClaimingHistory {
 
 interface JobOrderBase {
   jo_number: number
-  date_received: Date
+  date_received: string
 }
 
 export interface JobOrder extends JobOrderBase {
@@ -108,8 +108,8 @@ export interface JobOrder extends JobOrderBase {
   customer_name: string
   customer_email: string
   customer_contact_no: string
-  created_at: Date
-  updated_at: Date
+  created_at: string
+  updated_at: string
   created_by_name: string
   updated_by_name: string
   overall_job_status: JobStatus

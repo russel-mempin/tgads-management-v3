@@ -198,7 +198,7 @@ const saveToDb = async () => {
 				discount_amount: item.discount_amount,
 				width: item.width,
 				height: item.height,
-				size_unit: item.size_unit,	
+				size_unit: item.size_unit,
 				service_id: serviceId,
 				service_option_id: serviceOptionId,
 				extras: item.extras.map(extra => ({
@@ -255,6 +255,15 @@ const saveToDb = async () => {
 	<div class="flex flex-col gap-8 m-8">
 		<JobItemTable :job-items="jobItems" :jo-number="joNumber" @open-form="openAddItemForm"
 			:get-total-claimed="getTotalClaimed">
+			<template #header-actions>
+				<UTooltip :text="!joNumber ? 'A valid job order number is required' : 'Add an item'">
+					<span>
+						<UButton @click="openAddItemForm"
+							:disabled="!joNumber || joNumber <= 0"
+							icon="i-lucide-plus" label="Add Item" variant="outline" />
+					</span>
+				</UTooltip>
+			</template>
 			<template #actions="{ item, index }">
 				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
 				<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md"
@@ -269,7 +278,8 @@ const saveToDb = async () => {
 					@click="deletePayment(index)" />
 			</template>
 		</PaymentTable>
-		<ClaimTable :claiming-history="claimingHistory" :job-items="jobItems" :claimable-items="claimableItemIds" @open-form="openAddClaimForm">
+		<ClaimTable :claiming-history="claimingHistory" :job-items="jobItems" :claimable-items="claimableItemIds"
+			@open-form="openAddClaimForm">
 			<template #actions="{ item, index }">
 				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditClaimForm(item, index)" />
 				<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" @click="deleteClaim(index)" />

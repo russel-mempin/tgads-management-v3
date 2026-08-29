@@ -163,14 +163,15 @@ def create_item(job_order_id: uuid.UUID, data: JobItemCreate, db: Session = Depe
     return create_job_item(db, job_order_id, data, current_user.id)
 
 
-@router.patch("/job-items/{id}")
+@router.patch("/{job_order_id}/job-items/{id}")
 def update(
     id: uuid.UUID,
+    job_order_id: uuid.UUID,
     data: JobItemUpdate,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    return update_job_item(db, id, data, current_user.id)
+    return update_job_item(db, id, job_order_id, data, current_user.id)
 
 
 @router.post("/{job_order_id}/payments")

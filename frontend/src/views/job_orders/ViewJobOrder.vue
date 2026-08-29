@@ -133,8 +133,9 @@ const saveNewItemToDb = async (item: JobItemCreate) => {
     }
 }
 const saveUpdatedItemToDb = async (payload: { id: string; changes: JobItemUpdate }) => {
+    if (!jobOrder.value) return
     try {
-        await updateJobItem(payload.changes, payload.id)
+        await updateJobItem(payload.changes, jobOrder.value.id, payload.id)
         toast.add({
             title: 'Job Item Updated.',
             color: 'success',
@@ -249,14 +250,23 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
 
             <!-- Job Items -->
             <JobItemTable :job-items="jobOrder.job_items" :can-call-api="true" :jo-number="jobOrder.jo_number"
-                @added="fetchJobOrder" @updated="fetchJobOrder" @open-form="openAddItemForm">
+                @added="fetchJobOrder" @updated="fetchJobOrder">
+                <template #header-actions>
+                    <UTooltip :text="!joNumber ? 'A valid job order number is required' : 'Add an item'">
+                        <span>
+                            <UButton @click="openAddItemForm" :disabled="!joNumber || joNumber <= 0"
+                                icon="i-lucide-plus" label="Add Item" variant="outline" />
+                        </span>
+                    </UTooltip>
+                </template>
                 <template #actions="{ item }">
                     <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
                 </template>
             </JobItemTable>
 
             <!-- Payments -->
-            <PaymentTable :balance="balance" :payments="jobOrder.payments" :is-job-cancelled="isCancelled" @open-form="openAddPaymentForm" />
+            <PaymentTable :balance="balance" :payments="jobOrder.payments" :is-job-cancelled="isCancelled"
+                @open-form="openAddPaymentForm" />
 
             <!-- Claiming History -->
             <ClaimTable :claiming-history="jobOrder.claiming_history" :job-items="jobOrder.job_items"

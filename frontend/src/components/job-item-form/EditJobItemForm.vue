@@ -76,8 +76,8 @@ watch(
         form.quantity = item.quantity
         form.job_status = item.job_status
         form.notes = item.notes ?? ''
-        form.extra_charge = item.extra_charge ?? 0
-        form.discount_amount = item.discount_amount ?? 0
+        form.extra_charge = Number(item.extra_charge ?? 0)
+        form.discount_amount = Number(item.discount_amount ?? 0)
 
         form.extras = (item.extras ?? []).map(extra => ({
             extra_service_id: extra.extra_service_id,
@@ -99,7 +99,9 @@ const getChanges = (): Record<string, unknown> => {
 
         const original = key === 'extras'
             ? props.jobItem.extras ?? []
-            : props.jobItem[key as keyof typeof props.jobItem]
+            : key === 'extra_charge' || key === 'discount_amount'
+                ? Number(props.jobItem[key] ?? 0)
+                : props.jobItem[key as keyof typeof props.jobItem]
 
         if (!isEqual(current, original)) {
             changes[key] = current
