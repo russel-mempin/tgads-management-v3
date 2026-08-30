@@ -23,7 +23,12 @@ const daysSinceFlagging = computed(() => {
 		'border-info bg-info/10': getReviewCategoryColor(flagData.reason_category) === 'info',
 		'border-neutral bg-default': getReviewCategoryColor(flagData.reason_category) === 'neutral',
 	}">
-		<div class="w-16 h-16 flex items-center justify-center border rounded-full mr-4">
+		<div class="w-16 h-16 flex items-center justify-center border rounded-full mr-4" :class="{
+			'border-warning text-warning': getReviewCategoryColor(flagData.reason_category) === 'warning',
+			'border-error text-error': getReviewCategoryColor(flagData.reason_category) === 'error',
+			'border-info text-info': getReviewCategoryColor(flagData.reason_category) === 'info',
+			'border-neutral text-neutral': getReviewCategoryColor(flagData.reason_category) === 'neutral',
+		}">
 			<UIcon name="i-lucide-triangle-alert" class="w-8 h-8" />
 		</div>
 		<div class="flex flex-col gap-1">

@@ -10,6 +10,7 @@ from app.models import (
     AuditLog,
     Customer,
     ForReview,
+    JobItem,
     JobOrder,
     MiscSale,
     Payment,
@@ -17,10 +18,18 @@ from app.models import (
 )
 from app.schemas.for_review import (
     ForReviewDetails,
-    JobItemPublic,
-    JobOrderPublic,
     PossibleJobOrder,
     UnlinkedPaymentReviewData,
+)
+from app.schemas.job_order import (
+    JobItemCreate,
+    JobItemPublic,
+    JobOrderPublic,
+)
+from app.utils.job_order import (
+    build_job_item,
+    build_job_item_extra,
+    get_extra_service_data_by_id,
 )
 
 
@@ -392,3 +401,60 @@ def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDe
         )
     entity_data = JobOrderPublic.model_validate(entity, from_attributes=True)
     return _build_for_review_details(for_review_item, entity_data)
+
+
+def update_whole_job_item(db: Session, job_order_id: uuid.UUID, job_item_id: uuid.UUID, data: JobItemCreate, current_user_id: uuid.UUID):
+    try:
+        job_item = db.exec(select(JobItem).where(JobItem.id == job_item_id, JobItem.job_order_id == job_order_id)).first()
+        if not job_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
+            )
+        extra_services = []
+        for extra in data.extras:
+            extra_service = get_extra_service_data_by_id(db, extra.extra_service_id)
+            extra_services.append((extra, extra_service))
+        new_item = build_job_item(db, job_order_id, data, extra_services)
+        # Replace all fields except the primary key
+        for field in [
+            "description",
+            "discount_amount",
+            "due_date",
+            "extra_charge",
+            "height",
+            "item_id",
+            "job_status",
+            "notes",
+            "quantity",
+            "service_abbreviation_snapshot",
+            "service_option_name_snapshot",
+            "service_name_snapshot",
+            "size_unit",
+            "subtotal",
+            "unit_price",
+            "width",
+            "service_id",
+            "service_option_id",
+        ]:
+            setattr(job_item, field, getattr(new_item, field))
+        for extra in job_item.extras:
+            db.delete(extra)
+        db.flush()
+        for extra, extra_service in extra_services:
+            db.add(build_job_item_extra(job_item.id, extra, extra_service))
+        db.flush()
+        job_order = job_item.job_order
+        job_order.sync_computed_fields()
+
+        audit = AuditLog(
+            action=f"Updated job item {job_item.item_id}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(job_order)
+        return job_order
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise

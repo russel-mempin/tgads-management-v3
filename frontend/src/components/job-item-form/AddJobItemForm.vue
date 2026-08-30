@@ -112,8 +112,8 @@ watch(() => props.editingItem, (item) => {
             quantity: item.quantity,
             jobStatus: item.job_status,
             dueDate: utcToInput(item.due_date),
-            description: item.description,
-            notes: item.notes,
+            description: item.description ?? '',
+            notes: item.notes ?? '',
             extraCharge: Number(item.extra_charge),
             discount: Number(item.discount_amount),
         })
@@ -161,7 +161,7 @@ const handleSave = (event: FormSubmitEvent<Schema>) => {
             class: 'rounded-full'
         }" fullscreen>
         <template #body>
-            <UForm :schema="schema" :state="state" @submit="handleSave" class="flex flex-col gap-6">
+            <UForm :schema="schema" :state="state" @submit="handleSave" class="flex flex-col gap-6" @error="(event: any) => console.log('VALIDATION ERROR', event)">
                 <JobItemServiceFields :services="serviceList" :selected-service-data="selectedServiceData"
                     :is-area-based="isAreaBased" v-model:service="state.selectedService"
                     v-model:option="state.selectedOption" v-model:width="state.width" v-model:height="state.height"

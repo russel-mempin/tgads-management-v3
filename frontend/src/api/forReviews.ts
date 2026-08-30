@@ -1,4 +1,5 @@
 import http from './http'
+import type { JobItemCreate } from '@/types/jobOrder'
 
 export const getAllForReview = async () => {
     const res = await http.get('/for-reviews/')
@@ -39,5 +40,10 @@ export const assignPaymentDataToMisc = async (entity_id: string) => {
 
 export const getJobForReviewDetails = async (entity_id: string) => {
     const res = await http.get(`/for-reviews/job-orders/${entity_id}`)
+    return res.data
+}
+
+export const updateWholeJobItem = async(job_order_id: string, job_item_id: string, data: JobItemCreate) => {
+    const res = await http.put(`/for-reviews/job-orders/${job_order_id}/job-items/${job_item_id}`, data)
     return res.data
 }

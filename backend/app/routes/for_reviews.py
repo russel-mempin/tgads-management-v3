@@ -12,6 +12,7 @@ from app.crud.for_review import (
     get_count_of_for_reviews,
     get_job_for_review_details,
     get_payment_for_review_details,
+    update_whole_job_item,
 )
 from app.database import get_session
 from app.models import UnlinkedPayment, User
@@ -20,11 +21,12 @@ from app.schemas.for_review import (
     ForReviewPublic,
     PossibleJobOrder,
 )
+from app.schemas.job_order import JobItemCreate
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/for-reviews", tags=["for-reviews"], dependencies=[Depends(get_current_active_user)])
 
-
+# TODO: Change all entity_id to their entity name_id
 @router.get("/", response_model=list[ForReviewPublic])
 def read_all_for_review_items(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_for_review_items(db, offset=offset, limit=limit)
@@ -64,3 +66,8 @@ def create_payment_data_to_misc(entity_id: uuid.UUID, db: Session = Depends(get_
 @router.get("/job-orders/{entity_id}", response_model=ForReviewDetails)
 def read_job_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_session)):
     return get_job_for_review_details(db, entity_id)
+
+
+@router.put("/job-orders/{job_order_id}/job-items/{job_item_id}")
+def update_job_item(job_order_id: uuid.UUID, job_item_id: uuid.UUID, data: JobItemCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return update_whole_job_item(db, job_order_id, job_item_id, data, current_user.id)

@@ -8,7 +8,7 @@ import type { JobForReview } from '@/types/forReview';
 import type { JobItemCreate, JobItem, JobItemTableRow } from '@/types/jobOrder';
 import type { Service } from '@/types/service';
 // API calls
-import { getJobForReviewDetails } from '@/api/forReviews';
+import { getJobForReviewDetails, updateWholeJobItem } from '@/api/forReviews';
 import { createJobItem } from '@/api/jobOrders';
 import { getAllServices } from '@/api/services';
 // Component imports
@@ -88,36 +88,66 @@ const saveJobItem = async (item: JobItemCreate) => {
         console.error('Cannot save job item: Job order not loaded.')
         return
     }
-    try {
-        await createJobItem(item, reviewData.value.entity_id)
-        toast.add({
-            title: 'Job Item Added.',
-            color: 'success',
-            icon: 'i-lucide-circle-check'
-        })
-        await fetchReviewDetails()
-    }
-    catch (error: unknown) {
-        console.error('Failed to create payment:', error)
-
-        let message = 'An unexpected error occurred.'
-
-        if (axios.isAxiosError(error)) {
-            message = error.response?.data?.detail ?? 'Failed to create payment.'
+    if (selectedJobItem.value) {
+        try {
+            await updateWholeJobItem(reviewData.value.entity_id, selectedJobItem.value.id, item)
+            toast.add({
+                title: 'Job Item Updated.',
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+            await fetchReviewDetails()
         }
+        catch (error: unknown) {
+            console.error('Failed to save job item:', error)
 
-        toast.add({
-            title: 'Saving data failed.',
-            description: message,
-            color: 'error',
-            icon: 'i-lucide-x'
-        })
+            let message = 'An unexpected error occurred.'
+
+            if (axios.isAxiosError(error)) {
+                message = error.response?.data?.detail ?? 'Failed to save job item.'
+            }
+
+            toast.add({
+                title: 'Saving data failed.',
+                description: message,
+                color: 'error',
+                icon: 'i-lucide-x'
+            })
+        }
+    }
+    else if (!selectedJobItem.value) {
+        try {
+            await createJobItem(item, reviewData.value.entity_id)
+            toast.add({
+                title: 'Job Item Added.',
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+            await fetchReviewDetails()
+        }
+        catch (error: unknown) {
+            console.error('Failed to save job item:', error)
+
+            let message = 'An unexpected error occurred.'
+
+            if (axios.isAxiosError(error)) {
+                message = error.response?.data?.detail ?? 'Failed to save job item.'
+            }
+
+            toast.add({
+                title: 'Saving data failed.',
+                description: message,
+                color: 'error',
+                icon: 'i-lucide-x'
+            })
+        }
     }
 }
 </script>
 
 <template>
-    <AddJobItemForm v-model:is-open="isAddItemFormOpen" :jo-number="reviewData?.entity.jo_number" :editing-item="selectedJobItem" @save="saveJobItem" />
+    <AddJobItemForm v-model:is-open="isAddItemFormOpen" :jo-number="reviewData?.entity.jo_number"
+        :editing-item="selectedJobItem" @save="saveJobItem" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -133,10 +163,12 @@ const saveJobItem = async (item: JobItemCreate) => {
             <OrderSummary :job-order="reviewData.entity" />
             <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number">
                 <template #header-actions>
-                    <UTooltip :text="!reviewData.entity.jo_number ? 'A valid job order number is required' : 'Add an item'">
+                    <UTooltip
+                        :text="!reviewData.entity.jo_number ? 'A valid job order number is required' : 'Add an item'">
                         <span>
-                            <UButton @click="openAddItemForm" :disabled="!reviewData.entity.jo_number || reviewData.entity.jo_number <= 0" icon="i-lucide-plus"
-                                label="Add Item" variant="outline" />
+                            <UButton @click="openAddItemForm"
+                                :disabled="!reviewData.entity.jo_number || reviewData.entity.jo_number <= 0"
+                                icon="i-lucide-plus" label="Add Item" variant="outline" />
                         </span>
                     </UTooltip>
                 </template>
