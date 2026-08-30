@@ -18,6 +18,11 @@ export const getAllJobOrders = async (params: {
     return response.data
 }
 
+export const getAllVoidedJobs = async () => {
+  const response = await http.get('/job-orders/voided')
+  return response.data
+}
+
 export const getJobOrderCount = async (params: {
 	payment_status?: string
 	job_status?: string

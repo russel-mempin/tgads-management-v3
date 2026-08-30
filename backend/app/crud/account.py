@@ -1,6 +1,14 @@
 from sqlmodel import Session, select
+
 from app.models import Account
-from app.schemas.account import AccountOption
+from app.schemas.account import AccountOption, AccountPublic
+
+
+def get_all_account_data(
+    db: Session
+) -> list[AccountPublic]:
+    accounts = db.exec(select(Account)).all()
+    return [AccountPublic.model_validate(account) for account in accounts]
 
 
 def get_all_account_names(

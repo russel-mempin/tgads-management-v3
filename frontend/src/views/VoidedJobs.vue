@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, h, resolveComponent } from 'vue'
-import { getAllVoidedJobs } from '@/api/voidedJobs';
+import { getAllVoidedJobs } from '@/api/jobOrders';
 import type { VoidedJobs } from '@/types/voidedJob';
 import type { TableColumn } from '@nuxt/ui';
 import { formatDate } from '@/utils/formatters';
@@ -24,9 +24,9 @@ const columns: TableColumn<VoidedJobs>[] = [
         cell: ({ row }) => `#${row.getValue('jo_number')}`
     },
     {
-        accessorKey: 'job_date',
+        accessorKey: 'date_received',
         header: 'Date Received',
-        cell: ({ row }) => `${formatDate(row.getValue('job_date'))}`
+        cell: ({ row }) => `${formatDate(row.getValue('date_received'))}`
     },
     {
         accessorKey: 'voided_at',
@@ -34,12 +34,17 @@ const columns: TableColumn<VoidedJobs>[] = [
         cell: ({ row }) => `${formatDate(row.getValue('voided_at'))}`
     },
     {
-        accessorKey: 'reason',
+        accessorKey: 'void_reason',
         header: 'Reason',
         cell: ({ row }) => {
-            const reason = row.getValue('reason') as string
+            const reason = row.getValue('void_reason') as string
+
             return h(UTooltip, { text: reason, delayDuration: 300 }, () =>
-                h('span', { class: 'truncate block max-w-72 cursor-help' }, reason)
+                h(
+                    'span',
+                    { class: 'truncate block max-w-72 cursor-help' },
+                    reason
+                )
             )
         }
     },

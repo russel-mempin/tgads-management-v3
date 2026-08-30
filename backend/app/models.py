@@ -349,6 +349,14 @@ class JobOrder(JobOrderBase, table=True):
             else None
         )
 
+    @property
+    def voided_by_name(self) -> str | None:
+        return (
+            f"{self.updated_by.first_name} {self.updated_by.last_name}"
+            if self.updated_by
+            else None
+        )
+
 
 # ====================== JOB ITEM EXTRAS =========================
 class JobItemExtra(SQLModel, table=True):

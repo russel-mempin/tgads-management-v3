@@ -195,6 +195,18 @@ def get_all_job_orders(
     )
 
 
+def get_all_voided_jobs(
+    db: Session,
+) -> list[JobOrder]:
+    return list(
+        db.exec(
+            select(JobOrder).where(
+                col(JobOrder.voided_at).is_not(None)
+            )
+        ).all()
+    )
+
+
 def get_job_order_count(
     db: Session,
     include_voided: bool = False,
@@ -367,33 +379,27 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         raise
 
 
-# TODO: Change to void job order
-# def archive_job_order(db: Session, jo_number: int, current_user_id: uuid.UUID):
-#     try:
-#         job_order = db.exec(
-#             select(JobOrder).where(JobOrder.jo_number == jo_number)
-#         ).first()
-#         if not job_order:
-#             raise HTTPException(
-#                 status_code=404, detail=f"Job order with number {jo_number} not found"
-#             )
-
-#         job_order.is_active = False
-#         db.add(job_order)
-
-#         audit = AuditLog(
-#             action=f"Deleted job order {job_order.jo_number}", user_id=current_user_id
-#         )
-#         db.add(audit)
-
-#         db.commit()
-#         db.refresh(job_order)
-#         return "Job order deleted."
-#     except HTTPException:
-#         raise
-#     except Exception:
-#         db.rollback()
-#         raise
+def void_job_order(db: Session, job_order_id: uuid.UUID, current_user_id: uuid.UUID, reason):
+    try:
+        job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job order not found.",
+            )
+        job_order.voided_at = datetime.now(UTC)
+        job_order.void_reason = reason
+        db.add(AuditLog(
+            action=f"Voided job order {job_order.jo_number}", user_id=current_user_id
+        ))
+        db.commit()
+        db.refresh(job_order)
+        return "Job Order voided."
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
 
 
 def create_job_item(

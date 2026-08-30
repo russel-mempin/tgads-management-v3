@@ -1,11 +1,10 @@
-from sqlmodel import Session, select
-from app.models import User, AuditLog
-from app.services.auth import verify_password
-from app.schemas.user import UserPublic, UserCreate
-import uuid
 from fastapi import HTTPException
-from app.services.auth import get_password_hash
+from sqlmodel import Session, select
+
 from app.enums import UserRoles
+from app.models import AuditLog, User
+from app.schemas.user import UserCreate
+from app.services.auth import get_password_hash, verify_password
 
 
 def get_user_by_username(db: Session, username: str) -> User | None:

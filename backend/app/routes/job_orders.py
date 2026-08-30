@@ -10,6 +10,7 @@ from app.crud.job_order import (
     create_job_order,
     create_payment,
     get_all_job_orders,
+    get_all_voided_jobs,
     get_business_kpis,
     get_job_order,
     get_job_order_count,
@@ -132,7 +133,12 @@ def compute_unit_price_route(
     return get_price(
         db, height=height, width=width, service_id=service_id, option_id=option_id, size_unit=size_unit, quantity=quantity
     )
-    
+
+
+@router.get("/voided", response_model=list[JobOrderPublic])
+def read_voided_job_orders(db: Session = Depends(get_session)):
+    return get_all_voided_jobs(db)
+
 
 @router.get("/{job_order_id}", response_model=JobOrderPublic)
 def read_job_order(job_order_id: uuid.UUID, db: Session = Depends(get_session)):
