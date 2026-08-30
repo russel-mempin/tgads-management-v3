@@ -537,7 +537,6 @@ class Account(SQLModel, table=True):
     type: AccountType = Field()
     beginning_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     beginning_balance_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    current_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
 
     payments: list[Payment] = Relationship(back_populates="account")
@@ -546,20 +545,25 @@ class Account(SQLModel, table=True):
     expenses: list[Expense] = Relationship(back_populates="account")
     misc_sales: list[MiscSale] = Relationship(back_populates="account")
 
+    @property
+    def current_balance(self) -> Decimal:
+        return self.beginning_balance + sum(
+            (transaction.amount for transaction in self.transactions),
+            Decimal("0.00"),
+        )
+
 
 class AccountTransaction(SQLModel, table=True):
     __tablename__ = "account_transactions"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    account_id: uuid.UUID = Field(foreign_key="accounts.id")
+    account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
     date: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
-    description: str = Field()
     amount: Decimal = Field(
         sa_column=Column(Numeric(12, 2), nullable=False)
     )  # positive = in, negative = out
-    running_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     source_type: TransactionSource
     source_id: uuid.UUID | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

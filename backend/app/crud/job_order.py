@@ -6,9 +6,10 @@ from fastapi import HTTPException, status
 from sqlalchemy import String, cast, func, or_
 from sqlmodel import Session, col, select
 
-from app.enums import JobStatus, PaymentStatus, SizeUnit
+from app.enums import JobStatus, PaymentStatus, SizeUnit, TransactionSource
 from app.models import (
     Account,
+    AccountTransaction,
     AuditLog,
     ClaimingHistory,
     Customer,
@@ -170,7 +171,7 @@ def get_all_job_orders(
     )
 
     if not include_voided:
-        query = query.where(JobOrder.voided_at.is_(None))
+       query = query.where(col(JobOrder.voided_at).is_(None))
 
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
@@ -208,7 +209,7 @@ def get_job_order_count(
     )
 
     if not include_voided:
-        query = query.where(JobOrder.voided_at.is_(None))
+        query = query.where(col(JobOrder.voided_at).is_(None))
     if payment_status:
         query = query.where(JobOrder.payment_status == payment_status)
     if job_status:
@@ -335,7 +336,15 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                 db.add(_build_job_item_extra(job_item.id, extra, extra_service))
         if data.payments:
             for payment in data.payments:
-                db.add(_build_payment(db, job_order.id, payment))
+                payment = _build_payment(db, job_order.id, payment)
+                db.add(payment)
+                db.flush()
+                db.add(AccountTransaction(
+                    account_id=payment.account_id,
+                    amount=payment.amount,
+                    source_type=TransactionSource.PAYMENT,
+                    source_id=payment.id
+                ))
         if data.claiming_history:
             for claim in data.claiming_history:
                 db.add(
@@ -570,6 +579,12 @@ def create_payment(
         db.add(payment)
         db.flush()
         job_order.sync_computed_fields()
+        db.add(AccountTransaction(
+            account_id=payment.account_id,
+            amount=payment.amount,
+            source_type=TransactionSource.PAYMENT,
+            source_id=payment.id
+        ))
         audit = AuditLog(
             action=f"Created payment amounting to {payment.amount}",
             user_id=current_user_id,
@@ -651,7 +666,7 @@ def get_business_kpis(db: Session) -> dict:
     # Outstanding balance — sum of (total_due - total_paid) for unpaid/partial orders
     job_orders = db.exec(
         select(JobOrder).where(
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
             col(JobOrder.payment_status).in_(
                 [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
             ),
@@ -664,7 +679,7 @@ def get_business_kpis(db: Session) -> dict:
         select(func.count())
         .select_from(JobOrder)
         .where(
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
             JobOrder.payment_status == PaymentStatus.UNPAID,
         )
     ).one()
@@ -714,7 +729,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
         )
     ).one()
 
@@ -733,7 +748,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
         )
     ).one()
 
@@ -749,7 +764,7 @@ def get_operation_kpis(db: Session) -> dict:
                     JobStatus.FOR_PICKUP,
                 ]
             ),
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
         )
     ).one()
 
@@ -759,7 +774,7 @@ def get_operation_kpis(db: Session) -> dict:
         .select_from(JobOrder)
         .where(
             JobOrder.overall_job_status == JobStatus.FOR_PICKUP,
-            JobOrder.voided_at.is_(None),
+            col(JobOrder.voided_at).is_(None),
         )
     ).one()
 
@@ -775,7 +790,7 @@ def get_jobs_with_outstanding_balance(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
                 col(JobOrder.payment_status).in_(
                     [PaymentStatus.UNPAID, PaymentStatus.PARTIAL]
                 ),
@@ -788,7 +803,7 @@ def get_unpaid_job_orders(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
                 JobOrder.payment_status == PaymentStatus.UNPAID,
             )
         ).all()
@@ -807,7 +822,7 @@ def get_overdue_job_orders(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder).where(
                 col(JobOrder.id).in_(overdue_job_order_ids),  # ← wrap with col()
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
             )
         ).all()
     )
@@ -825,7 +840,7 @@ def get_jobs_with_payments_this_week(db: Session) -> list[JobOrder]:
     return list(
         db.exec(
             select(JobOrder).where(
-                col(JobOrder.id).in_(job_order_ids), JobOrder.voided_at.is_(None),
+                col(JobOrder.id).in_(job_order_ids), col(JobOrder.voided_at).is_(None),
             )
         ).all()
     )
@@ -846,7 +861,7 @@ def get_overdue_jobs(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -866,7 +881,7 @@ def get_jobs_in_progress(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
             )
             .order_by(col(JobOrder.jo_number).desc())
         ).all()
@@ -892,7 +907,7 @@ def get_jobs_due_today(db: Session) -> list[JobOrder]:
                         JobStatus.FOR_PICKUP,
                     ]
                 ),
-                JobOrder.voided_at.is_(None),
+                col(JobOrder.voided_at).is_(None),
             )
             .distinct()
             .order_by(col(JobOrder.jo_number).desc())
@@ -905,7 +920,7 @@ def get_jobs_ready_for_pickup(db: Session) -> list[JobOrder]:
         db.exec(
             select(JobOrder)
             .join(JobItem, col(JobOrder.id) == col(JobItem.job_order_id))
-            .where(JobItem.job_status == JobStatus.FOR_PICKUP, JobOrder.voided_at.is_(None),)
+            .where(JobItem.job_status == JobStatus.FOR_PICKUP, col(JobOrder.voided_at).is_(None),)
             .distinct()
         ).all()
     )

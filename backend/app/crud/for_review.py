@@ -5,8 +5,9 @@ from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, col, select
 
-from app.enums import PaymentStatus, ReviewEntityType
+from app.enums import PaymentStatus, ReviewEntityType, TransactionSource
 from app.models import (
+    AccountTransaction,
     AuditLog,
     Customer,
     ForReview,
@@ -322,6 +323,12 @@ def assign_payment_to_job_order(db: Session, entity_id: uuid.UUID, match_id: uui
         db.delete(unlinked_payment)
         db.flush()
         job_order.sync_computed_fields()
+        db.add(AccountTransaction(
+            account_id=payment.account_id,
+            amount=payment.amount,
+            source_type=TransactionSource.PAYMENT,
+            source_id=payment.id
+        ))
         audit = AuditLog(
             action=(
                 f"Assigned unlinked payment "
@@ -359,8 +366,15 @@ def assign_payment_to_misc_sale(db: Session, entity_id: uuid.UUID, current_user_
             account_id=account.id
         )
         db.add(misc_sale)
+        db.flush()
         db.delete(for_review_data)
         db.delete(unlinked_payment)
+        db.add(AccountTransaction(
+            account_id=misc_sale.account_id,
+            amount=misc_sale.amount,
+            source_type=TransactionSource.MISC_SALE,
+            source_id=misc_sale.id
+        ))
         audit = AuditLog(
             action=(
                 f"Marked unlinked payment to Misc Sale Ref. No. "

@@ -1,12 +1,20 @@
 import csv
 import os
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlmodel import Session, select
 
 from app.database import engine
-from app.enums import ReasonCategory, ReviewEntityType
-from app.models import Account, ForReview, JobOrder, Payment, UnlinkedPayment
+from app.enums import ReasonCategory, ReviewEntityType, TransactionSource
+from app.models import (
+    Account,
+    AccountTransaction,
+    ForReview,
+    JobOrder,
+    Payment,
+    UnlinkedPayment,
+)
 from app.utils.utils import get_system_admin, to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -44,26 +52,17 @@ def get_account(session: Session, method: str) -> Account | None:
 
 
 def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
-    skipped: list[str] = []
-    linked_count = 0
-    unlinked_count = 0
-    touched_job_order_ids: set = set()
-    unlinked_refs: list[str] = []
-
     with Session(engine) as session:
         sysadmin = get_system_admin(session)
         with open(file_path, newline="") as f:
             for row in csv.DictReader(f):
                 account = get_account(session, row.get("method", ""))
                 if account is None:
-                    skipped.append(
-                        f"Ref {row.get('reference_number', '?')}: "
-                        f"no account for method '{row.get('method', '')}'"
-                    )
+                    print("Account not found.")
                     continue
 
                 date_received = parse_date(row["date_received"])
-                reference_number = row.get("reference_number", "").strip() or None
+                reference_number = row.get("reference_number", "").strip()
                 amount = parse_currency(row.get("amount", ""))
                 jo_number_raw = row.get("jo_number", "").strip()
 
@@ -83,20 +82,26 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                     if existing:
                         continue
 
+                    payment = Payment(
+                        date_received=date_received,
+                        reference_number=reference_number,
+                        amount=Decimal(amount),
+                        account_id=account.id,
+                        job_order_id=job_order.id,
+                        job_order=job_order,
+                        account_name_snapshot=account.name,
+                    )
+                    session.add(payment)
+                    session.flush()
+                    job_order.sync_computed_fields()
                     session.add(
-                        Payment(
-                            date_received=date_received,
-                            reference_number=reference_number,
-                            amount=amount,
+                        AccountTransaction(
                             account_id=account.id,
-                            job_order_id=job_order.id,
-                            job_order=job_order,
-                            account_name_snapshot=account.name
+                            amount=Decimal(amount),
+                            source_type=TransactionSource.PAYMENT,
+                            source_id=payment.id,
                         )
                     )
-                    job_order.sync_computed_fields()
-                    touched_job_order_ids.add(job_order.id)
-                    linked_count += 1
                 else:
                     description = row.get("description", "").strip() or None
                     if jo_number_raw:
@@ -105,13 +110,13 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                     unlinked_payment = UnlinkedPayment(
                         date_received=date_received,
                         reference_number=reference_number,
-                        amount=amount,
+                        amount=Decimal(amount),
                         customer_name=row.get("name", "").strip() or None,
                         description=description,
                         account_id=account.id,
                     )
                     session.add(unlinked_payment)
-                    
+
                     session.add(
                         ForReview(
                             entity_type=ReviewEntityType.PAYMENT,
@@ -122,23 +127,5 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             reason_category=ReasonCategory.MISSING_DATA,
                         )
                     )
-                    unlinked_count += 1
-                    unlinked_refs.append(
-                        f"Ref={reference_number or '(none)'} | JO={jo_number_raw or '(none)'}"
-                    )
-
+                    print(f"Unlinked Payment {reference_number} marked for review.")
         session.commit()
-
-    print(f"Payments: {linked_count} linked to job orders, {unlinked_count} unlinked")
-
-    if unlinked_refs:
-        print("\nUnlinked payments:")
-        for ref in unlinked_refs:
-            print(f"  - {ref}")
-
-    print("payment_status auto-synced for touched job orders via before_flush listener")
-
-    if skipped:
-        print(f"\n[WARN] {len(skipped)} rows skipped:")
-        for s in skipped:
-            print(f"  - {s}")
