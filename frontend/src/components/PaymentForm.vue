@@ -60,7 +60,7 @@ const handleCancel = () => {
 // Data Functions
 watch(() => props.editingPayment, (payment) => {
     if (payment) {
-        state.dateReceived = utcToInput(payment.date_received.toISOString())
+        state.dateReceived = utcToInput(payment.date_received)
         state.referenceNumber = payment.reference_number
         state.amount = payment.amount
         state.notes = payment.notes
@@ -74,7 +74,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
     const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
 
     const payload: Payment = {
-        date_received: new Date(inputToUtc(event.data.dateReceived)),
+        date_received: inputToUtc(event.data.dateReceived),
         reference_number: event.data.referenceNumber,
         amount: event.data.amount,
         notes: event.data.notes ?? '',

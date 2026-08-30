@@ -96,7 +96,7 @@ const columns: TableColumn<JobItemTableRow>[] = [
         accessorKey: 'job_status',
         header: 'Status',
         cell: ({ row }) => {
-            return h(UBadge, { class: 'capitalize font-semibold', variant: 'solid', color: getJobStatusColor(row.original.job_status) }, () =>
+            return h(UBadge, { color: getJobStatusColor(row.original.job_status) }, () =>
                 row.getValue('job_status')
             )
         }

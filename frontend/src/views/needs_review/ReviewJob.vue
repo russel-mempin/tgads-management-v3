@@ -5,17 +5,18 @@ import axios from 'axios';
 
 // Type imports
 import type { JobForReview } from '@/types/forReview';
-import type { JobItemCreate, JobItem, JobItemTableRow } from '@/types/jobOrder';
+import type { JobItemCreate, JobItem, JobItemTableRow, Payment } from '@/types/jobOrder';
 import type { Service } from '@/types/service';
 // API calls
 import { getJobForReviewDetails, updateWholeJobItem } from '@/api/forReviews';
-import { createJobItem } from '@/api/jobOrders';
+import { createJobItem, createPayment } from '@/api/jobOrders';
 import { getAllServices } from '@/api/services';
 // Component imports
 import FlagHeader from '@/components/FlagHeader.vue';
 import JobOrderHeader from '@/components/JobOrderHeader.vue';
 import OrderSummary from '@/components/OrderSummary.vue';
 import PaymentTable from '@/components/PaymentTable.vue';
+import PaymentForm from '@/components/PaymentForm.vue';
 
 const route = useRoute()
 const toast = useToast()
@@ -27,6 +28,7 @@ const serviceList = ref<Service[]>([])
 // UI Variables
 const loading = ref(true)
 const isAddItemFormOpen = ref(false)
+const isAddPaymentFormOpen = ref(false)
 
 // Data functions
 const fetchReviewDetails = async () => {
@@ -80,6 +82,9 @@ const openEditItemForm = (item: JobItemTableRow) => {
 }
 const openAddItemForm = () => {
     isAddItemFormOpen.value = true
+}
+const openAddPaymentForm = () => {
+    isAddPaymentFormOpen.value = true
 }
 
 // Data functions
@@ -143,11 +148,43 @@ const saveJobItem = async (item: JobItemCreate) => {
         }
     }
 }
+const savePayment = async (item: Payment) => {
+    if (!reviewData.value?.entity) {
+        console.error('Cannot save job item: Job order not loaded.')
+        return
+    }
+    try {
+        await createPayment(item, reviewData.value?.entity_id)
+        toast.add({
+            title: 'Payment data saved.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        fetchReviewDetails()
+    }
+    catch (error: unknown) {
+        console.error('Failed to save job item:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to save job item.'
+        }
+
+        toast.add({
+            title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+}
 </script>
 
 <template>
     <AddJobItemForm v-model:is-open="isAddItemFormOpen" :jo-number="reviewData?.entity.jo_number"
         :editing-item="selectedJobItem" @save="saveJobItem" />
+    <PaymentForm v-model:is-open="isAddPaymentFormOpen" :balance="reviewData?.entity.balance ?? 0" @save="savePayment" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -176,7 +213,8 @@ const saveJobItem = async (item: JobItemCreate) => {
                     <UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditItemForm(item)" />
                 </template>
             </JobItemTable>
-            <PaymentTable :payments="reviewData.entity.payments" :balance="Number(reviewData?.entity.balance)" />
+            <PaymentTable :payments="reviewData.entity.payments" :balance="Number(reviewData?.entity.balance)"
+                @open-form="openAddPaymentForm" />
         </div>
     </Transition>
 </template>
