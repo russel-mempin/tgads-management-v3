@@ -1,21 +1,31 @@
 import http from './http'
-import type { JobOrderCreate, JobItem, JobItemCreate, JobItemUpdate, PricingData, Payment, ClaimingHistory } from '@/types/jobOrder'
+import type {
+  JobOrderCreate,
+  JobItem,
+  JobItemCreate,
+  JobItemUpdate,
+  PricingData,
+  Payment,
+  ClaimingHistory,
+} from '@/types/jobOrder'
 
 export async function getJobOrderKpis() {
-	const res = await http.get('/job-orders/kpis')
-	return res.data
+  const res = await http.get('/job-orders/kpis')
+  return res.data
 }
 
-export const getAllJobOrders = async (params: {
+export const getAllJobOrders = async (
+  params: {
     offset?: number
     limit?: number
     payment_status?: string
     job_status?: string
     search?: string
     filter?: string
-} = {}) => {
-    const response = await http.get('/job-orders/', { params })
-    return response.data
+  } = {},
+) => {
+  const response = await http.get('/job-orders/', { params })
+  return response.data
 }
 
 export const getAllVoidedJobs = async () => {
@@ -23,18 +33,20 @@ export const getAllVoidedJobs = async () => {
   return response.data
 }
 
-export const getJobOrderCount = async (params: {
-	payment_status?: string
-	job_status?: string
-	search?: string
-} = {}) => {
-	const response = await http.get('/job-orders/count', { params })
-	return response.data
+export const getJobOrderCount = async (
+  params: {
+    payment_status?: string
+    job_status?: string
+    search?: string
+  } = {},
+) => {
+  const response = await http.get('/job-orders/count', { params })
+  return response.data
 }
 
 export async function getJobOrder(job_order_id: string) {
-	const res = await http.get(`/job-orders/${job_order_id}`)
-	return res.data
+  const res = await http.get(`/job-orders/${job_order_id}`)
+  return res.data
 }
 
 export const getUnitPrice = async (params: {
@@ -46,33 +58,48 @@ export const getUnitPrice = async (params: {
   quantity: number
 }): Promise<PricingData> => {
   const response = await http.get<PricingData>('/job-orders/compute-unit-price', {
-    params
+    params,
   })
 
   return response.data
 }
 
-export const createJobOrder = async(payload: JobOrderCreate) => {
+export const createJobOrder = async (payload: JobOrderCreate) => {
   const res = await http.post('/job-orders/', payload)
   return res.data
 }
 
-export const createJobItem = async(payload: JobItemCreate, job_order_id: string): Promise<JobItem> => {
+export const createJobItem = async (
+  payload: JobItemCreate,
+  job_order_id: string,
+): Promise<JobItem> => {
   const res = await http.post(`/job-orders/${job_order_id}/job-items`, payload)
   return res.data
 }
 
-export const updateJobItem = async (payload: JobItemUpdate, job_order_id: string, id: string): Promise<JobItem> => {
+export const updateJobItem = async (
+  payload: JobItemUpdate,
+  job_order_id: string,
+  id: string,
+): Promise<JobItem> => {
   const res = await http.patch(`/job-orders/${job_order_id}/job-items/${id}`, payload)
   return res.data
 }
 
-export const createPayment = async(payload: Payment, job_order_id: string): Promise<Payment> => {
+export const createPayment = async (payload: Payment, job_order_id: string): Promise<Payment> => {
   const res = await http.post(`/job-orders/${job_order_id}/payments`, payload)
   return res.data
 }
 
-export const createClaim = async(payload: ClaimingHistory, job_order_id: string): Promise<ClaimingHistory> => {
+export const createClaim = async (
+  payload: ClaimingHistory,
+  job_order_id: string,
+): Promise<ClaimingHistory> => {
   const res = await http.post(`/job-orders/${job_order_id}/claiming_history`, payload)
+  return res.data
+}
+
+export const voidJobOrder = async (reason: string, job_order_id: string) => {
+  const res = await http.patch(`/job-orders/${job_order_id}/void`, null, { params: { reason } })
   return res.data
 }

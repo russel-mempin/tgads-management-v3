@@ -13,6 +13,7 @@ from app.crud.for_review import (
     get_job_for_review_details,
     get_payment_for_review_details,
     update_whole_job_item,
+    void_job_order,
 )
 from app.database import get_session
 from app.models import UnlinkedPayment, User
@@ -71,3 +72,8 @@ def read_job_for_review_details(entity_id: uuid.UUID, db: Session = Depends(get_
 @router.put("/job-orders/{job_order_id}/job-items/{job_item_id}")
 def update_job_item(job_order_id: uuid.UUID, job_item_id: uuid.UUID, data: JobItemCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_whole_job_item(db, job_order_id, job_item_id, data, current_user.id)
+
+
+@router.patch("/job-orders/{job_order_id}/void")
+def void_job_order_and_delete_review(job_order_id: uuid.UUID, reason: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return void_job_order(db, job_order_id, reason, current_user.id)

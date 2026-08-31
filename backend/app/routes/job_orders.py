@@ -25,6 +25,7 @@ from app.crud.job_order import (
     get_price,
     get_unpaid_job_orders,
     update_job_item,
+    void_job_order,
 )
 from app.database import get_session
 from app.enums import JobStatus, PaymentStatus, SizeUnit, UserRoles
@@ -154,14 +155,14 @@ def create(
     return create_job_order(db, data, current_user.id)
 
 
-# TODO: Change to void job order
-# @router.patch("/{jo_number}/archive")
-# def archive(
-#     jo_number: int,
-#     db: Session = Depends(get_session),
-#     current_user: User = Depends(get_current_active_user),
-# ):
-#     return archive_job_order(db, jo_number, current_user.id)
+@router.patch("/{job_order_id}/void")
+def void(
+    job_order_id: uuid.UUID,
+    reason: str,
+    db: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    return void_job_order(db, job_order_id, reason, current_user.id)
 
 
 @router.post("/{job_order_id}/job-items")

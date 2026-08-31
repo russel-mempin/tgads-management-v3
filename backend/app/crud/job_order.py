@@ -379,7 +379,7 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
         raise
 
 
-def void_job_order(db: Session, job_order_id: uuid.UUID, current_user_id: uuid.UUID, reason):
+def void_job_order(db: Session, job_order_id: uuid.UUID, reason, current_user_id: uuid.UUID):
     try:
         job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
         if not job_order:

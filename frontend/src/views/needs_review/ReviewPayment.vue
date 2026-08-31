@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios'
 // Type imports
 import type { PaymentForReview } from '@/types/forReview';
 import type { MiscSaleCreate } from '@/types/miscSale';
 // API call imports
 import { getPaymentForReviewDetails, assignPaymentDataToJob, assignPaymentDataToMisc } from '@/api/forReviews';
-import router from '@/router';
 
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 // Data variables
 const reviewData = ref<PaymentForReview | null>(null)

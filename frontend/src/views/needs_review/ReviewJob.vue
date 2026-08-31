@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 // Type imports
@@ -8,7 +8,7 @@ import type { JobForReview } from '@/types/forReview';
 import type { JobItemCreate, JobItem, JobItemTableRow, Payment } from '@/types/jobOrder';
 import type { Service } from '@/types/service';
 // API calls
-import { getJobForReviewDetails, updateWholeJobItem } from '@/api/forReviews';
+import { getJobForReviewDetails, updateWholeJobItem, voidJobOrderAndDeleteReview } from '@/api/forReviews';
 import { createJobItem, createPayment } from '@/api/jobOrders';
 import { getAllServices } from '@/api/services';
 // Component imports
@@ -20,15 +20,18 @@ import PaymentForm from '@/components/PaymentForm.vue';
 
 const route = useRoute()
 const toast = useToast()
+const router = useRouter()
 // Data variables
 const reviewData = ref<JobForReview>()
 const selectedJobItem = ref<JobItem | null>(null)
 const serviceList = ref<Service[]>([])
+const voidReason = ref('')
 
 // UI Variables
 const loading = ref(true)
 const isAddItemFormOpen = ref(false)
 const isAddPaymentFormOpen = ref(false)
+const isVoidConfirmOpen = ref(false)
 
 // Data functions
 const fetchReviewDetails = async () => {
@@ -78,13 +81,7 @@ const openEditItemForm = (item: JobItemTableRow) => {
         service_option_id: option.id,
         service_abbreviation_snapshot: service.abbreviation
     }
-    isAddItemFormOpen.value = true
-}
-const openAddItemForm = () => {
-    isAddItemFormOpen.value = true
-}
-const openAddPaymentForm = () => {
-    isAddPaymentFormOpen.value = true
+    isAddItemFormOpen.value = false
 }
 
 // Data functions
@@ -179,12 +176,82 @@ const savePayment = async (item: Payment) => {
         })
     }
 }
+const voidJob = async () => {
+    if (!reviewData.value?.entity) {
+        console.error('Cannot save job item: Job order not loaded.')
+        return
+    }
+    try {
+        await voidJobOrderAndDeleteReview(voidReason.value, reviewData.value?.entity_id)
+        toast.add({
+            title: 'Job order voided.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await router.push('/review-data')
+    }
+    catch (error: unknown) {
+        console.error('Failed to void job order:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to save job item.'
+        }
+
+        toast.add({
+            title: 'Failed to void job order.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+}
+const confirmResolution = () => {
+    console.log("Hi")
+}
 </script>
 
 <template>
+    <UModal title="Void Job Order" v-model:open="isVoidConfirmOpen">
+        <template #body>
+            <div class="space-y-5">
+                <!-- Warning -->
+                <div class="flex gap-3 rounded-md border border-warning bg-warning/10 p-4">
+                    <UIcon name="i-lucide-triangle-alert" class="size-5 shrink-0 text-warning" />
+
+                    <div class="space-y-1">
+                        <p class="font-medium text-highlighted">
+                            You're about to void this job order.
+                        </p>
+                        <p class="text-sm text-muted">
+                            The job order will no longer be treated as active and
+                            will appear on the Voided Jobs page.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <UFormField label="Reason for voiding" required
+                    help="Please provide a reason so this action can be tracked.">
+                    <UTextarea v-model="voidReason" class="w-full" :rows="3"
+                        placeholder="e.g. Customer cancelled the order" />
+                </UFormField>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2">
+                    <UButton label="Cancel" color="neutral" variant="outline" @click="isVoidConfirmOpen = false" />
+
+                    <UButton label="Confirm Void" icon="i-lucide-x" color="error" :disabled="!voidReason.trim()"
+                        @click="voidJob" />
+                </div>
+            </div>
+        </template>
+    </UModal>
     <AddJobItemForm v-model:is-open="isAddItemFormOpen" :jo-number="reviewData?.entity.jo_number"
         :editing-item="selectedJobItem" @save="saveJobItem" />
-    <PaymentForm v-model:is-open="isAddPaymentFormOpen" :balance="reviewData?.entity.balance ?? 0" @save="savePayment" />
+    <PaymentForm v-model:is-open="isAddPaymentFormOpen" :balance="Number(reviewData?.entity.balance ?? 0)"
+        @save="savePayment" />
     <Transition name="fade" mode="out-in">
         <div v-if="loading" class="flex items-center justify-center py-24">
             <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
@@ -203,7 +270,7 @@ const savePayment = async (item: Payment) => {
                     <UTooltip
                         :text="!reviewData.entity.jo_number ? 'A valid job order number is required' : 'Add an item'">
                         <span>
-                            <UButton @click="openAddItemForm"
+                            <UButton @click="() => isAddItemFormOpen = true"
                                 :disabled="!reviewData.entity.jo_number || reviewData.entity.jo_number <= 0"
                                 icon="i-lucide-plus" label="Add Item" variant="outline" />
                         </span>
@@ -214,7 +281,13 @@ const savePayment = async (item: Payment) => {
                 </template>
             </JobItemTable>
             <PaymentTable :payments="reviewData.entity.payments" :balance="Number(reviewData?.entity.balance)"
-                @open-form="openAddPaymentForm" />
+                @open-form="() => isAddPaymentFormOpen = true" />
+            <div class="grid grid-cols-2 gap-4">
+                <UButton label="Void Job Order" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
+                    class="flex w-full justify-center" @click="() => isVoidConfirmOpen = true" />
+                <UButton label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center"
+                    @click="confirmResolution" />
+            </div>
         </div>
     </Transition>
 </template>
