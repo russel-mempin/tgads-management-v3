@@ -2,6 +2,7 @@ import type { JobOrder, JobItem } from "./jobOrder"
 
 export type ReviewEntityType =
     | 'Job Order'
+    | 'Job Item'
     | 'Payment'
     | 'Expense'
     | 'Misc Sale'
