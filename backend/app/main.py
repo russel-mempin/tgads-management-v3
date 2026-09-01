@@ -10,8 +10,8 @@ from app.routes import (
     expenses,
     for_reviews,
     job_orders,
+    misc_sales,
     reports,
-    sales,
     services,
     users,
 )
@@ -43,6 +43,6 @@ app.include_router(for_reviews.router)
 app.include_router(customers.router)
 app.include_router(services.router)
 app.include_router(expenses.router)
-app.include_router(sales.router)
+app.include_router(misc_sales.router)
 app.include_router(reports.router)
 app.include_router(accounts.router)

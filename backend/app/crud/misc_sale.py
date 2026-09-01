@@ -1,38 +1,46 @@
-from sqlmodel import Session, select
-from app.models import MiscSale, MiscSaleBase, AuditLog
 import uuid
-from fastapi import HTTPException
+
+from fastapi import HTTPException, status
+from sqlmodel import Session, select
+
+from app.models import AuditLog, MiscSale, MiscSaleBase
+from app.schemas.misc_sale import MiscSaleCreate
 
 
 def get_all_misc_sales(
-    db: Session, offset: int = 0, limit: int = 100
+    db: Session,
+    include_archived: bool = False,
+    offset: int = 0,
+    limit: int = 100,
 ) -> list[MiscSale]:
-    return list(db.exec(
-        select(MiscSale)
-        .where(MiscSale.is_archived == False)
-        .offset(offset)
-        .limit(limit)
-    ).all())
+    statement = select(MiscSale)
+
+    if not include_archived:
+        statement = statement.where(MiscSale.is_archived == False)
+
+    statement = statement.offset(offset).limit(limit)
+
+    return list(db.exec(statement).all())
     
     
-def create_misc_sale(db: Session, data: MiscSaleBase, current_user_id: uuid.UUID):
+def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UUID):
     try:
         misc_sale = MiscSale(
             date=data.date,
             description=data.description,
-            amount=data.amount
+            amount=data.amount,
+            account_id=data.account_id
         )
         db.add(misc_sale)
         db.commit()
         db.refresh(misc_sale)
         
         audit = AuditLog(
-            action=f"Created misc sale", user_id=current_user_id
+            action="Created misc sale", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
-        
-        return misc_sale
+        return "Misc. sale data created."
     except Exception:
         db.rollback()
         raise
@@ -44,7 +52,7 @@ def update_misc_sale(db: Session, misc_sale_id: uuid.UUID, data: MiscSaleBase, c
             select(MiscSale).where(MiscSale.id == misc_sale_id)
         ).first()
         if not misc_sale:
-            raise HTTPException(status_code=404, detail="Misc sale not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Misc sale not found.")
         
         misc_sale.date = data.date
         misc_sale.description = data.description
@@ -55,7 +63,7 @@ def update_misc_sale(db: Session, misc_sale_id: uuid.UUID, data: MiscSaleBase, c
         db.refresh(misc_sale)
         
         audit = AuditLog(
-            action=f"Updated misc sale", user_id=current_user_id
+            action="Updated misc sale", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
@@ -72,7 +80,7 @@ def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uui
             select(MiscSale).where(MiscSale.id == misc_sale_id)
         ).first()
         if not misc_sale:
-            raise HTTPException(status_code=404, detail="Misc sale not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Misc sale not found")
 
         misc_sale.is_archived = True
         db.add(misc_sale)
@@ -85,7 +93,7 @@ def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uui
         db.refresh(misc_sale)
         return "Misc sale deleted."
     except HTTPException:
-        raise  # don't rollback for 404s, nothing was changed
+        raise
     except Exception:
         db.rollback()
         raise

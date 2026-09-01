@@ -127,6 +127,16 @@ const router = createRouter({
             subtitle: 'View and verify job orders that have been voided to ensure all JO numbers are accounted for.'
           }
         },
+        {
+          path: 'misc-sales',
+          component: () => import('@/views/MiscSales.vue'),
+          meta: {
+            title: 'Misc Sales',
+            breadcrumb: 'Misc Sales',
+            breadcrumbParent: { label: 'Misc Sales', to: 'misc-sales' },
+            subtitle: 'View and record payments for miscellaneous sales without job orders.'
+          }
+        },
       ]
     }
   ],

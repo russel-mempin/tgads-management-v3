@@ -66,6 +66,7 @@ const allItems = computed<NavItem[]>(() => [
           : undefined
   },
   { to: '/voided-jobs', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
+  { to: '/misc-sales', label: 'Misc Sales', icon: 'i-lucide-hand-coins', category: 'Finance' },
 ])
 
 const visibleItems = computed(() =>
