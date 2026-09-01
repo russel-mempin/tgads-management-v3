@@ -8,7 +8,7 @@ import type { JobForReview } from '@/types/forReview';
 import type { JobItemCreate, JobItem, JobItemTableRow, Payment } from '@/types/jobOrder';
 import type { Service } from '@/types/service';
 // API calls
-import { getJobForReviewDetails, updateWholeJobItem, voidJobOrderAndDeleteReview } from '@/api/forReviews';
+import { getJobForReviewDetails, updateWholeJobItem, voidJobOrderAndDeleteReview, getJobItemWithJobOrder } from '@/api/forReviews';
 import { createJobItem, createPayment } from '@/api/jobOrders';
 import { getAllServices } from '@/api/services';
 // Component imports
@@ -32,18 +32,25 @@ const loading = ref(true)
 const isAddItemFormOpen = ref(false)
 const isAddPaymentFormOpen = ref(false)
 const isVoidConfirmOpen = ref(false)
+const highlightedItemId = ref('')
 
 // Data functions
 const fetchReviewDetails = async () => {
     loading.value = true
     try {
-        const forReviewId = route.params.entity_id
-        if (typeof forReviewId !== 'string') {
+        const entityId = route.params.entity_id
+        if (typeof entityId !== 'string') {
             throw new Error('Invalid entity id.')
         }
-        reviewData.value = await getJobForReviewDetails(forReviewId)
-    }
-    finally {
+        if (route.name === 'review-job-order') {
+            reviewData.value = await getJobForReviewDetails(entityId)
+        } else if (route.name === 'review-job-item') {
+            reviewData.value = await getJobItemWithJobOrder(entityId)
+            highlightedItemId.value = entityId
+        } else {
+            throw new Error('Invalid review route.')
+        }
+    } finally {
         loading.value = false
     }
 }
@@ -265,7 +272,7 @@ const confirmResolution = () => {
             <FlagHeader :flag-data="reviewData" />
             <!-- <JobOrderHeader :entity-data="reviewData.entity" /> -->
             <OrderSummary :job-order="reviewData.entity" />
-            <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number">
+            <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number" :highlighted-item-id="highlightedItemId">
                 <template #header-actions>
                     <UTooltip
                         :text="!reviewData.entity.jo_number ? 'A valid job order number is required' : 'Add an item'">

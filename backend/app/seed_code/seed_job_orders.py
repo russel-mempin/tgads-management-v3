@@ -245,65 +245,17 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 continue
             item_id = f"{jo_number}-{service.abbreviation}-{sequence}"
 
-            # Compute pricing and generate item_id before insertion
-            if service_requires_size:
-                if height is None or width is None or size_unit is None:
-                    print(
-                        f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
-                    )
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ITEM,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=item_id,
-                            reason=f"Missing size information for job item ({service.name}).",
-                            reason_category=ReasonCategory(
-                                review_reason if review_reason else "Missing Data"
-                            ),
-                        )
-                    )
-                # After validating data, compute unit price and check if the listed price is different
-                # If the computed unit price is different, mark job for review.
-                if service_requires_size and height is not None and width is not None and size_unit is not None:
-                    computed_unit_price = get_computed_unit_price_from_area(
-                        price_unit=service.unit,
-                        base_rate=option.base_rate,
-                        height=height,
-                        width=width,
-                        size_unit=size_unit,
-                    )
-                if (computed_unit_price + extra_service_price) > csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ITEM,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=item_id,
-                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
-                elif (computed_unit_price + extra_service_price) < csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ITEM,
-                            entity_id=job_order.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=item_id,
-                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
+            # Compute unit price up front (used both for the JobItem row and the review checks below)
+            if service_requires_size and height is not None and width is not None and size_unit is not None:
+                computed_unit_price = get_computed_unit_price_from_area(
+                    price_unit=service.unit,
+                    base_rate=option.base_rate,
+                    height=height,
+                    width=width,
+                    size_unit=size_unit,
+                )
 
+            # Insert the job item first so we have its id available for any ForReview rows
             item = JobItem(
                 item_id=item_id,
                 description=row["description"].strip() or None,
@@ -330,8 +282,58 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             )
 
             session.add(item)
-            session.flush()
+            session.flush()  # assigns item.id
             touched_job_order_ids.add(job_order.id)
+
+            # Now that item.id exists, run review checks
+            if service_requires_size:
+                if height is None or width is None or size_unit is None:
+                    print(
+                        f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."
+                    )
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=item.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason=f"Missing size information for job item ({service.name}).",
+                            reason_category=ReasonCategory(
+                                review_reason if review_reason else "Missing Data"
+                            ),
+                        )
+                    )
+
+                if (computed_unit_price + extra_service_price) > csv_unit_price:
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=item.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
+                        )
+                    )
+                elif (computed_unit_price + extra_service_price) < csv_unit_price:
+                    session.add(
+                        ForReview(
+                            entity_type=ReviewEntityType.JOB_ITEM,
+                            entity_id=item.id,
+                            created_by_id=sysadmin.id,
+                            entity_reference=item_id,
+                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
+                            reason_category=ReasonCategory(
+                                review_reason
+                                if review_reason
+                                else "Pricing Discrepancy"
+                            ),
+                        )
+                    )
 
             # After inserting the job item, determine extra service (if any) and insert to db
             if extra and extra_quantity > 0:

@@ -11,6 +11,7 @@ from app.crud.for_review import (
     get_all_for_review_items,
     get_count_of_for_reviews,
     get_job_for_review_details,
+    get_job_item_with_job_order,
     get_payment_for_review_details,
     update_whole_job_item,
     void_job_order,
@@ -77,3 +78,8 @@ def update_job_item(job_order_id: uuid.UUID, job_item_id: uuid.UUID, data: JobIt
 @router.patch("/job-orders/{job_order_id}/void")
 def void_job_order_and_delete_review(job_order_id: uuid.UUID, reason: str, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return void_job_order(db, job_order_id, reason, current_user.id)
+
+
+@router.get("/job-items/{job_item_id}")
+def get_job_item_review_details(job_item_id: uuid.UUID, db: Session = Depends(get_session)):
+    return get_job_item_with_job_order(db, job_item_id)

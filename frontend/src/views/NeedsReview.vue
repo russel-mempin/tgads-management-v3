@@ -82,7 +82,7 @@ const columns: TableColumn<ForReview>[] = [
                             router.push(`review-data/payments/${row.original.entity_id}`)
                         }
                         else if (row.original.entity_type === "Job Item") {
-                            router.push(`/review-data/job-orders/${row.original.entity_id}`)
+                            router.push(`/review-data/job-items/${row.original.entity_id}`)
                         }
                     }
                 }),

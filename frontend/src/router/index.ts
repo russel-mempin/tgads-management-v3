@@ -88,9 +88,21 @@ const router = createRouter({
         {
           path: 'review-data/job-orders/:entity_id',
           component: () => import('@/views/needs_review/ReviewJob.vue'),
+          name: 'review-job-order',
           meta: {
             title: 'Needs Review - Job Order',
             breadcrumb: 'Needs Review - Job Order',
+            breadcrumbParent: { label: 'Needs Review', to: 'review-data' },
+            subtitle: 'View full information about the job that is for review and resolve it.'
+          }
+        },
+        {
+          path: 'review-data/job-items/:entity_id',
+          component: () => import('@/views/needs_review/ReviewJob.vue'),
+          name: 'review-job-item',
+          meta: {
+            title: 'Needs Review - Job Item',
+            breadcrumb: 'Needs Review - Job Item',
             breadcrumbParent: { label: 'Needs Review', to: 'review-data' },
             subtitle: 'View full information about the job that is for review and resolve it.'
           }

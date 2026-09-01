@@ -570,3 +570,32 @@ def void_job_order(
     except Exception:
         db.rollback()
         raise
+
+
+def get_job_item_with_job_order(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
+    for_review_item = db.exec(
+        select(ForReview).where(
+            ForReview.entity_id == entity_id,
+            ForReview.entity_type == ReviewEntityType.JOB_ITEM,
+        )
+    ).first()
+    if not for_review_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
+        )
+    entity = db.exec(
+        select(JobItem).where(JobItem.id == entity_id)
+    ).first()
+    if not entity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job item not found."
+        )
+    job_order = db.exec(
+        select(JobOrder)
+        .where(JobOrder.id == entity.job_order_id)
+    ).first()
+    if not job_order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
+        )
+    return _build_for_review_details(for_review_item, job_order)

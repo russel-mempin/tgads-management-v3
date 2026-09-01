@@ -58,3 +58,8 @@ export const voidJobOrderAndDeleteReview = async (reason: string, job_order_id: 
   const res = await http.patch(`/for-reviews/job-orders/${job_order_id}/void`, null, { params: { reason } })
   return res.data
 }
+
+export const getJobItemWithJobOrder = async(job_item_id: string) => {
+  const res = await http.get(`/for-reviews/job-items/${job_item_id}`)
+  return res.data 
+}

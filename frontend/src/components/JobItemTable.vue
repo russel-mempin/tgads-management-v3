@@ -3,6 +3,7 @@ import { resolveComponent, h } from 'vue'
 import { formatCurrency, formatDate, getJobStatusColor } from '@/utils/formatters';
 import type { JobItemTableRow } from '@/types/jobOrder';
 import type { TableColumn } from '@nuxt/ui';
+import type { TableMeta, Row } from '@tanstack/vue-table'
 
 const UBadge = resolveComponent('UBadge')
 
@@ -10,6 +11,7 @@ const props = defineProps<{
     jobItems?: JobItemTableRow[]
     totalClaimedByItem?: Map<string, number>
     getTotalClaimed?: (itemId: string) => number
+    highlightedItemId?: string
 }>()
 // Table data
 const columns: TableColumn<JobItemTableRow>[] = [
@@ -106,6 +108,18 @@ const columns: TableColumn<JobItemTableRow>[] = [
         header: ''
     }
 ]
+
+const meta: TableMeta<JobItemTableRow> = {
+    class: {
+        tr: (row: Row<JobItemTableRow>) => {
+            if (row.original.id === props.highlightedItemId) {
+                return 'bg-error/10!'
+            }
+
+            return ''
+        }
+    }
+}
 </script>
 
 <template>
@@ -117,7 +131,7 @@ const columns: TableColumn<JobItemTableRow>[] = [
             </div>
             <slot name="header-actions" />
         </div>
-        <UTable :data="props.jobItems" :columns="columns">
+        <UTable :data="props.jobItems" :columns="columns" :meta="meta">
             <template #actions-cell="{ row }">
                 <slot name="actions" :item="row.original" :index="row.index" />
             </template>
