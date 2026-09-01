@@ -14,6 +14,7 @@ onMounted(async () => {
 		throw new Error('Invalid job order ID')
 	}
 	jobOrder.value = await getJobOrder(jobOrderId)
+	console.log(jobOrder.value)
 	await nextTick()
 	window.print()
 })

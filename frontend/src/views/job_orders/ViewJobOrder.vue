@@ -65,7 +65,7 @@ onMounted(async () => {
 
 // UI functions
 const printJobOrder = () => {
-    const resolved = router.resolve(`/job-orders/print/${jobOrder.value?.jo_number}`)
+    const resolved = router.resolve(`/job-orders/print/${route.params.job_order_id}`)
     window.open(resolved.href, '_blank')
 }
 const openAddItemForm = () => {
@@ -242,7 +242,10 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
             <div class="flex items-center justify-between">
                 <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="outline"
                     to="/job-orders" />
-                <UButton icon="i-lucide-printer" label="Print Job Order" variant="subtle" @click="printJobOrder" />
+                <div class="flex gap-4">
+                    <UButton icon="i-lucide-printer-x" label="Void Job Order" color="warning" variant="subtle" @click="printJobOrder" />
+                    <UButton icon="i-lucide-printer" label="Print Job Order" variant="subtle" @click="printJobOrder" />
+                </div>
             </div>
 
             <!-- Order Summary With Customer Info -->
@@ -270,7 +273,16 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
 
             <!-- Claiming History -->
             <ClaimTable :claiming-history="jobOrder.claiming_history" :job-items="jobOrder.job_items"
-                :claimable-items="claimableItemIds" :is-job-cancelled="isCancelled" @open-form="openAddClaimForm" />
+                :claimable-items="claimableItemIds" :is-job-cancelled="isCancelled" @open-form="openAddClaimForm">
+                <template #header-actions>
+                    <UTooltip :text="claimableItemIds.length === 0 ? 'No claimable items.' : 'Add an item'">
+                        <span>
+                            <UButton @click="openAddClaimForm" :disabled="claimableItemIds.length === 0"
+                                icon="i-lucide-plus" label="Add Item" variant="outline" />
+                        </span>
+                    </UTooltip>
+                </template>
+            </ClaimTable>
         </div>
     </Transition>
 </template>

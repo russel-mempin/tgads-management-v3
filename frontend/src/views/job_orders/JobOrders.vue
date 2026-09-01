@@ -153,7 +153,7 @@ const columns: TableColumn<JobOrder>[] = [
                     size: 'md',
                     onClick: (event: Event) => {
                         event.stopPropagation()
-                        router.push(`/job-orders/print/${row.original.jo_number}`)
+                        router.push(`/job-orders/print/${row.original.id}`)
                     }
                 })
             ])

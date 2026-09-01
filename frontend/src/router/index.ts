@@ -26,7 +26,7 @@ const router = createRouter({
       ],
     },
     {
-      path: '/job-orders/print/:jo_number',
+      path: '/job-orders/print/:job_order_id',
       component: () => import('@/views/job_orders/PrintJobOrder.vue'),
       meta: { requiresAuth: true, title: `Print Job Order` },
     },
