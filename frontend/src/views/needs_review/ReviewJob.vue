@@ -8,12 +8,11 @@ import type { JobForReview } from '@/types/forReview';
 import type { JobItemCreate, JobItem, JobItemTableRow, Payment } from '@/types/jobOrder';
 import type { Service } from '@/types/service';
 // API calls
-import { getJobForReviewDetails, updateWholeJobItem, voidJobOrderAndDeleteReview, getJobItemWithJobOrder } from '@/api/forReviews';
+import { getJobForReviewDetails, updateWholeJobItem, voidJobOrderAndDeleteReview, getJobItemWithJobOrder, markJobOrderAsResolved } from '@/api/forReviews';
 import { createJobItem, createPayment } from '@/api/jobOrders';
 import { getAllServices } from '@/api/services';
 // Component imports
 import FlagHeader from '@/components/FlagHeader.vue';
-import JobOrderHeader from '@/components/JobOrderHeader.vue';
 import OrderSummary from '@/components/OrderSummary.vue';
 import PaymentTable from '@/components/PaymentTable.vue';
 import PaymentForm from '@/components/PaymentForm.vue';
@@ -88,7 +87,7 @@ const openEditItemForm = (item: JobItemTableRow) => {
         service_option_id: option.id,
         service_abbreviation_snapshot: service.abbreviation
     }
-    isAddItemFormOpen.value = false
+    isAddItemFormOpen.value = true
 }
 
 // Data functions
@@ -214,8 +213,42 @@ const voidJob = async () => {
         })
     }
 }
-const confirmResolution = () => {
-    console.log("Hi")
+const confirmResolution = async () => {
+    if (!reviewData.value?.entity) {
+        console.error('Cannot resolve job order: Job order not loaded.')
+        return
+    }
+    try {
+        if (reviewData.value.entity_type === "Job Order") {
+            console.log("Job Order")
+            console.log(reviewData.value?.entity_id)
+            await markJobOrderAsResolved(reviewData.value?.entity_id)
+        }
+        else if (reviewData.value.entity_type === "Job Item") {
+            console.log("Job Item")
+            console.log(reviewData.value?.entity.id)
+            await markJobOrderAsResolved(reviewData.value?.entity.id)
+        }
+        toast.add({
+            title: 'Job order marked as resolved.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await router.push('/review-data')
+    }
+    catch (error: unknown) {
+        console.error('Failed to resolve job order:', error)
+        let message = 'An unexpected error occurred.'
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to resolve job order.'
+        }
+        toast.add({
+            title: 'Failed to resolve job order.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
 }
 </script>
 
@@ -270,7 +303,6 @@ const confirmResolution = () => {
                     to="/review-data" />
             </div>
             <FlagHeader :flag-data="reviewData" />
-            <!-- <JobOrderHeader :entity-data="reviewData.entity" /> -->
             <OrderSummary :job-order="reviewData.entity" />
             <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number" :highlighted-item-id="highlightedItemId">
                 <template #header-actions>

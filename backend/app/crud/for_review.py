@@ -182,10 +182,10 @@ def get_count_of_for_reviews(db: Session) -> int:
 
 def get_payment_for_review_details(
     db: Session,
-    entity_id: uuid.UUID,
+    payment_id: uuid.UUID,
 ) -> ForReviewDetails:
     for_review_item = db.exec(
-        select(ForReview).where(ForReview.entity_id == entity_id)
+        select(ForReview).where(ForReview.entity_id == payment_id)
     ).first()
 
     if not for_review_item:
@@ -298,7 +298,7 @@ def find_possible_job_orders(
 
 
 def assign_payment_to_job_order(
-    db: Session, entity_id: uuid.UUID, match_id: uuid.UUID, current_user_id: uuid.UUID
+    db: Session, payment_id: uuid.UUID, match_id: uuid.UUID, current_user_id: uuid.UUID
 ):
     try:
         job_order = db.exec(select(JobOrder).where(JobOrder.id == match_id)).first()
@@ -307,7 +307,7 @@ def assign_payment_to_job_order(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Job Order not found."
             )
         unlinked_payment = db.exec(
-            select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)
+            select(UnlinkedPayment).where(UnlinkedPayment.id == payment_id)
         ).first()
         if not unlinked_payment:
             raise HTTPException(
@@ -367,11 +367,11 @@ def assign_payment_to_job_order(
 
 
 def assign_payment_to_misc_sale(
-    db: Session, entity_id: uuid.UUID, current_user_id: uuid.UUID
+    db: Session, payment_id: uuid.UUID, current_user_id: uuid.UUID
 ):
     try:
         unlinked_payment = db.exec(
-            select(UnlinkedPayment).where(UnlinkedPayment.id == entity_id)
+            select(UnlinkedPayment).where(UnlinkedPayment.id == payment_id)
         ).first()
         if not unlinked_payment:
             raise HTTPException(
@@ -428,9 +428,9 @@ def assign_payment_to_misc_sale(
         raise
 
 
-def get_job_for_review_details(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
+def get_job_for_review_details(db: Session, job_order_id: uuid.UUID) -> ForReviewDetails:
     for_review_item = db.exec(
-        select(ForReview).where(ForReview.entity_id == entity_id)
+        select(ForReview).where(ForReview.entity_id == job_order_id)
     ).first()
     if not for_review_item:
         raise HTTPException(
@@ -527,44 +527,34 @@ def void_job_order(
 ):
     try:
         job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
-
         if not job_order:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Job order not found.",
             )
-
         if job_order.voided_at:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Job order is already voided.",
             )
-
         for_review = db.exec(
             select(ForReview).where(
                 ForReview.entity_type == ReviewEntityType.JOB_ORDER,
                 ForReview.entity_id == job_order_id,
             )
         ).first()
-
         job_order.voided_at = datetime.now(UTC)
         job_order.void_reason = reason
-
         db.add(
             AuditLog(
                 action=f"Voided job order {job_order.jo_number}",
                 user_id=current_user_id,
             )
         )
-
         if for_review:
             db.delete(for_review)
-
         db.commit()
-        db.refresh(job_order)
-
         return "Job Order voided."
-
     except HTTPException:
         raise
     except Exception:
@@ -572,30 +562,64 @@ def void_job_order(
         raise
 
 
-def get_job_item_with_job_order(db: Session, entity_id: uuid.UUID) -> ForReviewDetails:
-    for_review_item = db.exec(
-        select(ForReview).where(
-            ForReview.entity_id == entity_id,
-            ForReview.entity_type == ReviewEntityType.JOB_ITEM,
-        )
-    ).first()
-    if not for_review_item:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
-        )
-    entity = db.exec(
-        select(JobItem).where(JobItem.id == entity_id)
-    ).first()
-    if not entity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job item not found."
-        )
-    job_order = db.exec(
-        select(JobOrder)
-        .where(JobOrder.id == entity.job_order_id)
-    ).first()
-    if not job_order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
-        )
-    return _build_for_review_details(for_review_item, job_order)
+def get_job_item_with_job_order(db: Session, job_item_id: uuid.UUID) -> ForReviewDetails:
+    try:
+        for_review_item = db.exec(
+            select(ForReview).where(
+                ForReview.entity_id == job_item_id,
+                ForReview.entity_type == ReviewEntityType.JOB_ITEM,
+            )
+        ).first()
+        if not for_review_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
+            )
+        entity = db.exec(
+            select(JobItem).where(JobItem.id == job_item_id)
+        ).first()
+        if not entity:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job item not found."
+            )
+        job_order = db.exec(
+            select(JobOrder)
+            .where(JobOrder.id == entity.job_order_id)
+        ).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
+            )
+        entity_data = JobOrderPublic.model_validate(job_order, from_attributes=True)
+        return _build_for_review_details(for_review_item, entity_data)
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def mark_job_as_resolved(db: Session, job_order_id: uuid.UUID):
+    try:
+        job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
+        if not job_order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
+            )
+        for_review_item = db.exec(
+            select(ForReview).where(
+                ForReview.entity_id == job_order.id,
+                ForReview.entity_type == ReviewEntityType.JOB_ORDER
+            )
+        ).first()
+        if not for_review_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
+            )
+        db.delete(for_review_item)
+        db.commit()
+        return "Marked as resolved."
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise

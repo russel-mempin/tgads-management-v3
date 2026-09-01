@@ -11,13 +11,13 @@ export const getForReviewCount = async () => {
   return res.data
 }
 
-export const getPaymentForReviewDetails = async (entity_id: string) => {
-  const res = await http.get(`/for-reviews/payments/${entity_id}`)
+export const getPaymentForReviewDetails = async (payment_id: string) => {
+  const res = await http.get(`/for-reviews/payments/${payment_id}`)
   return res.data
 }
 
-export const searchPossibleJobOrders = async (entity_id: string, search_value: string) => {
-  const res = await http.get(`/for-reviews/payments/${entity_id}/possible-job-orders/search`, {
+export const searchPossibleJobOrders = async (payment_id: string, search_value: string) => {
+  const res = await http.get(`/for-reviews/payments/${payment_id}/possible-job-orders/search`, {
     params: {
       search_value,
     },
@@ -25,20 +25,20 @@ export const searchPossibleJobOrders = async (entity_id: string, search_value: s
   return res.data
 }
 
-export const assignPaymentDataToJob = async (entity_id: string, match_id: string) => {
-  const res = await http.post(`/for-reviews/payments/${entity_id}/job-assign`, null, {
+export const assignPaymentDataToJob = async (payment_id: string, match_id: string) => {
+  const res = await http.post(`/for-reviews/payments/${payment_id}/job-assign`, null, {
     params: { match_id: match_id },
   })
   return res.data
 }
 
-export const assignPaymentDataToMisc = async (entity_id: string) => {
-  const res = await http.post(`/for-reviews/payments/${entity_id}/misc-assign`)
+export const assignPaymentDataToMisc = async (payment_id: string) => {
+  const res = await http.post(`/for-reviews/payments/${payment_id}/misc-assign`)
   return res.data
 }
 
-export const getJobForReviewDetails = async (entity_id: string) => {
-  const res = await http.get(`/for-reviews/job-orders/${entity_id}`)
+export const getJobForReviewDetails = async (job_order_id: string) => {
+  const res = await http.get(`/for-reviews/job-orders/${job_order_id}`)
   return res.data
 }
 
@@ -62,4 +62,9 @@ export const voidJobOrderAndDeleteReview = async (reason: string, job_order_id: 
 export const getJobItemWithJobOrder = async(job_item_id: string) => {
   const res = await http.get(`/for-reviews/job-items/${job_item_id}`)
   return res.data 
+}
+
+export const markJobOrderAsResolved = async(job_order_id: string) => {
+  const res = await http.patch(`/for-reviews/job-orders/${job_order_id}/resolve`)
+  return res.data
 }
