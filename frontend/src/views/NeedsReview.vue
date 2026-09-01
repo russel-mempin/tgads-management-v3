@@ -13,7 +13,13 @@ const UBadge = resolveComponent('UBadge')
 const UTooltip = resolveComponent('UTooltip')
 
 const fetchData = async () => {
-    data.value = await getAllForReview()
+    loading.value = true
+    try {
+        data.value = await getAllForReview()
+    }
+    finally {
+        loading.value = false
+    }
 }
 
 onMounted(async () => {
@@ -92,18 +98,25 @@ const columns: TableColumn<ForReview>[] = [
 </script>
 
 <template>
-    <section class="m-6 border border-default rounded-md">
-        <UTable :data="data" :columns="columns" :loading="loading" :ui="{
-            th: 'text-muted font-semibold uppercase',
-            td: 'text-base text-highlighted',
-            tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
-        }" />
-    </section>
-    <!-- <section class="mt-4 flex items-center justify-between">
-        <p class="text-muted text-sm">
-            Showing {{ job_orders.length ? currentOffset + 1 : 0 }}–{{ Math.min(currentOffset + rows, totalRecords) }}
-            of {{ totalRecords }}
-        </p>
-        <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
-    </section> -->
+    <Transition name="fade" mode="out-in">
+        <section v-if="!loading" class="m-6 border border-default rounded-md">
+            <UTable :data="data" :columns="columns" :ui="{
+                th: 'text-muted font-semibold uppercase',
+                td: 'text-base text-highlighted',
+                tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
+            }" />
+        </section>
+    </Transition>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

@@ -10,7 +10,13 @@ const loading = ref(false)
 const UTooltip = resolveComponent('UTooltip')
 
 const fetchData = async () => {
-    data.value = await getAllVoidedJobs()
+    loading.value = true
+    try {
+        data.value = await getAllVoidedJobs()
+    }
+    finally {
+        loading.value = false
+    }
 }
 
 onMounted(async () => {
@@ -57,13 +63,15 @@ const columns: TableColumn<VoidedJobs>[] = [
 </script>
 
 <template>
-    <section class="m-6 border border-default rounded-md">
-        <UTable :data="data" :columns="columns" :loading="loading" :ui="{
-            th: 'text-muted font-semibold uppercase',
-            td: 'text-base text-highlighted',
-            tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
-        }" />
-    </section>
+    <Transition name="fade" mode="out-in">
+        <section class="m-6 border border-default rounded-md">
+            <UTable :data="data" :columns="columns" :loading="loading" :ui="{
+                th: 'text-muted font-semibold uppercase',
+                td: 'text-base text-highlighted',
+                tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
+            }" />
+        </section>
+    </Transition>
     <!-- <section class="mt-4 flex items-center justify-between">
         <p class="text-muted text-sm">
             Showing {{ job_orders.length ? currentOffset + 1 : 0 }}–{{ Math.min(currentOffset + rows, totalRecords) }}
@@ -72,3 +80,15 @@ const columns: TableColumn<VoidedJobs>[] = [
         <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
     </section> -->
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>
