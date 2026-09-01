@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router';
 // Type imports
 import type { JobItemTableRow, JobItemCreate, JobItem, Payment, ClaimingHistory } from '@/types/jobOrder';
 import type { Service, Extra } from '@/types/service';
@@ -20,6 +21,7 @@ import { useCustomerSearch } from '@/composables/customerSearch';
 import { useJobItemBuilder } from '@/composables/jobItemBuilder';
 
 const toast = useToast()
+const router = useRouter()
 
 // Data Variables
 const joNumber = ref(0)
@@ -219,6 +221,7 @@ const saveToDb = async () => {
 			color: 'success',
 			icon: 'i-lucide-circle-check'
 		})
+		await router.push('/job-orders')
 	}
 	catch (error: any) {
 		console.error(error)

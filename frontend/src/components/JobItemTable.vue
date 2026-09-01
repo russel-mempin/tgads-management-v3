@@ -112,7 +112,11 @@ const columns: TableColumn<JobItemTableRow>[] = [
 const meta: TableMeta<JobItemTableRow> = {
     class: {
         tr: (row: Row<JobItemTableRow>) => {
-            if (row.original.id === props.highlightedItemId) {
+            if (
+                row.original.id != null &&
+                props.highlightedItemId != null &&
+                row.original.id === props.highlightedItemId
+            ) {
                 return 'bg-error/10!'
             }
 

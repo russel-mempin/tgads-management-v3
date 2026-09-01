@@ -184,7 +184,7 @@ const savePayment = async (item: Payment) => {
 }
 const voidJob = async () => {
     if (!reviewData.value?.entity) {
-        console.error('Cannot save job item: Job order not loaded.')
+        console.error('Cannot void job item: Job order not loaded.')
         return
     }
     try {

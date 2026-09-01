@@ -387,6 +387,11 @@ def void_job_order(db: Session, job_order_id: uuid.UUID, reason, current_user_id
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Job order not found.",
             )
+        if job_order.voided_at:
+            raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Job order is already voided.",
+                )
         job_order.voided_at = datetime.now(UTC)
         job_order.void_reason = reason
         db.add(AuditLog(

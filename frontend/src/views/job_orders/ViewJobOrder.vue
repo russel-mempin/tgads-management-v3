@@ -6,7 +6,7 @@ import axios from 'axios';
 import type { JobOrder, JobItem, JobItemCreate, JobItemTableRow, JobItemUpdate, Payment, ClaimingHistory } from '@/types/jobOrder'
 import type { Service } from '@/types/service'
 // API call imports
-import { getJobOrder, createJobItem, updateJobItem, createPayment, createClaim } from '@/api/jobOrders'
+import { getJobOrder, createJobItem, updateJobItem, createPayment, createClaim, voidJobOrder } from '@/api/jobOrders'
 import { getAllServices } from '@/api/services'
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue'
@@ -24,6 +24,7 @@ const toast = useToast()
 
 // Data variables
 const jobOrder = ref<JobOrder>()
+const voidReason = ref('')
 
 // UI variables
 const loading = ref(true)
@@ -43,6 +44,7 @@ const payments = computed(() => jobOrder.value?.payments ?? [])
 const claimingHistory = computed(() => jobOrder.value?.claiming_history ?? [])
 const { claimableItemIds, balance } = useJobOrderTotals(joNumber, jobItems, payments, claimingHistory)
 const isCancelled = computed(() => jobOrder.value?.overall_job_status === 'Cancelled')
+const isVoidConfirmOpen = ref(false)
 
 // Data functions 
 const fetchJobOrder = async () => {
@@ -223,9 +225,75 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
         })
     }
 }
+const voidJobOrderToDb = async () => {
+    if (!jobOrder.value?.id) {
+        console.error('Cannot void job item: Job order not loaded.')
+        return
+    }
+    try {
+        await voidJobOrder(voidReason.value, jobOrder.value?.id)
+        toast.add({
+            title: 'Job order voided.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await router.push('/job-orders')
+    }
+    catch (error: unknown) {
+        console.error('Failed to void job order:', error)
+
+        let message = 'An unexpected error occurred.'
+
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to save job item.'
+        }
+
+        toast.add({
+            title: 'Failed to void job order.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+}
 </script>
 
 <template>
+    <UModal title="Void Job Order" v-model:open="isVoidConfirmOpen">
+        <template #body>
+            <div class="space-y-5">
+                <!-- Warning -->
+                <div class="flex gap-3 rounded-md border border-warning bg-warning/10 p-4">
+                    <UIcon name="i-lucide-triangle-alert" class="size-5 shrink-0 text-warning" />
+
+                    <div class="space-y-1">
+                        <p class="font-medium text-highlighted">
+                            You're about to void this job order.
+                        </p>
+                        <p class="text-sm text-muted">
+                            The job order will no longer be treated as active and
+                            will appear on the Voided Jobs page.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <UFormField label="Reason for voiding" required
+                    help="Please provide a reason so this action can be tracked.">
+                    <UTextarea v-model="voidReason" class="w-full" :rows="3"
+                        placeholder="e.g. Customer cancelled the order" />
+                </UFormField>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2">
+                    <UButton label="Cancel" color="neutral" variant="outline" @click="isVoidConfirmOpen = false" />
+
+                    <UButton label="Confirm Void" icon="i-lucide-x" color="error" :disabled="!voidReason.trim()"
+                        @click="voidJobOrderToDb" />
+                </div>
+            </div>
+        </template>
+    </UModal>
     <AddJobItemForm v-model:is-open="isAddFormOpen" :jo-number="jobOrder?.jo_number" :current-item-ids="currentItemIds"
         @save="saveNewItemToDb" />
     <EditJobItemForm v-model:is-open="isEditFormOpen" :job-item="selectedJobItem" v-if="selectedJobItem"
@@ -243,7 +311,7 @@ const saveNewClaimToDb = async (item: ClaimingHistory) => {
                 <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="outline"
                     to="/job-orders" />
                 <div class="flex gap-4">
-                    <UButton icon="i-lucide-printer-x" label="Void Job Order" color="warning" variant="subtle" @click="printJobOrder" />
+                    <UButton icon="i-lucide-printer-x" label="Void Job Order" color="warning" variant="subtle" @click="() => isVoidConfirmOpen = true" />
                     <UButton icon="i-lucide-printer" label="Print Job Order" variant="subtle" @click="printJobOrder" />
                 </div>
             </div>
