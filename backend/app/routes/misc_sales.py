@@ -13,15 +13,15 @@ from app.crud.misc_sale import (
 from app.database import get_session
 from app.enums import UserRoles
 from app.models import MiscSale, MiscSaleBase, User
-from app.schemas.misc_sale import MiscSaleCreate
+from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(
-    prefix="/sales", tags=["sales"], dependencies=[Depends(get_current_active_user)]
+    prefix="/misc-sales", tags=["misc-sales"], dependencies=[Depends(get_current_active_user)]
 )
 
 
-@router.get("/", response_model=list[MiscSale])
+@router.get("/", response_model=list[MiscSalePublic])
 def read_all(
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,

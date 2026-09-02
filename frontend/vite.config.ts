@@ -91,7 +91,12 @@ export default defineConfig({
             td: 'text-base text-highlighted',
             tr: 'even:bg-muted',
             separator: 'bg-(--ui-border)',
-            base: '[&_tbody_tr:last-child_td:first-child]:rounded-bl-lg [&_tbody_tr:last-child_td:last-child]:rounded-br-lg',
+            base: `
+              [&_thead_tr:first-child_th:first-child]:rounded-tl-md
+              [&_thead_tr:first-child_th:last-child]:rounded-tr-md
+              [&_tbody_tr:last-child_td:first-child]:rounded-bl-md
+              [&_tbody_tr:last-child_td:last-child]:rounded-br-md
+            `,
           },
         },
         navigationMenu: {

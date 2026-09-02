@@ -20,7 +20,7 @@ const fetchData = async () => {
 }
 
 onMounted(async () => {
-    fetchData()
+    await fetchData()
 })
 
 const columns: TableColumn<VoidedJobs>[] = [

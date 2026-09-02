@@ -525,6 +525,7 @@ class MiscSaleBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     description: str = Field()
+    reference_number: str | None = Field(default=None, nullable=True)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_archived: bool = Field(default=False)
 
@@ -535,6 +536,10 @@ class MiscSale(MiscSaleBase, table=True):
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False, index=True)
     
     account: Account = Relationship(back_populates="misc_sales")
+    
+    @property
+    def account_name(self) -> str | None:
+        return self.account.name if self.account else None
 
 
 # ====================== ACCOUNTS =========================

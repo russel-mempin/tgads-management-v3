@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.models import AuditLog, MiscSale, MiscSaleBase
-from app.schemas.misc_sale import MiscSaleCreate
+from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic
 
 
 def get_all_misc_sales(
@@ -12,7 +12,7 @@ def get_all_misc_sales(
     include_archived: bool = False,
     offset: int = 0,
     limit: int = 100,
-) -> list[MiscSale]:
+) -> list[MiscSalePublic]:
     statement = select(MiscSale)
 
     if not include_archived:

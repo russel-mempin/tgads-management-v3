@@ -127,7 +127,7 @@ const confirmResolution = () => {
             <!-- Form -->
             <MatchesList v-if="resolutionType === 'job_order'" :matches-list="possibleJobOrders"
                 v-model:selected-match-id="selectedMatchId" />
-            <MiscSaleForm v-else-if="resolutionType === 'misc_sale'" v-model:amount="miscSale.amount"
+            <MiscSaleDisplay v-else-if="resolutionType === 'misc_sale'" v-model:amount="miscSale.amount"
                 v-model:date="miscSale.date" v-model:description="miscSale.description" />
         </div>
         <UButton :disabled="!canConfirm" label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center"

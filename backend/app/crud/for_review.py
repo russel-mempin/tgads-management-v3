@@ -397,6 +397,7 @@ def assign_payment_to_misc_sale(
             description=unlinked_payment.description,
             amount=unlinked_payment.amount,
             account_id=account.id,
+            reference_number=unlinked_payment.reference_number
         )
         db.add(misc_sale)
         db.flush()
