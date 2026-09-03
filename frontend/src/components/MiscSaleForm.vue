@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { MiscSaleCreate } from '@/types/miscSale'
-import { inputToUtc, nowForInput } from '@/utils/formatters'
+import { inputToUtc, nowForInput, utcToInput } from '@/utils/formatters'
 import { useReferenceStore } from '@/stores/reference'
 
+const props = defineProps<{
+    editingMiscSale?: MiscSaleCreate | null
+}>()
 const isOpen = defineModel<boolean>('isOpen', { required: true })
 const emit = defineEmits<{
     save: [miscSale: MiscSaleCreate]
@@ -41,6 +44,20 @@ const handleCancel = () => {
 	resetForm()
 	isOpen.value = false
 }
+
+// Data Functions
+watch(() => props.editingMiscSale, (miscSale) => {
+    if (miscSale) {
+        state.date = utcToInput(miscSale.date)
+        state.referenceNumber = miscSale.reference_number ?? ''
+        state.amount = Number(miscSale.amount)
+        state.accountId = miscSale.account_id
+        state.description = miscSale.description
+    }
+    else {
+        resetForm()
+    }
+}, { immediate: true })
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
 	const payload: MiscSaleCreate = {

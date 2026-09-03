@@ -5,12 +5,15 @@ import { createMiscSale, getAllMiscSales } from '@/api/miscSales';
 import MiscSaleTable from '@/components/MiscSaleTable.vue';
 import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
+import { useReferenceStore } from '@/stores/reference';
 
 const toast = useToast()
+const referenceStore = useReferenceStore()
 
 const descriptionSearch = ref('')
 const includeArchived = ref(false)
 const data = ref<MiscSale[]>([])
+const selectedMiscSale = ref<MiscSaleCreate>()
 
 const loading = ref(false)
 const isAddMiscSaleFormOpen = ref(false)
@@ -60,10 +63,26 @@ const saveNewMiscSaleToDb = async (item: MiscSaleCreate) => {
 		})
 	}
 }
+
+const openEditMiscSaleForm = (item: MiscSale) => {
+	const account = referenceStore.accountOptions.find(
+		acc => acc.name === item.account_name
+	)
+	if (!account) {
+		console.error(`No matching account: ${item.account_name}`)
+        return
+	}
+	selectedMiscSale.value = {
+		...item,
+		account_id: account.id,
+		amount: Number(item.amount)
+	}
+	isAddMiscSaleFormOpen.value = true
+}
 </script>
 
 <template>
-	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb" />
+	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb" :editing-misc-sale="selectedMiscSale" />
 	<div class="m-6">
 		<section class="flex gap-6 items-center">
 			<UInput size="lg" class="flex-1" v-model="descriptionSearch" placeholder="Search by description" />
@@ -74,7 +93,7 @@ const saveNewMiscSaleToDb = async (item: MiscSaleCreate) => {
 		<section class="mt-6 border border-default bg-default rounded-md">
 			<MiscSaleTable :misc-sale="data">
 				<template #actions="{ item }">
-					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" />
+					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditMiscSaleForm(item)" />
 					<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" />
 				</template>
 			</MiscSaleTable>

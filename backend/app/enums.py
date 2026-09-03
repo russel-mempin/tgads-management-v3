@@ -88,3 +88,4 @@ class ReasonCategory(str, Enum):
     MISSING_DATA = "Missing Data"
     STATUS_ISSUE = "Status Issue"
     NEEDS_VERIFICATION = "Needs Verification"
+    EDIT_REQUIRES_APPROVAL = "Needs Approval"

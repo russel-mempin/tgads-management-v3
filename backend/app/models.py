@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import EmailStr
 from sqlalchemy import Column, DateTime, ForeignKey, Numeric
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import JSON, Field, Relationship, SQLModel
 
 from app.enums import (
     AccountType,
@@ -450,12 +450,12 @@ class PaymentBase(SQLModel):
     reference_number: str | None = Field(default=None)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     notes: str | None = Field(default=None)
-    account_name_snapshot: str
 
 
 class Payment(PaymentBase, table=True):
     __tablename__ = "payments"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    account_name_snapshot: str
     job_order_id: uuid.UUID = Field(
         sa_column=Column(
             ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
@@ -465,6 +465,27 @@ class Payment(PaymentBase, table=True):
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
 
     job_order: JobOrder = Relationship(back_populates="payments")
+    
+    
+# ====================== REFUNDS =========================
+class RefundBase(SQLModel):
+    date_issued: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    reason: str = Field()
+        
+    
+class Refund(RefundBase, table=True):
+    __tablename__ = "refunds"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    account_name_snapshot: str
+    
+    account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    payment_id: uuid.UUID = Field(foreign_key="")
+    
+    account: Account = Relationship(back_populates="payments")
 
 
 # ====================== CLAIMING HISTORY =========================
@@ -510,6 +531,7 @@ class Expense(ExpenseBase, table=True):
     __tablename__ = "expenses"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    account_name_snapshot: str
 
     account: Account = Relationship(back_populates="expenses")
 
@@ -534,6 +556,7 @@ class MiscSale(MiscSaleBase, table=True):
     __tablename__ = "misc_sales"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False, index=True)
+    account_name_snapshot: str
     
     account: Account = Relationship(back_populates="misc_sales")
     
@@ -585,6 +608,7 @@ class AccountTransaction(SQLModel, table=True):
 
 
 # ====================== UNLINKED PAYMENTS =========================
+# Temporary table. No payments should be unlinked. It should either be linked to a job order or a misc sale.
 # For payments known to be for a real job order, but where that job order
 # can't be identified from past records.
 class UnlinkedPayment(SQLModel, table=True):
@@ -621,6 +645,8 @@ class ForReview(SQLModel, table=True):
     entity_id: uuid.UUID = Field()
     entity_reference: str = Field()
     reason_category: ReasonCategory
+    old_data: dict | None = Field(default=None, sa_column=Column(JSON))
+    new_data: dict | None = Field(default=None, sa_column=Column(JSON))
     reason: str = Field()
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by_id: uuid.UUID = Field(foreign_key="users.id")
