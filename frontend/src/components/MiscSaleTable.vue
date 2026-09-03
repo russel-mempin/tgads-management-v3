@@ -11,6 +11,7 @@ const columns: TableColumn<MiscSale>[] = [
 	{
 		accessorKey: 'reference_number',
 		header: 'Reference No.',
+		cell: ({ row }) => row.getValue('reference_number') || 'N/A',
 	},
 	{
 		accessorKey: 'date',

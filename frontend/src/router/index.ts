@@ -137,6 +137,16 @@ const router = createRouter({
             subtitle: 'View and record payments for miscellaneous sales without job orders.'
           }
         },
+        {
+          path: 'expenses',
+          component: () => import('@/views/Expenses.vue'),
+          meta: {
+            title: 'Expenses',
+            breadcrumb: 'Expenses',
+            breadcrumbParent: { label: 'Expenses', to: 'expenses' },
+            subtitle: 'View and record expense data.'
+          }
+        },
       ]
     }
   ],

@@ -67,6 +67,11 @@ const allItems = computed<NavItem[]>(() => [
   },
   { to: '/voided-jobs', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
   { to: '/misc-sales', label: 'Misc Sales', icon: 'i-lucide-hand-coins', category: 'Finance' },
+  { to: '/expenses', label: authStore.isOwner ? 'Expenses' : 'Daily Expenses', icon: 'i-lucide-banknote-arrow-down', category: 'Finance' },
+  // { to: '/deposits', label: 'Deposits', icon: 'i-lucide-landmark', category: 'Finance', adminOnly: true },
+  // { to: '/manage-services', label: 'Manage Services', icon: 'i-lucide-concierge-bell', category: 'Settings', adminOnly: true },
+  // { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
+  // { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
 ])
 
 const visibleItems = computed(() =>

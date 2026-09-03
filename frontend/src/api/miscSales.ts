@@ -1,3 +1,4 @@
+import type { MiscSaleCreate } from '@/types/miscSale'
 import http from './http'
 
 export const getAllMiscSales = async(includeArchived = false) => {
@@ -6,5 +7,10 @@ export const getAllMiscSales = async(includeArchived = false) => {
             include_archived: includeArchived
         }
     })
+    return res.data
+}
+
+export const createMiscSale = async(payload: MiscSaleCreate) => {
+    const res = await http.post('/misc-sales/', payload)
     return res.data
 }

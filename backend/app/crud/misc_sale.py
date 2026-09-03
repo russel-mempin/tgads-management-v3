@@ -29,12 +29,12 @@ def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UU
             date=data.date,
             description=data.description,
             amount=data.amount,
+            reference_number=data.reference_number,
             account_id=data.account_id
         )
         db.add(misc_sale)
         db.commit()
-        db.refresh(misc_sale)
-        
+        db.refresh(misc_sale) 
         audit = AuditLog(
             action="Created misc sale", user_id=current_user_id
         )
