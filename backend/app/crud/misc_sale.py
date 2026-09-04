@@ -3,7 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
-from app.models import AuditLog, MiscSale, MiscSaleBase
+from app.models import Account, AuditLog, MiscSale, MiscSaleBase
 from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic
 
 
@@ -25,12 +25,16 @@ def get_all_misc_sales(
     
 def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UUID):
     try:
+        account = db.exec(select(Account).where(Account.id == data.account_id)).first()
+        if not account:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
         misc_sale = MiscSale(
             date=data.date,
             description=data.description,
             amount=data.amount,
             reference_number=data.reference_number,
-            account_id=data.account_id
+            account_id=account.id,
+            account_name_snapshot=account.name
         )
         db.add(misc_sale)
         db.commit()

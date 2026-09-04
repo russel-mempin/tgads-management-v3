@@ -6,7 +6,9 @@ import MiscSaleTable from '@/components/MiscSaleTable.vue';
 import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
 import { useReferenceStore } from '@/stores/reference';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore()
 const toast = useToast()
 const referenceStore = useReferenceStore()
 
@@ -38,21 +40,27 @@ watch(includeArchived, async () => {
 
 const saveNewMiscSaleToDb = async (item: MiscSaleCreate) => {
 	try {
-		await createMiscSale(item)
-		toast.add({
-			title: 'Job Item Added.',
-			color: 'success',
-			icon: 'i-lucide-circle-check'
-		})
+		if (!selectedMiscSale) {
+			await createMiscSale(item)
+			toast.add({
+				title: 'Misc Sale Added.',
+				color: 'success',
+				icon: 'i-lucide-circle-check'
+			})
+		}
+		else {
+			alert("hi")
+		}
 		await fetchData()
+		selectedMiscSale.value = undefined
 	}
 	catch (error: unknown) {
-		console.error('Failed to create payment:', error)
+		console.error('Failed to create misc sale:', error)
 
 		let message = 'An unexpected error occurred.'
 
 		if (axios.isAxiosError(error)) {
-			message = error.response?.data?.detail ?? 'Failed to create payment.'
+			message = error.response?.data?.detail ?? 'Failed to create misc sale.'
 		}
 
 		toast.add({
@@ -70,7 +78,7 @@ const openEditMiscSaleForm = (item: MiscSale) => {
 	)
 	if (!account) {
 		console.error(`No matching account: ${item.account_name}`)
-        return
+		return
 	}
 	selectedMiscSale.value = {
 		...item,
@@ -82,11 +90,12 @@ const openEditMiscSaleForm = (item: MiscSale) => {
 </script>
 
 <template>
-	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb" :editing-misc-sale="selectedMiscSale" />
+	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb"
+		:editing-misc-sale="selectedMiscSale" />
 	<div class="m-6">
 		<section class="flex gap-6 items-center">
 			<UInput size="lg" class="flex-1" v-model="descriptionSearch" placeholder="Search by description" />
-			<USwitch label="Include archived" v-model="includeArchived" />
+			<USwitch v-if="authStore.isOwner" label="Include archived" v-model="includeArchived" />
 			<UButton label="Add Misc Sale" icon="i-lucide-plus" color="primary" size="lg"
 				@click="() => isAddMiscSaleFormOpen = true" />
 		</section>

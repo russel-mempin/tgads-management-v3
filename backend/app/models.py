@@ -463,9 +463,10 @@ class Payment(PaymentBase, table=True):
     )
     account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    
 
     job_order: JobOrder = Relationship(back_populates="payments")
-    
+    refunds: list[Refund] = Relationship(back_populates="payment")
     
 # ====================== REFUNDS =========================
 class RefundBase(SQLModel):
@@ -483,9 +484,10 @@ class Refund(RefundBase, table=True):
     account_name_snapshot: str
     
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
-    payment_id: uuid.UUID = Field(foreign_key="")
+    payment_id: uuid.UUID = Field(foreign_key="payments.id", nullable=False)
     
-    account: Account = Relationship(back_populates="payments")
+    account: Account = Relationship(back_populates="refunds")
+    payment: Payment = Relationship(back_populates="refunds")
 
 
 # ====================== CLAIMING HISTORY =========================
@@ -580,6 +582,7 @@ class Account(SQLModel, table=True):
     transactions: list[AccountTransaction] = Relationship(back_populates="account")
     expenses: list[Expense] = Relationship(back_populates="account")
     misc_sales: list[MiscSale] = Relationship(back_populates="account")
+    refunds: list[Refund] = Relationship(back_populates="account")
 
     @property
     def current_balance(self) -> Decimal:
