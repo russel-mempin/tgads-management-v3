@@ -2,6 +2,7 @@ interface MiscSaleBase {
     date: string
     description: string
     reference_number?: string
+    account_id: string
 }
 
 export interface MiscSale extends MiscSaleBase {
@@ -12,5 +13,12 @@ export interface MiscSale extends MiscSaleBase {
 
 export interface MiscSaleCreate extends MiscSaleBase {
     amount: number
-    account_id: string
+}
+
+export interface MiscSaleUpdate {
+    date?: string
+    description?: string
+    reference_number?: string | null
+    amount?: number
+    account_id?: string
 }

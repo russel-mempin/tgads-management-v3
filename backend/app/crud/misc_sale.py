@@ -1,10 +1,12 @@
 import uuid
 
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session, select
 
-from app.models import Account, AuditLog, MiscSale, MiscSaleBase
-from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic
+from app.enums import ReasonCategory, ReviewEntityType, UserRoles
+from app.models import Account, AuditLog, ForReview, MiscSale, User
+from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic, MiscSaleUpdate
 
 
 def get_all_misc_sales(
@@ -50,32 +52,47 @@ def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UU
         raise
     
     
-def update_misc_sale(db: Session, misc_sale_id: uuid.UUID, data: MiscSaleBase, current_user_id: uuid.UUID):
-    try:
-        misc_sale = db.exec(
-            select(MiscSale).where(MiscSale.id == misc_sale_id)
-        ).first()
-        if not misc_sale:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Misc sale not found.")
-        
-        misc_sale.date = data.date
-        misc_sale.description = data.description
-        misc_sale.amount = data.amount
-        
-        db.add(misc_sale)
-        db.commit()
-        db.refresh(misc_sale)
-        
-        audit = AuditLog(
-            action="Updated misc sale", user_id=current_user_id
+def update_misc_sale(
+    db: Session,
+    misc_sale_id: uuid.UUID,
+    data: MiscSaleUpdate,
+    current_user: User,
+):
+    misc_sale = db.get(MiscSale, misc_sale_id)
+    if not misc_sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Misc sale not found",
         )
-        db.add(audit)
-        db.commit()
-        
-        return misc_sale
-    except Exception:
-        db.rollback()
-        raise
+
+    update_data = data.model_dump(exclude_unset=True)
+    old_data = {}
+    new_data = {}
+    for field, value in update_data.items():
+        old_value = getattr(misc_sale, field)
+
+        if old_value != value:
+            old_data[field] = jsonable_encoder(old_value)
+            new_data[field] = jsonable_encoder(value)
+            setattr(misc_sale, field, value)
+    if current_user.role != UserRoles.OWNER and new_data:
+        review = ForReview(
+            entity_type=ReviewEntityType.MISC_SALE,
+            entity_id=misc_sale.id,
+            entity_reference=misc_sale.description,
+            reason_category=ReasonCategory.EDIT_REQUIRES_APPROVAL,
+            old_data=old_data,
+            new_data=new_data,
+            reason="Misc sale edited by non-owner",
+            created_by_id=current_user.id,
+        )
+        db.add(review)
+
+    db.add(misc_sale)
+    db.commit()
+    db.refresh(misc_sale)
+
+    return misc_sale
     
     
 def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uuid.UUID):

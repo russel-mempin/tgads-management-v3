@@ -60,9 +60,7 @@ class User(UserBase, table=True):
     audit_logs: list[AuditLog] = Relationship(back_populates="user")
     voided_job_orders: list[JobOrder] = Relationship(
         back_populates="voided_by",
-        sa_relationship_kwargs={
-            "foreign_keys": "[JobOrder.voided_by_id]"
-        },
+        sa_relationship_kwargs={"foreign_keys": "[JobOrder.voided_by_id]"},
     )
     created_for_reviews: list[ForReview] = Relationship(
         back_populates="created_by",
@@ -134,11 +132,18 @@ class ServiceBase(SQLModel):
     is_active: bool = Field(default=True)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
     )
 
 
@@ -168,11 +173,19 @@ class ServicePriceTier(SQLModel, table=True):
 
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
     )
+
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
     )
 
     rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
@@ -190,11 +203,19 @@ class ExtraService(SQLModel, table=True):
     is_active: bool = Field(default=True)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
     )
+
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
     )
 
     job_item_extras: list[JobItemExtra] = Relationship(back_populates="extra_service")
@@ -208,24 +229,34 @@ class JobOrderBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     override_payment_status: PaymentStatus | None = Field(default=None)
-    
+
     voided_at: datetime | None = Field(default=None)
     void_reason: str | None = Field(default=None)
-    
+
     payment_status: PaymentStatus = Field(default=PaymentStatus.UNPAID, index=True)
     overall_job_status: JobStatus = Field(default=JobStatus.FOR_LAYOUT, index=True)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
+
 
 class JobOrder(JobOrderBase, table=True):
     __tablename__ = "job_orders"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
+    
     customer_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=True)
     )
@@ -252,9 +283,7 @@ class JobOrder(JobOrderBase, table=True):
 
     voided_by: User | None = Relationship(
         back_populates="voided_job_orders",
-        sa_relationship_kwargs={
-            "foreign_keys": "[JobOrder.voided_by_id]"
-        },
+        sa_relationship_kwargs={"foreign_keys": "[JobOrder.voided_by_id]"},
     )
     customer: Customer | None = Relationship(back_populates="job_orders")
     job_items: list[JobItem] = Relationship(
@@ -269,7 +298,7 @@ class JobOrder(JobOrderBase, table=True):
         back_populates="job_order",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    
+
     @property
     def is_void(self) -> bool:
         return self.voided_at is not None
@@ -463,11 +492,11 @@ class Payment(PaymentBase, table=True):
     )
     account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
-    
 
     job_order: JobOrder = Relationship(back_populates="payments")
     refunds: list[Refund] = Relationship(back_populates="payment")
-    
+
+
 # ====================== REFUNDS =========================
 class RefundBase(SQLModel):
     date_issued: datetime = Field(
@@ -476,16 +505,31 @@ class RefundBase(SQLModel):
     )
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     reason: str = Field()
-        
-    
+
+
 class Refund(RefundBase, table=True):
     __tablename__ = "refunds"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_name_snapshot: str
-    
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
+
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
     payment_id: uuid.UUID = Field(foreign_key="payments.id", nullable=False)
-    
+
     account: Account = Relationship(back_populates="refunds")
     payment: Payment = Relationship(back_populates="refunds")
 
@@ -534,6 +578,22 @@ class Expense(ExpenseBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
     account_name_snapshot: str
+    
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+        ),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=lambda: datetime.now(UTC),
+        ),
+    )
 
     account: Account = Relationship(back_populates="expenses")
 
@@ -559,9 +619,9 @@ class MiscSale(MiscSaleBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False, index=True)
     account_name_snapshot: str
-    
+
     account: Account = Relationship(back_populates="misc_sales")
-    
+
     @property
     def account_name(self) -> str | None:
         return self.account.name if self.account else None
@@ -639,7 +699,7 @@ class UnlinkedPayment(SQLModel, table=True):
 
 
 # ====================== FOR REVIEW =========================
-# For any records that have missing or inconsistent data, so they can be reviewed by a human.
+# For any data that the owner needs to look at. E.g. Admin updating misc sales & expenses data, missing data, etc.
 # It would use their tables and just link here by ID so that the human can see the record in its original table and fix it, then remove it from this table.
 class ForReview(SQLModel, table=True):
     __tablename__ = "for_reviews"  # type: ignore

@@ -12,8 +12,8 @@ from app.crud.misc_sale import (
 )
 from app.database import get_session
 from app.enums import UserRoles
-from app.models import MiscSale, MiscSaleBase, User
-from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic
+from app.models import MiscSale, User
+from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic, MiscSaleUpdate
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(
@@ -49,11 +49,11 @@ def create(
 @router.patch("/{misc_sale_id}", response_model=MiscSale)
 def update(
     misc_sale_id: uuid.UUID,
-    data: MiscSaleBase,
+    data: MiscSaleUpdate,
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    return update_misc_sale(db, misc_sale_id, data, current_user.id)
+    return update_misc_sale(db, misc_sale_id, data, current_user)
 
 
 @router.patch("/{misc_sale_id}/archive")

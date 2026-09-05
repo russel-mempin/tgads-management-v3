@@ -2,12 +2,12 @@
 import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { MiscSaleCreate } from '@/types/miscSale'
+import type { MiscSaleCreate, MiscSale } from '@/types/miscSale'
 import { inputToUtc, nowForInput, utcToInput } from '@/utils/formatters'
 import { useReferenceStore } from '@/stores/reference'
 
 const props = defineProps<{
-    editingMiscSale?: MiscSaleCreate | null
+    editingMiscSale?: MiscSale | null
 }>()
 const isOpen = defineModel<boolean>('isOpen', { required: true })
 const emit = defineEmits<{
@@ -74,7 +74,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-    <UModal title="Add Misc Sale" description="Enter payment data and save to database." v-model:open="isOpen"
+    <UModal :title="props.editingMiscSale ? 'Edit Misc Sale' : 'Add Misc Sale'" description="Enter payment data and save to database." v-model:open="isOpen"
         :close="{ color: 'error', class: 'rounded-full' }">
         <template #body>
             <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="onSubmit">
