@@ -624,3 +624,10 @@ def mark_job_as_resolved(db: Session, job_order_id: uuid.UUID):
     except Exception:
         db.rollback()
         raise
+    
+
+def get_misc_sale_details(db: Session, misc_sale_id: uuid.UUID) -> ForReviewDetails:
+    try:
+        misc_sale = db.get(MiscSale, misc_sale_id)
+        if not misc_sale:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

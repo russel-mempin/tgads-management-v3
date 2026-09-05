@@ -118,6 +118,16 @@ const router = createRouter({
           }
         },
         {
+          path: 'review-data/misc-sales/:misc_sale_id',
+          component: () => import('@/views/needs_review/ReviewMiscSale.vue'),
+          meta: {
+            title: 'Needs Review - Misc Sale',
+            breadcrumb: 'Needs Review - Misc Sale',
+            breadcrumbParent: { label: 'Needs Review', to: 'review-data' },
+            subtitle: 'View full information about the misc. sale that is for review and resolve it.'
+          }
+        },
+        {
           path: 'voided-jobs',
           component: () => import('@/views/VoidedJobs.vue'),
           meta: {

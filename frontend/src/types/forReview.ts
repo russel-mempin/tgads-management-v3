@@ -1,4 +1,5 @@
 import type { JobOrder, JobItem } from "./jobOrder"
+import type { MiscSale } from "./miscSale"
 
 export type ReviewEntityType =
     | 'Job Order'
@@ -55,4 +56,8 @@ export interface PaymentForReview extends ForReview {
 
 export interface JobForReview extends ForReview {
     entity: JobOrder
+}
+
+export interface MiscSaleForReview extends ForReview {
+    entity: MiscSale
 }
