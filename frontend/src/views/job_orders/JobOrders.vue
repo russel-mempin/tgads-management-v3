@@ -167,167 +167,175 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
 </script>
 
 <template>
-    <!-- Operation KPI's -->
-    <section v-if="authStore.isLoggedIn" class="m-6 grid grid-cols-4 gap-6">
-        <div @click="setFilter('overdue')"
-            class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-            :class="activeFilter === 'overdue'
-                ? 'bg-orange-100 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900'
-                : 'bg-default border-default hover:bg-orange-50 dark:hover:bg-orange-950/20'">
-            <div class="flex items-center justify-center w-12 h-12 rounded-full text-orange-700 dark:text-orange-400"
-                :class="activeFilter === 'overdue' ? 'bg-orange-300 dark:bg-orange-900' : 'bg-orange-100 dark:bg-orange-950/60'">
-                <UIcon name="i-lucide-file-warning" class="size-6" />
-            </div>
-            <div class="ml-4">
-                <p class="uppercase font-semibold text-sm text-muted">Overdue Jobs</p>
-                <p class="font-bold text-3xl text-orange-700 dark:text-orange-400">{{ kpis.overdue_jobs }}</p>
-            </div>
-        </div>
-        <div @click="setFilter('in-progress')"
-            class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-            :class="activeFilter === 'in-progress'
-                ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900'
-                : 'bg-default border-default hover:bg-blue-50 dark:hover:bg-blue-950/20'">
-            <div class="flex items-center justify-center w-12 h-12 rounded-full text-blue-700 dark:text-blue-400"
-                :class="activeFilter === 'in-progress' ? 'bg-blue-300 dark:bg-blue-900' : 'bg-blue-100 dark:bg-blue-950/60'">
-                <UIcon name="i-lucide-clock" class="size-6" />
-            </div>
-            <div class="ml-4">
-                <p class="uppercase font-semibold text-sm text-muted">In Progress</p>
-                <p class="font-bold text-3xl text-blue-700 dark:text-blue-400">{{ kpis.in_progress }}</p>
-            </div>
-        </div>
-        <div @click="setFilter('due-today')"
-            class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-            :class="activeFilter === 'due-today'
-                ? 'bg-yellow-100 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-900'
-                : 'bg-default border-default hover:bg-yellow-50 dark:hover:bg-yellow-950/20'">
-            <div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700 dark:text-red-400"
-                :class="activeFilter === 'due-today' ? 'bg-yellow-300 dark:bg-yellow-900' : 'bg-yellow-100 dark:bg-yellow-950/60'">
-                <UIcon name="i-lucide-clock-fading" class="size-6" />
-            </div>
-            <div class="ml-4">
-                <p class="uppercase font-semibold text-sm text-muted">Due Today</p>
-                <p class="font-bold text-3xl text-red-700 dark:text-red-400">{{ kpis.due_today }}</p>
-            </div>
-        </div>
-        <div @click="setFilter('for-pickup')"
-            class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
-            :class="activeFilter === 'for-pickup'
-                ? 'bg-green-100 dark:bg-green-950/40 border-green-200 dark:border-green-900'
-                : 'bg-default border-default hover:bg-green-50 dark:hover:bg-green-950/20'">
-            <div class="flex items-center justify-center w-12 h-12 rounded-full text-green-700 dark:text-green-400"
-                :class="activeFilter === 'for-pickup' ? 'bg-green-300 dark:bg-green-900' : 'bg-green-100 dark:bg-green-950/60'">
-                <UIcon name="i-lucide-printer-check" class="size-6" />
-            </div>
-            <div class="ml-4">
-                <p class="uppercase font-semibold text-sm text-muted">Ready for pickup</p>
-                <p class="font-bold text-3xl text-green-700 dark:text-green-400">{{ kpis.ready_for_pickup }}</p>
-            </div>
-        </div>
-    </section>
-    <!-- Controls -->
-    <section class="mx-6 mt-6 flex gap-6">
-        <UInput size="lg" class="flex-1" v-model="joNumberSearch"
-            placeholder="Search by customer name or JO Number..." />
-        <USelect size="lg" class="w-50" v-model="paymentStatus" :items="paymentStatusOptions"
-            placeholder="Payment Status" showClear />
-        <USelect size="lg" class="w-50" v-model="jobStatus" :items="jobStatusOptions" placeholder="Job Status"
-            showClear />
-        <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="outline"
-            @click="clearFilters" />
-        <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner"
-            label="Add Job Order" color="primary" variant="solid" />
-    </section>
-    <section class="mx-6 mt-6 border border-default bg-default rounded-md">
-        <UTable :data="job_orders" :columns="columns" :loading="loading" @select="(_: any, row: TableRow<JobOrder>) => row.toggleExpanded()">
-            <template #expanded="{ row }">
-                <div class="p-2 flex flex-col gap-6">
-                    <!-- Job Items -->
-                    <div>
-                        <p class="text-sm font-semibold text-muted uppercase mb-2">
-                            Job Items ({{ row.original.job_items.length }})
-                        </p>
-                        <div v-if="row.original.job_items.length"
-                            class="border border-default rounded-md overflow-hidden bg-default">
-                            <table class="w-full text-sm">
-                                <thead class="bg-elevated">
-                                    <tr class="text-left text-muted uppercase">
-                                        <th class="p-2.5">Item</th>
-                                        <th class="p-2.5">Service</th>
-                                        <th class="p-2.5">Size</th>
-                                        <th class="p-2.5">Due</th>
-                                        <th class="p-2.5">Unit Price</th>
-                                        <th class="p-2.5">Qty</th>
-                                        <th class="p-2.5">Subtotal</th>
-                                        <th class="p-2.5">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="item in row.original.job_items" :key="item.item_id"
-                                        class="border-t border-default">
-                                        <td class="p-2.5 text-highlighted">{{ item.item_id }}</td>
-                                        <td class="p-2.5 text-highlighted">
-                                            {{ item.service_name_snapshot }}
-                                            <span v-if="item.service_option_name_snapshot" class="text-muted"> — {{
-                                                item.service_option_name_snapshot }}</span>
-                                        </td>
-                                        <td class="p-2.5 text-highlighted">{{ item.height && item.width ?
-                                            `${item.height} × ${item.width} ${item.size_unit}` : '—' }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ formatDateNoYear(item.due_date) }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ formatCurrency(item.unit_price) }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ item.quantity }}</td>
-                                        <td class="p-2.5 font-semibold text-highlighted">{{
-                                            formatCurrency(item.subtotal) }}</td>
-                                        <td class="p-2.5">
-                                            <UBadge :color="getJobStatusColor(item.job_status)">{{item.job_status }}</UBadge>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p v-else class="text-muted text-sm">No job items recorded.</p>
-                    </div>
-
-                    <!-- Payments -->
-                    <div>
-                        <p class="text-sm font-semibold text-muted uppercase mb-2">
-                            Payments ({{ row.original.payments.length }})
-                        </p>
-                        <div v-if="row.original.payments.length"
-                            class="border border-default rounded-md overflow-hidden bg-default">
-                            <table class="w-full text-sm">
-                                <thead class="bg-elevated">
-                                    <tr class="text-left text-muted uppercase">
-                                        <th class="p-2.5">Date</th>
-                                        <th class="p-2.5">Reference #</th>
-                                        <th class="p-2.5">Method</th>
-                                        <th class="p-2.5">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="payment in row.original.payments" :key="payment.reference_number"
-                                        class="border-t border-default">
-                                        <td class="p-2.5 text-highlighted">{{ formatDate(payment.date_received) }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ payment.reference_number }}</td>
-                                        <td class="p-2.5 text-highlighted">{{ payment.account_name_snapshot }}</td>
-                                        <td class="p-2.5 font-semibold text-highlighted">{{
-                                            formatCurrency(payment.amount) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p v-else class="text-muted text-sm">No payments recorded yet.</p>
-                    </div>
+    <div class="h-full min-h-0 flex flex-col">
+        <!-- Operation KPI's -->
+        <section v-if="authStore.isLoggedIn" class="shrink-0 mx-6 mt-6 grid grid-cols-4 gap-6">
+            <div @click="setFilter('overdue')"
+                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                :class="activeFilter === 'overdue'
+                    ? 'bg-orange-100 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900'
+                    : 'bg-default border-default hover:bg-orange-50 dark:hover:bg-orange-950/20'">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full text-orange-700 dark:text-orange-400"
+                    :class="activeFilter === 'overdue' ? 'bg-orange-300 dark:bg-orange-900' : 'bg-orange-100 dark:bg-orange-950/60'">
+                    <UIcon name="i-lucide-file-warning" class="size-6" />
                 </div>
-            </template>
-        </UTable>
-    </section>
-    <section class="mx-6 my-6 flex items-center justify-between">
-        <p class="text-muted text-sm">
-            Showing {{ job_orders.length ? currentOffset + 1 : 0 }}–{{ Math.min(currentOffset + rows, totalRecords) }}
-            of {{ totalRecords }}
-        </p>
-        <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
-    </section>
+                <div class="ml-4">
+                    <p class="uppercase font-semibold text-sm text-muted">Overdue Jobs</p>
+                    <p class="font-bold text-3xl text-orange-700 dark:text-orange-400">{{ kpis.overdue_jobs }}</p>
+                </div>
+            </div>
+            <div @click="setFilter('in-progress')"
+                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                :class="activeFilter === 'in-progress'
+                    ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900'
+                    : 'bg-default border-default hover:bg-blue-50 dark:hover:bg-blue-950/20'">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full text-blue-700 dark:text-blue-400"
+                    :class="activeFilter === 'in-progress' ? 'bg-blue-300 dark:bg-blue-900' : 'bg-blue-100 dark:bg-blue-950/60'">
+                    <UIcon name="i-lucide-clock" class="size-6" />
+                </div>
+                <div class="ml-4">
+                    <p class="uppercase font-semibold text-sm text-muted">In Progress</p>
+                    <p class="font-bold text-3xl text-blue-700 dark:text-blue-400">{{ kpis.in_progress }}</p>
+                </div>
+            </div>
+            <div @click="setFilter('due-today')"
+                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                :class="activeFilter === 'due-today'
+                    ? 'bg-yellow-100 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-900'
+                    : 'bg-default border-default hover:bg-yellow-50 dark:hover:bg-yellow-950/20'">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full text-red-700 dark:text-red-400"
+                    :class="activeFilter === 'due-today' ? 'bg-yellow-300 dark:bg-yellow-900' : 'bg-yellow-100 dark:bg-yellow-950/60'">
+                    <UIcon name="i-lucide-clock-fading" class="size-6" />
+                </div>
+                <div class="ml-4">
+                    <p class="uppercase font-semibold text-sm text-muted">Due Today</p>
+                    <p class="font-bold text-3xl text-red-700 dark:text-red-400">{{ kpis.due_today }}</p>
+                </div>
+            </div>
+            <div @click="setFilter('for-pickup')"
+                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                :class="activeFilter === 'for-pickup'
+                    ? 'bg-green-100 dark:bg-green-950/40 border-green-200 dark:border-green-900'
+                    : 'bg-default border-default hover:bg-green-50 dark:hover:bg-green-950/20'">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full text-green-700 dark:text-green-400"
+                    :class="activeFilter === 'for-pickup' ? 'bg-green-300 dark:bg-green-900' : 'bg-green-100 dark:bg-green-950/60'">
+                    <UIcon name="i-lucide-printer-check" class="size-6" />
+                </div>
+                <div class="ml-4">
+                    <p class="uppercase font-semibold text-sm text-muted">Ready for pickup</p>
+                    <p class="font-bold text-3xl text-green-700 dark:text-green-400">{{ kpis.ready_for_pickup }}</p>
+                </div>
+            </div>
+        </section>
+        <!-- Controls -->
+        <section class="shrink-0 mx-6 mt-6 flex gap-6">
+            <UInput size="lg" class="flex-1" v-model="joNumberSearch"
+                placeholder="Search by customer name or JO Number..." />
+            <USelect size="lg" class="w-50" v-model="paymentStatus" :items="paymentStatusOptions"
+                placeholder="Payment Status" showClear />
+            <USelect size="lg" class="w-50" v-model="jobStatus" :items="jobStatusOptions" placeholder="Job Status"
+                showClear />
+            <UButton size="lg" icon="i-lucide-funnel-x" label="Clear Filters" color="neutral" variant="outline"
+                @click="clearFilters" />
+            <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner"
+                label="Add Job Order" color="primary" variant="solid" />
+        </section>
+        <section class="shrink-0 flex-1 min-h-0 mx-6 mt-6 border border-default bg-default rounded-md">
+            <UTable sticky class="overflow-y-auto h-full" :data="job_orders" :columns="columns" :loading="loading"
+                @select="(_: any, row: TableRow<JobOrder>) => row.toggleExpanded()">
+                <template #expanded="{ row }">
+                    <div class="p-2 flex flex-col gap-6">
+                        <!-- Job Items -->
+                        <div>
+                            <p class="text-sm font-semibold text-muted uppercase mb-2">
+                                Job Items ({{ row.original.job_items.length }})
+                            </p>
+                            <div v-if="row.original.job_items.length"
+                                class="border border-default rounded-md overflow-hidden bg-default">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-elevated">
+                                        <tr class="text-left text-muted uppercase">
+                                            <th class="p-2.5">Item</th>
+                                            <th class="p-2.5">Service</th>
+                                            <th class="p-2.5">Size</th>
+                                            <th class="p-2.5">Due</th>
+                                            <th class="p-2.5">Unit Price</th>
+                                            <th class="p-2.5">Qty</th>
+                                            <th class="p-2.5">Subtotal</th>
+                                            <th class="p-2.5">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="item in row.original.job_items" :key="item.item_id"
+                                            class="border-t border-default">
+                                            <td class="p-2.5 text-highlighted">{{ item.item_id }}</td>
+                                            <td class="p-2.5 text-highlighted">
+                                                {{ item.service_name_snapshot }}
+                                                <span v-if="item.service_option_name_snapshot" class="text-muted"> — {{
+                                                    item.service_option_name_snapshot }}</span>
+                                            </td>
+                                            <td class="p-2.5 text-highlighted">{{ item.height && item.width ?
+                                                `${item.height} × ${item.width} ${item.size_unit}` : '—' }}</td>
+                                            <td class="p-2.5 text-highlighted">{{ formatDateNoYear(item.due_date) }}
+                                            </td>
+                                            <td class="p-2.5 text-highlighted">{{ formatCurrency(item.unit_price) }}
+                                            </td>
+                                            <td class="p-2.5 text-highlighted">{{ item.quantity }}</td>
+                                            <td class="p-2.5 font-semibold text-highlighted">{{
+                                                formatCurrency(item.subtotal) }}</td>
+                                            <td class="p-2.5">
+                                                <UBadge :color="getJobStatusColor(item.job_status)">{{ item.job_status }}
+                                                </UBadge>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p v-else class="text-muted text-sm">No job items recorded.</p>
+                        </div>
+
+                        <!-- Payments -->
+                        <div>
+                            <p class="text-sm font-semibold text-muted uppercase mb-2">
+                                Payments ({{ row.original.payments.length }})
+                            </p>
+                            <div v-if="row.original.payments.length"
+                                class="border border-default rounded-md overflow-hidden bg-default">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-elevated">
+                                        <tr class="text-left text-muted uppercase">
+                                            <th class="p-2.5">Date</th>
+                                            <th class="p-2.5">Reference #</th>
+                                            <th class="p-2.5">Method</th>
+                                            <th class="p-2.5">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="payment in row.original.payments" :key="payment.reference_number"
+                                            class="border-t border-default">
+                                            <td class="p-2.5 text-highlighted">{{ formatDate(payment.date_received) }}
+                                            </td>
+                                            <td class="p-2.5 text-highlighted">{{ payment.reference_number }}</td>
+                                            <td class="p-2.5 text-highlighted">{{ payment.account_name_snapshot }}</td>
+                                            <td class="p-2.5 font-semibold text-highlighted">{{
+                                                formatCurrency(payment.amount) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p v-else class="text-muted text-sm">No payments recorded yet.</p>
+                        </div>
+                    </div>
+                </template>
+            </UTable>
+        </section>
+        <section class="shrink-0 mx-6 my-6 flex items-center justify-between">
+            <p class="text-muted text-sm">
+                Showing {{ job_orders.length ? currentOffset + 1 : 0 }}–{{ Math.min(currentOffset + rows, totalRecords)
+                }}
+                of {{ totalRecords }}
+            </p>
+            <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
+        </section>
+    </div>
 </template>

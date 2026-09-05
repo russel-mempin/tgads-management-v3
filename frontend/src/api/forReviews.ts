@@ -1,8 +1,10 @@
 import http from './http'
 import type { JobItemCreate } from '@/types/jobOrder'
 
-export const getAllForReview = async () => {
-  const res = await http.get('/for-reviews/')
+export const getAllForReview = async (offset = 0, limit = 100) => {
+  const res = await http.get('/for-reviews/', {
+    params: { offset, limit },
+  })
   return res.data
 }
 

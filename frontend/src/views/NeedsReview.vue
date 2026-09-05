@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, h, resolveComponent } from 'vue'
-import { getAllForReview } from '@/api/forReviews';
+import { onMounted, ref, h, resolveComponent, computed, watch } from 'vue'
+import { getAllForReview, getForReviewCount } from '@/api/forReviews';
 import type { ForReview } from '@/types/forReview';
 import type { TableColumn } from '@nuxt/ui';
 import { useRouter } from 'vue-router';
@@ -12,19 +12,29 @@ const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UTooltip = resolveComponent('UTooltip')
 
+// Pagination
+const currentPage = ref(1)
+const rows = ref(20)
+const totalRecords = ref(0)
+const currentOffset = computed(() => (currentPage.value - 1) * rows.value)
+
 const fetchData = async () => {
     loading.value = true
     try {
-        data.value = await getAllForReview()
+        data.value = await getAllForReview(
+            currentOffset.value,
+            rows.value
+        )
+        totalRecords.value = await getForReviewCount()
     }
     finally {
         loading.value = false
     }
 }
 
-onMounted(async () => {
-    fetchData()
-})
+watch([currentPage, rows], fetchData)
+
+onMounted(fetchData)
 
 const columns: TableColumn<ForReview>[] = [
     {
@@ -99,13 +109,27 @@ const columns: TableColumn<ForReview>[] = [
 
 <template>
     <Transition name="fade" mode="out-in">
-        <section v-if="!loading" class="m-6 border border-default rounded-md">
-            <UTable :data="data" :columns="columns" :ui="{
-                th: 'text-muted font-semibold uppercase',
-                td: 'text-base text-highlighted',
-                tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
-            }" />
-        </section>
+        <div class="h-full min-h-0 flex flex-col">
+            <section v-if="!loading" class="flex-1 min-h-0 m-6 border border-default rounded-md overflow-hidden">
+                <UTable sticky class="overflow-y-auto h-full" :data="data" :columns="columns" :ui="{
+                    th: 'text-muted font-semibold uppercase',
+                    td: 'text-base text-highlighted',
+                    tr: 'hover:bg-elevated/100 odd:bg-elevated/50 cursor-pointer'
+                }" />
+            </section>
+
+            <section class="shrink-0 mb-4 flex items-center justify-between px-6">
+                <p class="text-muted text-sm">
+                    Showing
+                    {{ data.length ? currentOffset + 1 : 0 }}–{{
+                        Math.min(currentOffset + data.length, totalRecords)
+                    }}
+                    of {{ totalRecords }}
+                </p>
+
+                <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
+            </section>
+        </div>
     </Transition>
 </template>
 
