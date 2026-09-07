@@ -13,11 +13,13 @@ class ForReviewPublic(SQLModel):
     id: uuid.UUID
     entity_type: ReviewEntityType
     entity_id: uuid.UUID
-    entity_reference: str
+    entity_reference: str | None = None
     reason: str
     reason_category: ReasonCategory
     created_at: datetime
     created_by_name: str
+    old_data: dict | None = None
+    new_data: dict | None = None
     
     
 class PossibleJobOrder(SQLModel):

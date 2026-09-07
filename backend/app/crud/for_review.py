@@ -54,6 +54,8 @@ def _build_for_review_details(
         created_at=for_review_item.created_at,
         created_by_name=for_review_item.created_by_name,
         entity=entity_data,
+        old_data=for_review_item.old_data,
+        new_data=for_review_item.new_data
     )
 
 

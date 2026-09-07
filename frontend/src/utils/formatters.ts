@@ -124,6 +124,7 @@ const reviewCategoryColors: Record<string, BadgeColor> = {
   'Pricing Discrepancy': 'error',
   'Status Issue': 'info',
   'Needs Verification': 'neutral',
+  'Needs Approval': 'info',
 }
 
 export const getPaymentStatusColor = (status?: string): BadgeColor =>

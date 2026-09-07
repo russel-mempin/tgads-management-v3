@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import type { MiscSaleForReview } from '@/types/forReview';
 import { getMiscSaleDetails } from '@/api/forReviews';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import ReviewFields from '@/components/ReviewFields.vue';
 
 const route = useRoute()
 
@@ -20,9 +22,7 @@ const fetchReviewDetails = async () => {
         if (typeof forReviewId !== 'string') {
             throw new Error('Invalid entity id.')
         }
-        const data = await getMiscSaleDetails(forReviewId)
-        console.log(data)
-        reviewData.value = data
+        reviewData.value = await getMiscSaleDetails(forReviewId)
     }
     finally {
         loading.value = false
@@ -30,6 +30,18 @@ const fetchReviewDetails = async () => {
 }
 onMounted(async () => {
     await fetchReviewDetails()
+})
+
+const daysSinceFlagging = computed(() => {
+    if (!reviewData.value?.created_at) {
+        return 0
+    }
+
+    const createdAt = new Date(reviewData.value.created_at)
+    const now = new Date()
+
+    const diffMs = now.getTime() - createdAt.getTime()
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24))
 })
 </script>
 
@@ -45,8 +57,14 @@ onMounted(async () => {
                     to="/review-data" />
             </div>
             <div>
-                <h2 class="text-xl text-highlighted font-semibold">Review Payment</h2>
-                <p>Reference No. {{ reviewData.entity_reference }}</p>
+                <h2 class="text-xl text-highlighted font-semibold">Misc Sale</h2>
+                <p>Reference No. {{ reviewData.entity_reference ? reviewData.entity_reference : 'N/A' }}</p>
+            </div>
+            <p>Edited by {{ reviewData.created_by_name }} {{ daysSinceFlagging }}d ago</p>
+            <ReviewFields :old-data="reviewData.old_data" :new-data="reviewData.new_data" :entity="reviewData.entity" />
+            <div class="grid grid-cols-2 gap-6">
+                <UButton color="error" icon="i-lucide-x" label="Restore old data" class="flex w-full justify-center" />
+                <UButton color="success" icon="i-lucide-check" label="Keep new data" class="flex w-full justify-center" />
             </div>
         </div>
     </Transition>

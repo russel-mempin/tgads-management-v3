@@ -23,6 +23,8 @@ export interface ForReview {
     reason_category: ReasonCategory
     created_at: Date
     created_by_name: string
+    old_data: Record<string, unknown> | null
+    new_data: Record<string, unknown> | null
 }
 
 export interface PossibleMatch {

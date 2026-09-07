@@ -28,6 +28,7 @@ const miscSale = ref<MiscSaleCreate>({
     amount: props.entity.amount,
     date: toDatetimeLocal(props.entity.date_received),
     description: props.entity.description ?? '',
+    account_id: props.entity.account_id
 })
 
 let latestSearch = ''

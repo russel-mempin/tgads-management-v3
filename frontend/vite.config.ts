@@ -118,6 +118,11 @@ export default defineConfig({
             base: 'font-semibold uppercase',
           },
         },
+        button: {
+          slots: {
+            base: 'font-semibold'
+          }
+        }
       },
     }),
   ],

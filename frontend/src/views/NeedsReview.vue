@@ -40,7 +40,7 @@ const columns: TableColumn<ForReview>[] = [
     {
         accessorKey: 'entity_reference',
         header: 'ID',
-        cell: ({ row }) => `${row.getValue('entity_reference')}`
+        cell: ({ row }) => row.getValue('entity_reference') ?? 'N/A'
     },
     {
         accessorKey: 'entity_type',

@@ -79,7 +79,7 @@ def update_misc_sale(
         review = ForReview(
             entity_type=ReviewEntityType.MISC_SALE,
             entity_id=misc_sale.id,
-            entity_reference=misc_sale.description,
+            entity_reference=misc_sale.reference_number or None,
             reason_category=ReasonCategory.EDIT_REQUIRES_APPROVAL,
             old_data=old_data,
             new_data=new_data,

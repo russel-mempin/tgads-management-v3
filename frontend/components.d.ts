@@ -46,6 +46,7 @@ declare module 'vue' {
     PaymentTable: typeof import('./src/components/PaymentTable.vue')['default']
     ResolvePayment: typeof import('./src/components/ResolvePayment.vue')['default']
     ResolvePaymentSection: typeof import('./src/components/ResolvePaymentSection.vue')['default']
+    ReviewFields: typeof import('./src/components/ReviewFields.vue')['default']
     ReviewHeader: typeof import('./src/components/ReviewHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

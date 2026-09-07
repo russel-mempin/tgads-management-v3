@@ -706,7 +706,7 @@ class ForReview(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     entity_type: ReviewEntityType
     entity_id: uuid.UUID = Field()
-    entity_reference: str = Field()
+    entity_reference: str | None = None
     reason_category: ReasonCategory
     old_data: dict | None = Field(default=None, sa_column=Column(JSON))
     new_data: dict | None = Field(default=None, sa_column=Column(JSON))
