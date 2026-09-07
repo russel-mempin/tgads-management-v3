@@ -100,6 +100,7 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             amount=Decimal(amount),
                             source_type=TransactionSource.PAYMENT,
                             source_id=payment.id,
+                            date=date_received
                         )
                     )
                 else:
