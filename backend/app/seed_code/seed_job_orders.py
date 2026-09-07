@@ -254,6 +254,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                     width=width,
                     size_unit=size_unit,
                 )
+                computed_unit_price = round(computed_unit_price, 2) + extra_service_price + extra_charge - discount
 
             # Insert the job item first so we have its id available for any ForReview rows
             item = JobItem(
@@ -269,9 +270,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 unit_price=csv_unit_price,
                 discount_amount=discount,
                 extra_charge=extra_charge,
-                subtotal=(csv_unit_price * quantity)
-                - discount
-                + (extra_charge * quantity),
+                subtotal=(csv_unit_price * quantity),
                 service_name_snapshot=service.name,
                 service_option_name_snapshot=option.name,
                 service_abbreviation_snapshot=service.abbreviation,

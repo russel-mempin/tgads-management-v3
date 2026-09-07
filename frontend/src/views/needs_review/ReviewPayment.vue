@@ -25,8 +25,7 @@ const fetchReviewDetails = async () => {
         if (typeof forReviewId !== 'string') {
             throw new Error('Invalid entity id.')
         }
-        const data = await getPaymentForReviewDetails(forReviewId)
-        reviewData.value = data
+        reviewData.value = await getPaymentForReviewDetails(forReviewId)
     }
     finally {
         loading.value = false

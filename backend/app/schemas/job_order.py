@@ -58,6 +58,7 @@ class JobItemUpdate(SQLModel):
     
 class PaymentPublic(PaymentBase):
     id: uuid.UUID
+    account_name_snapshot: str
     
     
 class PaymentCreate(PaymentBase):

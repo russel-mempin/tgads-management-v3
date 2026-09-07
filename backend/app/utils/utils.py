@@ -120,7 +120,7 @@ def compute_unit_price(height: float | None, width: float | None, service_type: 
 			rate = applicable_tier.rate
 		else:
 			rate = option.base_rate
-		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate=round(rate, 3), unit_price= Decimal(str(billable_area)) * rate)
+		return PricingData(consumption=round(consumption, 4), consumption_unit=service_type.unit, rate = rate.quantize(Decimal("0.001")), unit_price = (Decimal(str(billable_area)) * rate).quantize(Decimal("0.01")))
 	else:
 		# For Fixed Pricing (Desktop Printing, Digital Print, Riso)
 		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate)

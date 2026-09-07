@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import type { MiscSaleForReview } from '@/types/forReview';
+import { getMiscSaleDetails } from '@/api/forReviews';
+
+const route = useRoute()
 
 // Data variables
 const reviewData = ref<MiscSaleForReview | null>(null)
@@ -9,7 +13,20 @@ const loading = ref(false)
 
 // Data functions
 const fetchReviewDetails = async () => {
-
+    loading.value = true
+    try {
+        const forReviewId = route.params.misc_sale_id
+        console.log(forReviewId)
+        if (typeof forReviewId !== 'string') {
+            throw new Error('Invalid entity id.')
+        }
+        const data = await getMiscSaleDetails(forReviewId)
+        console.log(data)
+        reviewData.value = data
+    }
+    finally {
+        loading.value = false
+    }
 }
 onMounted(async () => {
     await fetchReviewDetails()

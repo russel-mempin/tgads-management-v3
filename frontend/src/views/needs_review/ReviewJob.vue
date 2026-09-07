@@ -98,7 +98,7 @@ const saveJobItem = async (item: JobItemCreate) => {
     }
     if (selectedJobItem.value) {
         try {
-            await updateWholeJobItem(reviewData.value.entity_id, selectedJobItem.value.id, item)
+            await updateWholeJobItem(reviewData.value.entity.id, selectedJobItem.value.id, item)
             toast.add({
                 title: 'Job Item Updated.',
                 color: 'success',
@@ -219,16 +219,7 @@ const confirmResolution = async () => {
         return
     }
     try {
-        if (reviewData.value.entity_type === "Job Order") {
-            console.log("Job Order")
-            console.log(reviewData.value?.entity_id)
-            await markJobOrderAsResolved(reviewData.value?.entity_id)
-        }
-        else if (reviewData.value.entity_type === "Job Item") {
-            console.log("Job Item")
-            console.log(reviewData.value?.entity.id)
-            await markJobOrderAsResolved(reviewData.value?.entity.id)
-        }
+        await markJobOrderAsResolved(reviewData.value?.entity.id, reviewData.value.id)
         toast.add({
             title: 'Job order marked as resolved.',
             color: 'success',

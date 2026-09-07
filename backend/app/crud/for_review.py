@@ -599,19 +599,14 @@ def get_job_item_with_job_order(db: Session, job_item_id: uuid.UUID) -> ForRevie
         raise
 
 
-def mark_job_as_resolved(db: Session, job_order_id: uuid.UUID):
+def mark_job_as_resolved(db: Session, job_order_id: uuid.UUID, for_review_id: uuid.UUID):
     try:
-        job_order = db.exec(select(JobOrder).where(JobOrder.id == job_order_id)).first()
+        job_order = db.get(JobOrder, job_order_id)
         if not job_order:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Job order not found."
             )
-        for_review_item = db.exec(
-            select(ForReview).where(
-                ForReview.entity_id == job_order.id,
-                ForReview.entity_type == ReviewEntityType.JOB_ORDER
-            )
-        ).first()
+        for_review_item = db.get(ForReview, for_review_id)
         if not for_review_item:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found."
@@ -628,6 +623,17 @@ def mark_job_as_resolved(db: Session, job_order_id: uuid.UUID):
 
 def get_misc_sale_details(db: Session, misc_sale_id: uuid.UUID) -> ForReviewDetails:
     try:
+        for_review = db.exec(
+            select(ForReview).where(ForReview.entity_id == misc_sale_id)
+        ).first()
+        if not for_review:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="For Review item not found.")
         misc_sale = db.get(MiscSale, misc_sale_id)
         if not misc_sale:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Misc sale item not found.")
+        return _build_for_review_details(for_review, misc_sale)
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise

@@ -12,6 +12,7 @@ from app.crud.for_review import (
     get_count_of_for_reviews,
     get_job_for_review_details,
     get_job_item_with_job_order,
+    get_misc_sale_details,
     get_payment_for_review_details,
     mark_job_as_resolved,
     update_whole_job_item,
@@ -86,6 +87,11 @@ def get_job_item_review_details(job_item_id: uuid.UUID, db: Session = Depends(ge
     return get_job_item_with_job_order(db, job_item_id)
 
 
-@router.patch("/job-orders/{job_order_id}/resolve")
-def resolve_job(job_order_id: uuid.UUID, db: Session = Depends(get_session)):
-    return mark_job_as_resolved(db, job_order_id)
+@router.patch("/job-orders/{job_order_id}/resolve/{for_review_id}")
+def resolve_job(job_order_id: uuid.UUID, for_review_id: uuid.UUID, db: Session = Depends(get_session)):
+    return mark_job_as_resolved(db, job_order_id, for_review_id)
+
+
+@router.get("/misc-sales/{misc_sale_id}")
+def get_misc_sale_review_details(misc_sale_id: uuid.UUID, db: Session = Depends(get_session)):
+    return get_misc_sale_details(db, misc_sale_id)

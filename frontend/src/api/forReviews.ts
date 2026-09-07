@@ -66,7 +66,12 @@ export const getJobItemWithJobOrder = async(job_item_id: string) => {
   return res.data 
 }
 
-export const markJobOrderAsResolved = async(job_order_id: string) => {
-  const res = await http.patch(`/for-reviews/job-orders/${job_order_id}/resolve`)
+export const markJobOrderAsResolved = async(job_order_id: string, for_review_id: string) => {
+  const res = await http.patch(`/for-reviews/job-orders/${job_order_id}/resolve/${for_review_id}`)
+  return res.data
+}
+
+export const getMiscSaleDetails = async(misc_sale_id: string) => {
+  const res = await http.get(`/for-reviews/misc-sales/${misc_sale_id}`)
   return res.data
 }

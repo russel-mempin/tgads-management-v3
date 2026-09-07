@@ -6,6 +6,7 @@ from sqlmodel import SQLModel
 
 from app.enums import ReasonCategory, ReviewEntityType
 from app.schemas.job_order import JobItemPublic, JobOrderPublic
+from app.schemas.misc_sale import MiscSalePublic
 
 
 class ForReviewPublic(SQLModel):
@@ -48,4 +49,4 @@ class UnlinkedPaymentReviewData(UnlinkedPaymentWithJobMatch):
     
     
 class ForReviewDetails(ForReviewPublic):
-    entity: UnlinkedPaymentReviewData | JobOrderPublic
+    entity: UnlinkedPaymentReviewData | JobOrderPublic | MiscSalePublic
