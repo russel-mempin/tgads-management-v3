@@ -75,7 +75,7 @@ class CustomerBase(SQLModel):
     name: str = Field(unique=True, index=True)
     address: str | None = None
     contact_no: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
 
 
 class Customer(CustomerBase, table=True):
@@ -83,8 +83,7 @@ class Customer(CustomerBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     job_orders: list[JobOrder] = Relationship(
-        back_populates="customer",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+        back_populates="customer"
     )
 
 
@@ -258,7 +257,7 @@ class JobOrder(JobOrderBase, table=True):
     )
     
     customer_id: uuid.UUID | None = Field(
-        sa_column=Column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=True)
+        sa_column=Column(ForeignKey("customers.id"), nullable=True)
     )
     created_by_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -267,10 +266,10 @@ class JobOrder(JobOrderBase, table=True):
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     )
 
-    created_by: User = Relationship(
+    created_by: User | None = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.created_by_id]"}
     )
-    updated_by: User = Relationship(
+    updated_by: User | None = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
     )
     voided_by_id: uuid.UUID | None = Field(
@@ -288,11 +287,9 @@ class JobOrder(JobOrderBase, table=True):
     customer: Customer | None = Relationship(back_populates="job_orders")
     job_items: list[JobItem] = Relationship(
         back_populates="job_order",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
     payments: list[Payment] = Relationship(
         back_populates="job_order",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
     claiming_history: list[ClaimingHistory] = Relationship(
         back_populates="job_order",
@@ -437,7 +434,7 @@ class JobItem(JobItemBase, table=True):
 
     job_order_id: uuid.UUID = Field(
         sa_column=Column(
-            ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
+            ForeignKey("job_orders.id"), nullable=False
         )
     )
     service_id: uuid.UUID = Field(foreign_key="services.id")
@@ -487,7 +484,7 @@ class Payment(PaymentBase, table=True):
     account_name_snapshot: str
     job_order_id: uuid.UUID = Field(
         sa_column=Column(
-            ForeignKey("job_orders.id", ondelete="CASCADE"), nullable=False
+            ForeignKey("job_orders.id"), nullable=False
         )
     )
     account: Account = Relationship(back_populates="payments")
