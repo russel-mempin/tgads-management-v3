@@ -1,17 +1,19 @@
 import os
+
 from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, select
+
 from app.database import engine
 from app.models import JobOrder, User
-from app.seed_code.seed_users import seed_users_from_csv
-from app.seed_code.seed_services import seed_services_data
-from app.seed_code.seed_extra_services import seed_extra_services_from_csv
-from app.seed_code.seed_customers import seed_customers_from_csv
-from app.seed_code.seed_payments import seed_payments_from_csv
-from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
-from app.seed_code.seed_job_orders import seed_job_orders_and_items
-from app.seed_code.seed_expenses import seed_expenses_from_csv
 from app.seed_code.seed_accounts import seed_accounts
+from app.seed_code.seed_claiming_history import seed_claiming_history_from_csv
+from app.seed_code.seed_customers import seed_customers_from_csv
+from app.seed_code.seed_expenses import seed_expenses_from_csv
+from app.seed_code.seed_extra_services import seed_extra_services_from_csv
+from app.seed_code.seed_job_orders import seed_job_orders_and_items
+from app.seed_code.seed_payments import seed_payments_from_csv
+from app.seed_code.seed_services import seed_services_data
+from app.seed_code.seed_users import seed_users_from_csv
 
 BASE_DIR = os.path.dirname(__file__)
 ENV_PATH = os.path.join(BASE_DIR, ".env")
@@ -42,8 +44,8 @@ def seed_dev_data():
         print("Seeded payments.")
         # seed_claiming_history_from_csv()
         # print("Seeded claiming history.")
-        # seed_expenses_from_csv()
-        # print("Seeded expenses.")
+        seed_expenses_from_csv()
+        print("Seeded expenses.")
 
     else:
         # Create tables if they don't exist

@@ -669,8 +669,6 @@ class AccountTransaction(SQLModel, table=True):
 
 # ====================== UNLINKED PAYMENTS =========================
 # Temporary table. No payments should be unlinked. It should either be linked to a job order or a misc sale.
-# For payments known to be for a real job order, but where that job order
-# can't be identified from past records.
 class UnlinkedPayment(SQLModel, table=True):
     __tablename__ = "unlinked_payments"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)

@@ -1,6 +1,5 @@
 import csv
 import os
-from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlmodel import Session, select
@@ -15,7 +14,7 @@ from app.models import (
     Payment,
     UnlinkedPayment,
 )
-from app.utils.utils import get_system_admin, to_float
+from app.utils.utils import get_system_admin, parse_currency, parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "payments.csv")
@@ -25,23 +24,6 @@ ACCOUNT_NAME_BY_METHOD: dict[str, str] = {
     "GCash": "GCash",
     "Bank": "RCBC",
 }
-
-
-def parse_currency(value: str) -> float:
-    cleaned = (value or "").replace("₱", "").replace(",", "").strip()
-    return to_float(cleaned) if cleaned else 0.0
-
-
-def parse_date(value: str) -> datetime:
-    value = value.strip()
-
-    for fmt in ("%m/%d/%Y", "%m/%d/%y"):
-        try:
-            return datetime.strptime(value, fmt).replace(tzinfo=UTC)
-        except ValueError:
-            pass
-
-    raise ValueError(f"Unsupported date format: {value}")
 
 
 def get_account(session: Session, method: str) -> Account | None:

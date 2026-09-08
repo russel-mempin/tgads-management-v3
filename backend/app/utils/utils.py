@@ -57,6 +57,23 @@ def to_local(dt: datetime) -> datetime:
     return dt.astimezone(MANILA).replace(tzinfo=None)
 
 
+def parse_currency(value: str) -> float:
+    cleaned = (value or "").replace("₱", "").replace(",", "").strip()
+    return to_float(cleaned) if cleaned else 0.0
+
+
+def parse_date(value: str) -> datetime:
+    value = value.strip()
+
+    for fmt in ("%m/%d/%Y", "%m/%d/%y"):
+        try:
+            return datetime.strptime(value, fmt).replace(tzinfo=UTC)
+        except ValueError:
+            pass
+
+    raise ValueError(f"Unsupported date format: {value}")
+
+
 def get_system_admin(session: Session) -> User:
     sysadmin = session.exec(
 		select(User).where(User.username == "system.admin")

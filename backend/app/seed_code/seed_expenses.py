@@ -1,10 +1,13 @@
-import csv, os
+import csv
+import os
+from decimal import Decimal
+
 from sqlmodel import Session, select
+
 from app.database import engine
-from app.models import Expense, Account, AccountTransaction
 from app.enums import ExpenseCategory
-from app.utils.utils import to_float
-from datetime import datetime
+from app.models import Account, AccountTransaction, Expense
+from app.utils.utils import parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "seed_data", "2026expenses.csv")
@@ -27,27 +30,30 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
             ).first()
             if not account:
                 raise ValueError(f"Account '{account_name}' not found in database")
+            date = parse_date(row['Date'])
             expense = Expense(
-                date=datetime.strptime(f"{row['Date']} 2026", "%d-%b %Y"),
+                date=date,
                 category=ExpenseCategory(row["Category"]),
                 description=row["Description"],
-                amount=to_float(row["OUT"]),
-                account_id=account.id
+                amount=Decimal(row["Amount"].replace(",", "").strip()),
+                account_id=account.id,
+                account_name_snapshot=account.name
             )
             session.add(expense)
             
-            new_balance = account.current_balance - expense.amount
-            account.current_balance = new_balance
-            session.add(account)
+            current_balance = account.current_balance
+            new_balance = current_balance - expense.amount
+
             transaction = AccountTransaction(
                 account_id=account.id,
-                date=datetime.strptime(f"{row['Date']} 2026", "%d-%b %Y"),
+                date=date,
                 description=row["Description"],
-                amount=expense.amount,
+                amount=-expense.amount,
                 running_balance=new_balance,
                 source_type="expense",
                 source_id=expense.id,
             )
+
             session.add(transaction)
             session.commit()
         session.commit()
