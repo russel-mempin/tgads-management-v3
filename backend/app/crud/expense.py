@@ -1,10 +1,12 @@
-from sqlmodel import Session, select
-from app.models import Expense, ExpenseBase, AuditLog, Account, AccountTransaction
-from app.enums import TransactionSource
-from app.schemas.expense import ExpenseCreate
 import uuid
+from datetime import UTC, datetime, timedelta
+
 from fastapi import HTTPException
-from datetime import datetime, timezone, timedelta
+from sqlmodel import Session, select
+
+from app.enums import TransactionSource
+from app.models import Account, AccountTransaction, AuditLog, Expense
+from app.schemas.expense import ExpenseCreate
 
 
 def get_all_expenses(db: Session, offset: int = 0, limit: int = 100) -> list[Expense]:
@@ -18,7 +20,7 @@ def get_all_expenses(db: Session, offset: int = 0, limit: int = 100) -> list[Exp
     )
     
 def get_today_expenses(db: Session) -> list[Expense]:
-    start = datetime.now(timezone.utc).replace(
+    start = datetime.now(UTC).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
     end = start + timedelta(days=1)
@@ -39,7 +41,7 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
     try:
         account = db.exec(select(Account).where(Account.id == data.fund_source)).first()
         if not account:
-            raise ValueError(f"Fund source not found in database")
+            raise ValueError("Fund source not found in database")
 
         print(data.date)
         print(repr(data.date))
@@ -69,7 +71,7 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
             source_id=expense.id,
         )
         db.add(transaction)
-        audit = AuditLog(action=f"Created expense", user_id=current_user_id)
+        audit = AuditLog(action=f"Created expense {expense.description}", user_id=current_user_id)
         db.add(audit)
         db.commit()
 
@@ -96,7 +98,7 @@ def update_expense(
 
             reversal = AccountTransaction(
                 account_id=old_account.id,
-                date=datetime.now(timezone.utc),
+                date=datetime.now(UTC),
                 description=f"Reversal: {expense.description}",
                 amount=expense.amount,  # positive = money back
                 running_balance=old_account.current_balance,
@@ -162,7 +164,7 @@ def archive_expense(db: Session, expense_id: uuid.UUID, current_user_id: uuid.UU
 
             reversal = AccountTransaction(
                 account_id=account.id,
-                date=datetime.now(timezone.utc),
+                date=datetime.now(UTC),
                 description=f"Reversal (archived): {expense.description}",
                 amount=expense.amount,  # positive = money back
                 running_balance=account.current_balance,

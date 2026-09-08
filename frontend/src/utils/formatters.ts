@@ -10,6 +10,7 @@ export const formatCurrency = (value: number | undefined) => {
     .replace('₱', '₱ ')
 }
 
+// Initialization of form
 export function nowForInput(): string {
   const date = new Date()
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
