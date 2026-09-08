@@ -293,7 +293,7 @@ const confirmResolution = async () => {
                 <UButton icon="i-lucide-arrow-left" label="Back to Needs Review" color="neutral" variant="outline"
                     to="/review-data" />
             </div>
-            <FlagHeader :flag-data="reviewData" />
+            <FlagHeader :flag-data="reviewData" reference-label="JO" />
             <OrderSummary :job-order="reviewData.entity" />
             <JobItemTable :job-items="reviewData.entity.job_items" :jo-number="reviewData.entity.jo_number" :highlighted-item-id="highlightedItemId">
                 <template #header-actions>

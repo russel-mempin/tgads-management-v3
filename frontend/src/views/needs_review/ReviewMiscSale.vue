@@ -56,15 +56,31 @@ const daysSinceFlagging = computed(() => {
                 <UButton icon="i-lucide-arrow-left" label="Back to Needs Review" color="neutral" variant="outline"
                     to="/review-data" />
             </div>
-            <div>
-                <h2 class="text-xl text-highlighted font-semibold">Misc Sale</h2>
-                <p>Reference No. {{ reviewData.entity_reference ? reviewData.entity_reference : 'N/A' }}</p>
-            </div>
-            <p>Edited by {{ reviewData.created_by_name }} {{ daysSinceFlagging }}d ago</p>
-            <ReviewFields :old-data="reviewData.old_data" :new-data="reviewData.new_data" :entity="reviewData.entity" />
+            <FlagHeader :flag-data="reviewData" reference-label="Misc Sale" />
+            <ReviewFields :old-data="reviewData.old_data" :new-data="reviewData.new_data" :entity="reviewData.entity"
+                :field-order="[
+                    'date',
+                    'account_name',
+                    'description',
+                    'reference_number',
+                    'amount',
+                    'is_archived',
+                ]" :field-labels="{
+                    date: 'Date',
+                    account_name: 'Method',
+                    description: 'Description',
+                    reference_number: 'Reference No.',
+                    amount: 'Amount',
+                    is_archived: 'Archived',
+                }" :field-formatters="{
+                    date: 'date',
+                    amount: 'currency',
+                    is_archived: 'boolean',
+                }" />
             <div class="grid grid-cols-2 gap-6">
                 <UButton color="error" icon="i-lucide-x" label="Restore old data" class="flex w-full justify-center" />
-                <UButton color="success" icon="i-lucide-check" label="Keep new data" class="flex w-full justify-center" />
+                <UButton color="success" icon="i-lucide-check" label="Keep new data"
+                    class="flex w-full justify-center" />
             </div>
         </div>
     </Transition>

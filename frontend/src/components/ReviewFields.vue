@@ -2,49 +2,31 @@
 import { computed } from "vue";
 import { formatDate, formatCurrency } from "@/utils/formatters";
 
-const props = defineProps<{
-  oldData: Record<string, unknown> | null;
-  newData: Record<string, unknown> | null;
-  entity: Record<string, unknown>;
+type FieldFormatter = "date" | "currency" | "boolean" | "text";
 
-  fieldOrder?: string[];
-  fieldLabels?: Record<string, string>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    oldData: Record<string, unknown> | null;
+    newData: Record<string, unknown> | null;
+    entity: Record<string, unknown>;
 
-type ReviewField =
-    | "date"
-    | "account_name"
-    | "description"
-    | "reference_number"
-    | "amount"
-    | "is_archived";
-
-const fields = computed<ReviewField[]>(() => props.fieldOrder as ReviewField[] ?? [
-    "date",
-    "account_name",
-    "description",
-    "reference_number",
-    "amount",
-    "is_archived",
-]);
-
-const labels = computed(() => ({
-  date: "Date",
-  account_name: "Method",
-  description: "Description",
-  reference_number: "Reference No.",
-  amount: "Amount",
-  is_archived: "Archived",
-  ...props.fieldLabels,
-}));
+    fieldOrder: string[];
+    fieldLabels?: Record<string, string>;
+    fieldFormatters?: Record<string, FieldFormatter>;
+  }>(),
+  {
+    fieldLabels: () => ({}),
+    fieldFormatters: () => ({}),
+  }
+);
 
 const diffRows = computed(() => {
-  return fields.value.map((field) => {
+  return props.fieldOrder.map((field) => {
     const changed = field in (props.oldData ?? {});
 
     return {
       field,
-      label: labels.value[field] ?? field,
+      label: props.fieldLabels[field] ?? field,
       oldV: props.oldData?.[field],
       newV: props.newData?.[field],
       currentV: props.entity?.[field],
@@ -62,149 +44,65 @@ function formatValue(field: string, value: unknown) {
     return "—";
   }
 
-  if (field === "amount") {
-    return formatCurrency(Number(value));
-  }
+  const formatter = props.fieldFormatters[field] ?? "text";
 
-  if (field === "date") {
-    return formatDate(String(value));
-  }
+  switch (formatter) {
+    case "date":
+      return formatDate(String(value));
 
-  if (field === "is_archived") {
-    return value ? "Archived" : "Active";
-  }
+    case "currency":
+      return formatCurrency(Number(value));
 
-  return String(value);
+    case "boolean":
+      return value ? "Yes" : "No";
+
+    default:
+      return String(value);
+  }
 }
+
+const columns = [
+  {
+    accessorKey: "label",
+    header: "Field",
+    id: "field",
+  },
+  {
+    accessorKey: "value",
+    header: "Value",
+    id: "value",
+  },
+];
 </script>
 
-
 <template>
-  <div class="diff-table">
-    <div class="diff-header">
-      <span>Field</span>
-      <span>{{ changedCount }} of {{ diffRows.length }} fields changed</span>
-    </div>
+  <UTable :data="diffRows" :columns="columns" class="border border-default rounded-md">
+    <template #field-cell="{ row }">
+      <span :class="{ 'font-semibold': row.original.changed }">
+        {{ row.original.label }}
+      </span>
+    </template>
 
-    <div v-for="row in diffRows" :key="row.field" class="diff-row">
-      <div class="diff-label" :class="{ changed: row.changed }">
-        {{ row.label }}
+    <template #value-cell="{ row }">
+      <div v-if="row.original.changed" class="flex items-center gap-2">
+        <span class="rounded bg-red-50 px-2 py-1 text-red-700">
+          {{ formatValue(row.original.field, row.original.oldV) }}
+        </span>
+
+        <span>→</span>
+
+        <span class="rounded bg-green-50 px-2 py-1 font-semibold text-green-700">
+          {{ formatValue(row.original.field, row.original.newV) }}
+        </span>
       </div>
 
-      <!-- Changed -->
-      <div v-if="row.changed" class="diff-values">
-        <div class="value old">
-          {{ formatValue(row.field, row.oldV) }}
-        </div>
+      <span v-else class="text-muted">
+        {{ formatValue(row.original.field, row.original.currentV) }}
+      </span>
+    </template>
+  </UTable>
 
-        <div class="arrow">
-          →
-        </div>
-
-        <div class="value new">
-          {{ formatValue(row.field, row.newV) }}
-        </div>
-      </div>
-
-      <!-- Unchanged -->
-      <div v-else class="value unchanged">
-        {{ formatValue(row.field, row.currentV) }}
-      </div>
-    </div>
-  </div>
+  <p class="mt-2 text-sm text-muted">
+    {{ changedCount }} of {{ diffRows.length }} fields changed
+  </p>
 </template>
-
-<style scoped>
-.diff-table {
-  border: 1px solid #e4e1d8;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #211f1b;
-}
-
-.diff-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 16px;
-  font-size: 12px;
-  color: #5b5850;
-  border-bottom: 1px solid #e4e1d8;
-}
-
-.diff-row {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid #e4e1d8;
-}
-
-.diff-row:last-child {
-  border-bottom: none;
-}
-
-.diff-label {
-  width: 150px;
-  min-width: 150px;
-  padding: 12px 16px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  color: #5b5850;
-}
-
-.diff-label.changed {
-  color: #211f1b;
-  font-weight: 600;
-}
-
-.diff-values {
-  display: flex;
-  align-items: stretch;
-  flex: 1;
-}
-
-.value {
-  flex: 1;
-  padding: 12px 16px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.value.old {
-  background: #f8ece8;
-  color: #9c4a34;
-}
-
-.value.new {
-  background: #ebf2e9;
-  color: #3c6b45;
-  font-weight: 600;
-}
-
-.value.unchanged {
-  flex: 1;
-  color: #5b5850;
-  padding: 12px 16px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.unchanged-tag {
-  font-size: 11px;
-  color: #d2cec0;
-  margin-left: 8px;
-}
-
-.arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-  background: #f8ece8;
-  color: #9c4a34;
-}
-</style>
