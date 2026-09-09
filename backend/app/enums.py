@@ -90,3 +90,12 @@ class ReasonCategory(str, Enum):
     STATUS_ISSUE = "Status Issue"
     NEEDS_VERIFICATION = "Needs Verification"
     EDIT_REQUIRES_APPROVAL = "Needs Approval"
+    
+    
+class ExpensePeriod(str, Enum):
+    TODAY = "today"
+    THIS_WEEK = "this_week"
+    THIS_MONTH = "this_month"
+    LAST_MONTH = "last_month"
+    THIS_YEAR = "this_year"
+    ALL = "all"

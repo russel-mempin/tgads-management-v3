@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 from sqlmodel import SQLModel
 
@@ -17,3 +18,13 @@ class ExpenseCreate(SQLModel):
     amount: float
     description: str
     fund_source: uuid.UUID
+    
+class ExpenseSummary(SQLModel):
+    total: Decimal
+    count: int
+    largest: Decimal | None
+    
+    
+class ExpenseList(SQLModel):
+    items: list[ExpensePublic]
+    summary: ExpenseSummary

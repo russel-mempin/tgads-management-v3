@@ -22,20 +22,20 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
         }
         
         for row in reader:
-            account_name = METHOD_TO_ACCOUNT.get(row["Method"])
+            account_name = METHOD_TO_ACCOUNT.get(row["method"])
             if not account_name:
-                raise ValueError(f"No account mapped for method: {row['Method']}")
+                raise ValueError(f"No account mapped for method: {row['method']}")
             account = session.exec(
                 select(Account).where(Account.name == account_name)
             ).first()
             if not account:
                 raise ValueError(f"Account '{account_name}' not found in database")
-            date = parse_date(row['Date'])
+            date = parse_date(row['date'])
             expense = Expense(
                 date=date,
-                category=ExpenseCategory(row["Category"]),
-                description=row["Description"],
-                amount=Decimal(row["Amount"].replace(",", "").strip()),
+                category=ExpenseCategory(row["category"]),
+                description=row["description"],
+                amount=Decimal(row["amount"].replace(",", "").strip()),
                 account_id=account.id,
                 account_name_snapshot=account.name
             )
@@ -47,7 +47,7 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
             transaction = AccountTransaction(
                 account_id=account.id,
                 date=date,
-                description=row["Description"],
+                description=row["description"],
                 amount=-expense.amount,
                 running_balance=new_balance,
                 source_type="expense",

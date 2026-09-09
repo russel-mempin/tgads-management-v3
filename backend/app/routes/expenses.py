@@ -1,26 +1,63 @@
-from app.models import ExpenseBase, User
-from app.enums import UserRoles
-from app.schemas.expense import ExpensePublic, ExpenseCreate
-from typing import Annotated
-from app.services.dependencies import get_current_active_user, require_role
-from fastapi import APIRouter, Query, Depends
-from sqlmodel import Session
-from app.database import get_session
-from app.crud.expense import get_all_expenses, get_today_expenses, create_expense, update_expense, archive_expense
 import uuid
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlmodel import Session
+
+from app.crud.expense import (
+    archive_expense,
+    count_all_expenses,
+    create_expense,
+    get_all_expenses,
+    get_today_expenses,
+    update_expense,
+)
+from app.database import get_session
+from app.enums import ExpensePeriod, UserRoles
+from app.models import User
+from app.schemas.expense import ExpenseCreate, ExpenseList, ExpensePublic
+from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/expenses", tags=["expenses"], dependencies=[Depends(get_current_active_user)])
 
 
-@router.get("/", response_model=list[ExpensePublic])
+@router.get("/", response_model=ExpenseList)
 def read_all(
     offset: int = 0,
     limit: Annotated[int, Query(le=100)] = 100,
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role(UserRoles.OWNER)),
+    include_archived: bool = False,
+    period: ExpensePeriod = ExpensePeriod.ALL,
+    current_user: User = Depends(get_current_active_user),
 ):
-    return get_all_expenses(db, offset=offset, limit=limit)
+    # Non-owners can only view today's expenses
+    if current_user.role != UserRoles.OWNER:
+        if period != ExpensePeriod.TODAY:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Non-owner users can only access today's expenses.",
+            )
+
+        # Non-owners cannot access archived expenses
+        if include_archived:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner can access archived expenses.",
+            )
+
+    return get_all_expenses(
+        db,
+        period=period,
+        include_archived=include_archived,
+        offset=offset,
+        limit=limit,
+    )
+
+
+@router.get("/count", response_model=int)
+def read_count_of_expenses(db: Session = Depends(get_session)):
+    return count_all_expenses(db)
+
 
 @router.get("/today", response_model=list[ExpensePublic])
 def read_all_daily(

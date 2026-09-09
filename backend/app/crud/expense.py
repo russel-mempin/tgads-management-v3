@@ -2,22 +2,99 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.enums import TransactionSource
+from app.enums import ExpensePeriod, TransactionSource
 from app.models import Account, AccountTransaction, AuditLog, Expense
-from app.schemas.expense import ExpenseCreate
+from app.schemas.expense import ExpenseCreate, ExpenseList, ExpenseSummary
+from app.utils.utils import MANILA
 
 
-def get_all_expenses(db: Session, offset: int = 0, limit: int = 100) -> list[Expense]:
-    return list(
-        db.exec(
-            select(Expense)
-            .where(Expense.is_archived == False)
-            .offset(offset)
-            .limit(limit)
-        ).all()
+def _get_expense_date_range(period: ExpensePeriod):
+    now = datetime.now(MANILA)
+
+    if period == ExpensePeriod.TODAY:
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=1)
+    elif period == ExpensePeriod.THIS_WEEK:
+        start = (now - timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        end = start + timedelta(days=7)
+    elif period == ExpensePeriod.THIS_MONTH:
+        start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        end = (
+            start.replace(year=start.year + 1, month=1)
+            if start.month == 12
+            else start.replace(month=start.month + 1)
+        )
+    elif period == ExpensePeriod.LAST_MONTH:
+        end = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        start = (
+            end.replace(year=end.year - 1, month=12)
+            if end.month == 1
+            else end.replace(month=end.month - 1)
+        )
+    elif period == ExpensePeriod.THIS_YEAR:
+        start = now.replace(
+            month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        end = start.replace(year=start.year + 1)
+    else:
+        return None, None
+
+    return start, end
+
+
+def get_all_expenses(db: Session, period: ExpensePeriod = ExpensePeriod.ALL, include_archived: bool = False, offset: int = 0, limit: int = 100) -> ExpenseList:
+    filters = []
+    
+    if not include_archived:
+        filters.append(Expense.is_archived == False)
+    
+    start, end = _get_expense_date_range(period)
+    if start and end:
+        filters.extend([
+            Expense.date >= start,
+            Expense.date < end,
+        ])
+
+    # Summary
+    summary_statement = select(
+        func.coalesce(func.sum(Expense.amount), 0),
+        func.count(Expense.id),
+        func.max(Expense.amount),
+    ).where(*filters)
+    total, count, largest = db.exec(summary_statement).one()
+    
+    # Table data
+    expense_statement = (
+        select(Expense)
+        .where(*filters)
+        .order_by(Expense.date.desc())
+        .offset(offset)
+        .limit(limit)
     )
+    expenses = list(db.exec(expense_statement).all())
+    
+    return ExpenseList(
+        items=expenses,
+        summary=ExpenseSummary(
+            total=total,
+            count=count,
+            largest=largest,
+        ),
+    )
+    
+    
+def count_all_expenses(db: Session) -> int:
+    return db.exec(select(func.count()).select_from(Expense)).one()
+    
     
 def get_today_expenses(db: Session) -> list[Expense]:
     start = datetime.now(UTC).replace(

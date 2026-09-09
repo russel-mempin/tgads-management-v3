@@ -19,6 +19,7 @@ declare module 'vue' {
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
     Expense: typeof import('./src/components/ExpenseTable.vue/index.js')['default']
+    ExpenseCards: typeof import('./src/components/ExpenseCards.vue')['default']
     ExpenseTable: typeof import('./src/components/ExpenseTable.vue')['default']
     FlagDetails: typeof import('./src/components/FlagDetails.vue')['default']
     FlagHeader: typeof import('./src/components/FlagHeader.vue')['default']
