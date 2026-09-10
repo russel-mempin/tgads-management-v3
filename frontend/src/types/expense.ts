@@ -6,6 +6,18 @@ export type ExpensePeriod =
     | 'this_year'
     | 'all'
 
+export type ExpenseCategory = 
+    | 'Food'
+    | 'Maintenance'
+    | 'Utilities'
+    | 'Transportation'
+    | 'Supplies'
+    | 'Payroll'
+    | 'Benefits'
+    | 'Production'
+    | 'Miscellaneous'
+    | 'Equipment'
+
 interface ExpenseBase {
     date: string
     category: string
@@ -18,13 +30,14 @@ export interface Expense extends ExpenseBase {
     account_name: string
 }
 
-interface ExpenseSummary {
+export interface ExpenseSummary {
     total: string
     count: number
-    largest: string
+    largest: Expense | null
 }
 
 export interface ExpenseList {
     items: Expense[]
+    total_items: number
     summary: ExpenseSummary
 }

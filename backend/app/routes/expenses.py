@@ -13,7 +13,7 @@ from app.crud.expense import (
     update_expense,
 )
 from app.database import get_session
-from app.enums import ExpensePeriod, UserRoles
+from app.enums import ExpenseCategory, ExpensePeriod, UserRoles
 from app.models import User
 from app.schemas.expense import ExpenseCreate, ExpenseList, ExpensePublic
 from app.services.dependencies import get_current_active_user
@@ -28,6 +28,8 @@ def read_all(
     db: Session = Depends(get_session),
     include_archived: bool = False,
     period: ExpensePeriod = ExpensePeriod.ALL,
+    category: ExpenseCategory | None = None,
+    search: str | None = None,
     current_user: User = Depends(get_current_active_user),
 ):
     # Non-owners can only view today's expenses
@@ -49,6 +51,8 @@ def read_all(
         db,
         period=period,
         include_archived=include_archived,
+        category=category,
+        search=search,
         offset=offset,
         limit=limit,
     )

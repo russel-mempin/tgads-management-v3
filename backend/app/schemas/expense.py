@@ -22,9 +22,10 @@ class ExpenseCreate(SQLModel):
 class ExpenseSummary(SQLModel):
     total: Decimal
     count: int
-    largest: Decimal | None
+    largest: ExpensePublic | None
     
     
 class ExpenseList(SQLModel):
     items: list[ExpensePublic]
+    total_items: int
     summary: ExpenseSummary

@@ -1,9 +1,11 @@
 import http from './http'
-import type { ExpensePeriod } from '@/types/expense'
+import type { ExpenseCategory, ExpensePeriod } from '@/types/expense'
 
 export const getAllExpenses = async (
     period: ExpensePeriod = 'all',
     includeArchived = false,
+    category?: ExpenseCategory,
+    search?: string,
     offset = 0,
     limit = 100,
 ) => {
@@ -11,6 +13,8 @@ export const getAllExpenses = async (
         params: {
             period,
             include_archived: includeArchived,
+            category,
+            search,
             offset,
             limit,
         },
