@@ -7,7 +7,12 @@ from sqlmodel import Session, select
 
 from app.enums import ExpenseCategory, ExpensePeriod, TransactionSource
 from app.models import Account, AccountTransaction, AuditLog, Expense
-from app.schemas.expense import ExpenseCreate, ExpenseList, ExpenseSummary
+from app.schemas.expense import (
+    ExpenseByCategory,
+    ExpenseCreate,
+    ExpenseList,
+    ExpenseSummary,
+)
 from app.utils.utils import MANILA
 
 
@@ -54,26 +59,26 @@ def get_all_expenses(
     offset: int = 0,
     limit: int = 100,
 ) -> ExpenseList:
+    base_filters = []
     period_filters = []
-    table_filters = []
 
     if not include_archived:
-        table_filters.append(Expense.is_archived == False)
+        base_filters.append(Expense.is_archived == False)
 
     start, end = _get_expense_date_range(period)
     if start and end:
-        period_filters.extend(
-            [
-                Expense.date >= start,
-                Expense.date < end,
-            ]
-        )
+        period_filters.extend([
+            Expense.date >= start,
+            Expense.date < end,
+        ])
+
+    summary_filters = [*base_filters, *period_filters]
 
     # Summary — period only
     summary_statement = select(
         func.coalesce(func.sum(Expense.amount), 0),
         func.count(Expense.id),
-    ).where(*period_filters)
+    ).where(*summary_filters)
     total, count = db.exec(summary_statement).one()
     
     largest_statement = (
@@ -83,15 +88,34 @@ def get_all_expenses(
         .limit(1)
     )
     largest = db.exec(largest_statement).first()
+    
+    category_statement = (
+        select(
+            Expense.category,
+            func.sum(Expense.amount).label("amount"),
+        )
+        .where(*summary_filters)
+        .group_by(Expense.category)
+        .order_by(func.sum(Expense.amount).desc())
+    )
+
+    expense_by_category = [
+        ExpenseByCategory(
+            category=category,
+            amount=amount,
+        )
+        for category, amount in db.exec(category_statement).all()
+    ]
 
     # Table — period + filters
-    table_filters.extend(period_filters)
-
+    table_filters = [*summary_filters]
     if category:
         table_filters.append(Expense.category == category)
 
     if search:
-        table_filters.append(Expense.description.ilike(f"%{search}%"))
+        table_filters.append(
+            Expense.description.ilike(f"%{search}%")
+        )
 
     # Pagination count
     table_count_statement = select(func.count(Expense.id)).where(*table_filters)
@@ -117,6 +141,7 @@ def get_all_expenses(
             count=count,
             largest=largest,
         ),
+        expense_by_category=expense_by_category
     )
 
 

@@ -15,7 +15,7 @@ class ExpensePublic(ExpenseBase):
 class ExpenseCreate(SQLModel):
     date: datetime
     category: ExpenseCategory
-    amount: float
+    amount: Decimal
     description: str
     fund_source: uuid.UUID
     
@@ -25,7 +25,13 @@ class ExpenseSummary(SQLModel):
     largest: ExpensePublic | None
     
     
+class ExpenseByCategory(SQLModel):
+    category: ExpenseCategory
+    amount: Decimal
+    
+    
 class ExpenseList(SQLModel):
     items: list[ExpensePublic]
     total_items: int
     summary: ExpenseSummary
+    expense_by_category: list[ExpenseByCategory]

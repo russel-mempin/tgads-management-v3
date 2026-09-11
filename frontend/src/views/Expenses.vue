@@ -6,6 +6,7 @@ import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import ExpenseTable from '@/components/ExpenseTable.vue';
 import ExpenseCards from '@/components/ExpenseCards.vue';
 import { useAuthStore } from '@/stores/auth';
+import SpendingByCategory from '@/components/SpendingByCategory.vue';
 
 const authStore = useAuthStore()
 
@@ -17,6 +18,7 @@ const data = ref<ExpenseList>({
 		count: 0,
 		largest: null,
 	},
+	expense_by_category: []
 })
 
 const loading = ref(false)
@@ -69,6 +71,7 @@ const fetchData = async () => {
 			rows.value
 		)
 		totalRecords.value = data.value.total_items
+		console.log(data.value)
 	}
 	finally {
 		loading.value = false
@@ -129,9 +132,7 @@ watch(
 			</div>
 		</section>
 		<section class="mx-6 my-6 border border-default bg-default rounded-md p-4">
-			<p class="text-lg">Expense By Category</p>
-			<div>
-			</div>
+			<SpendingByCategory :data="data.expense_by_category" />
 		</section>
 	</div>
 </template>

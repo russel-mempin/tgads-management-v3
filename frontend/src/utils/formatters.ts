@@ -99,6 +99,32 @@ export const mapExpenseCategory = (category: string): string => {
   }
 }
 
+// For charts
+export const mapExpenseCategoryColor = (category: string): string => {
+  switch (category) {
+    case 'Food':
+      return '#f97316'
+    case 'Maintenance':
+      return '#6b7280'
+    case 'Utilities':
+      return '#eab308'
+    case 'Transportation':
+      return '#3b82f6'
+    case 'Supplies':
+      return '#14b8a6'
+    case 'Payroll':
+      return '#16a34a'
+    case 'Benefits':
+      return '#a855f7'
+    case 'Production':
+      return '#ef4444'
+    case 'Miscellaneous':
+      return '#94a3b8'
+    default:
+      return '#94a3b8'
+  }
+}
+
 type BadgeColor = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary'
 
 const paymentStatusColors: Record<string, BadgeColor> = {

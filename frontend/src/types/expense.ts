@@ -36,8 +36,14 @@ export interface ExpenseSummary {
     largest: Expense | null
 }
 
+export interface ExpenseByCategory {
+    category: string
+    amount: string
+}
+
 export interface ExpenseList {
     items: Expense[]
     total_items: number
     summary: ExpenseSummary
+    expense_by_category: ExpenseByCategory[]
 }
