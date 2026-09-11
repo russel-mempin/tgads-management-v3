@@ -95,7 +95,7 @@ def update_misc_sale(
     return misc_sale
     
     
-def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uuid.UUID):
+def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user: User):
     try:
         misc_sale = db.exec(
             select(MiscSale).where(MiscSale.id == misc_sale_id)
@@ -107,7 +107,7 @@ def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user_id: uui
         db.add(misc_sale)
 
         audit = AuditLog(
-            action=f"Deleted misc_sale {misc_sale.description}", user_id=current_user_id
+            action=f"Archived misc_sale {misc_sale.description} and reversed transaction", user_id=current_user.id
         )
         db.add(audit)
         db.commit()

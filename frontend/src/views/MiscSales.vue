@@ -7,6 +7,8 @@ import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
 import { useReferenceStore } from '@/stores/reference';
 import { useAuthStore } from '@/stores/auth';
+import ConfirmDeleteMiscSale from '@/components/ConfirmDeleteMiscSale.vue';
+import { formatDate } from '@/utils/formatters';
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -20,6 +22,7 @@ const originalMiscSale = ref<MiscSale>()
 
 const loading = ref(false)
 const isAddMiscSaleFormOpen = ref(false)
+const isConfirmDeleteModalOpen = ref(false)
 
 const fetchData = async () => {
 	loading.value = true
@@ -115,9 +118,42 @@ const openEditMiscSaleForm = (item: MiscSale) => {
 
 	isAddMiscSaleFormOpen.value = true
 }
+const openDeleteMiscSaleModal = (item: MiscSale) => {
+	selectedMiscSale.value = item
+	isConfirmDeleteModalOpen.value = true
+}
+const deleteMiscSale = () => {
+
+}
 </script>
 
 <template>
+	<ConfirmDeleteMiscSale v-model:open="isConfirmDeleteModalOpen" title="You are about to delete a misc. sale"
+		description="This will delete the misc. sale data and reverse the transaction related to it."
+		@confirm="deleteMiscSale">
+		<template #details>
+			<div class="flex justify-between gap-4">
+				<span class="text-sm text-muted">Description</span>
+				<span class="text-sm font-medium text-highlighted">
+					{{ selectedMiscSale?.description }}
+				</span>
+			</div>
+
+			<div class="mt-2 flex justify-between gap-4">
+				<span class="text-sm text-muted">Amount</span>
+				<span class="text-sm font-medium text-highlighted">
+					₱{{ selectedMiscSale?.amount }}
+				</span>
+			</div>
+
+			<div class="mt-2 flex justify-between gap-4">
+				<span class="text-sm text-muted">Date</span>
+				<span class="text-sm font-medium text-highlighted">
+					{{ formatDate(selectedMiscSale?.date) }}
+				</span>
+			</div>
+		</template>
+	</ConfirmDeleteMiscSale>
 	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb"
 		:editing-misc-sale="selectedMiscSale" />
 	<div class="m-6">
@@ -131,7 +167,8 @@ const openEditMiscSaleForm = (item: MiscSale) => {
 			<MiscSaleTable :misc-sale="data">
 				<template #actions="{ item }">
 					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditMiscSaleForm(item)" />
-					<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" />
+					<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md"
+						@click="openDeleteMiscSaleModal(item)" />
 				</template>
 			</MiscSaleTable>
 		</section>

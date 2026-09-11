@@ -15,6 +15,7 @@ declare module 'vue' {
     AddJobOrderHeader: typeof import('./src/components/AddJobOrderHeader.vue')['default']
     ClaimForm: typeof import('./src/components/ClaimForm.vue')['default']
     ClaimTable: typeof import('./src/components/ClaimTable.vue')['default']
+    ConfirmDeleteMiscSale: typeof import('./src/components/ConfirmDeleteMiscSale.vue')['default']
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
