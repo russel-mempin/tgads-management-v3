@@ -159,7 +159,7 @@ const router = createRouter({
         },
         {
           path: 'transactions',
-          component: () => import('@/views/Expenses.vue'),
+          component: () => import('@/views/Transactions.vue'),
           meta: {
             title: 'Transactions',
             breadcrumb: 'Transactions',
