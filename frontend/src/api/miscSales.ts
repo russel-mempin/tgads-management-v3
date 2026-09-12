@@ -19,3 +19,8 @@ export const updateMiscSale = async(misc_sale_id: string, payload: MiscSaleUpdat
     const res = await http.patch(`/misc-sales/${misc_sale_id}`, payload)
     return res.data
 }
+
+export const archiveMiscSale = async(misc_sale_id: string) => {
+    const res = await http.patch(`/misc-sales/${misc_sale_id}/archive`)
+    return res.data
+}

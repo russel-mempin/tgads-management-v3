@@ -62,4 +62,4 @@ def archive(
     db: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    return archive_misc_sale(db, misc_sale_id, current_user.id)
+    return archive_misc_sale(db, misc_sale_id, current_user)

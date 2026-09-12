@@ -157,6 +157,16 @@ const router = createRouter({
             subtitle: 'View and record expense data.'
           }
         },
+        {
+          path: 'transactions',
+          component: () => import('@/views/Expenses.vue'),
+          meta: {
+            title: 'Transactions',
+            breadcrumb: 'Transactions',
+            breadcrumbParent: { label: 'Expenses', to: 'expenses' },
+            subtitle: 'View transaction history and see where money comes in and goes out.'
+          }
+        },
       ]
     }
   ],

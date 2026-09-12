@@ -53,7 +53,7 @@ class TransactionSource(str, Enum):
     MISC_SALE = "misc_sale"
     TRANSFER = "transfer"
     ADJUSTMENT = "adjustment"
-    EXPENSE_REVERSAL = "expense_reversal"
+    REVERSAL = "reversal"
     REFUND = "refund"
     
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import type { MiscSale, MiscSaleCreate, MiscSaleUpdate } from '@/types/miscSale';
-import { createMiscSale, getAllMiscSales, updateMiscSale } from '@/api/miscSales';
+import { createMiscSale, getAllMiscSales, updateMiscSale, archiveMiscSale } from '@/api/miscSales';
 import MiscSaleTable from '@/components/MiscSaleTable.vue';
 import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
@@ -122,8 +122,32 @@ const openDeleteMiscSaleModal = (item: MiscSale) => {
 	selectedMiscSale.value = item
 	isConfirmDeleteModalOpen.value = true
 }
-const deleteMiscSale = () => {
+const deleteMiscSale = async () => {
+	if (!selectedMiscSale.value) return
+	try {
+		await archiveMiscSale(selectedMiscSale.value.id)
+		toast.add({
+			title: 'Misc Sale archived.',
+			color: 'success',
+			icon: 'i-lucide-circle-check'
+		})
+	}
+	catch(error: unknown) {
+		console.error('Failed to archive misc sale:', error)
 
+		let message = 'An unexpected error occurred.'
+
+		if (axios.isAxiosError(error)) {
+			message = error.response?.data?.detail ?? 'Failed to archive misc sale.'
+		}
+
+		toast.add({
+			title: 'Archiving failed.',
+			description: message,
+			color: 'error',
+			icon: 'i-lucide-x'
+		})
+	}
 }
 </script>
 
