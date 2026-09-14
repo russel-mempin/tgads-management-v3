@@ -86,17 +86,10 @@ export default defineConfig({
         },
         table: {
           slots: {
-            root: 'rounded-b-lg overflow-hidden',
             th: 'bg-elevated text-muted font-semibold uppercase text-sm tracking-wide',
             td: 'text-base text-highlighted',
             tr: 'even:bg-muted',
             separator: 'bg-(--ui-border)',
-            base: `
-              [&_thead_tr:first-child_th:first-child]:rounded-tl-md
-              [&_thead_tr:first-child_th:last-child]:rounded-tr-md
-              [&_tbody_tr:last-child_td:first-child]:rounded-bl-md
-              [&_tbody_tr:last-child_td:last-child]:rounded-br-md
-            `,
           },
         },
         navigationMenu: {

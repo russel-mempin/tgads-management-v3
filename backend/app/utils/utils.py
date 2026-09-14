@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from sqlmodel import Session, select
 
-from app.enums import PriceUnit, PricingStrategy, SizeUnit
+from app.enums import DatePeriod, PriceUnit, PricingStrategy, SizeUnit
 from app.models import Service, ServiceOption, User
 from app.schemas.job_order import PricingData
 
@@ -141,3 +141,37 @@ def compute_unit_price(height: float | None, width: float | None, service_type: 
 	else:
 		# For Fixed Pricing (Desktop Printing, Digital Print, Riso)
 		return PricingData(consumption=quantity, rate=option.base_rate, unit_price=option.base_rate)
+
+
+def get_date_range(period: DatePeriod):
+    now = datetime.now(MANILA)
+
+    if period == DatePeriod.TODAY:
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=1)
+    elif period == DatePeriod.THIS_WEEK:
+        start = (now - timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        end = start + timedelta(days=7)
+    elif period == DatePeriod.THIS_MONTH:
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = (
+            start.replace(year=start.year + 1, month=1)
+            if start.month == 12
+            else start.replace(month=start.month + 1)
+        )
+    elif period == DatePeriod.LAST_MONTH:
+        end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start = (
+            end.replace(year=end.year - 1, month=12)
+            if end.month == 1
+            else end.replace(month=end.month - 1)
+        )
+    elif period == DatePeriod.THIS_YEAR:
+        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = start.replace(year=start.year + 1)
+    else:
+        return None, None
+
+    return start, end

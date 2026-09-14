@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.enums import ExpenseCategory, ExpensePeriod, TransactionSource
+from app.enums import DatePeriod, ExpenseCategory, TransactionSource
 from app.models import Account, AccountTransaction, AuditLog, Expense
 from app.schemas.expense import (
     ExpenseByCategory,
@@ -13,46 +13,12 @@ from app.schemas.expense import (
     ExpenseList,
     ExpenseSummary,
 )
-from app.utils.utils import MANILA
-
-
-def _get_expense_date_range(period: ExpensePeriod):
-    now = datetime.now(MANILA)
-
-    if period == ExpensePeriod.TODAY:
-        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = start + timedelta(days=1)
-    elif period == ExpensePeriod.THIS_WEEK:
-        start = (now - timedelta(days=now.weekday())).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        end = start + timedelta(days=7)
-    elif period == ExpensePeriod.THIS_MONTH:
-        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = (
-            start.replace(year=start.year + 1, month=1)
-            if start.month == 12
-            else start.replace(month=start.month + 1)
-        )
-    elif period == ExpensePeriod.LAST_MONTH:
-        end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        start = (
-            end.replace(year=end.year - 1, month=12)
-            if end.month == 1
-            else end.replace(month=end.month - 1)
-        )
-    elif period == ExpensePeriod.THIS_YEAR:
-        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = start.replace(year=start.year + 1)
-    else:
-        return None, None
-
-    return start, end
+from app.utils.utils import get_date_range
 
 
 def get_all_expenses(
     db: Session,
-    period: ExpensePeriod = ExpensePeriod.ALL,
+    period: DatePeriod = DatePeriod.ALL,
     include_archived: bool = False,
     category: ExpenseCategory | None = None,
     search: str | None = None,
@@ -65,7 +31,7 @@ def get_all_expenses(
     if not include_archived:
         base_filters.append(Expense.is_archived == False)
 
-    start, end = _get_expense_date_range(period)
+    start, end = get_date_range(period)
     if start and end:
         period_filters.extend([
             Expense.date >= start,

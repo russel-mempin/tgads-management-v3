@@ -13,7 +13,7 @@ from app.crud.expense import (
     update_expense,
 )
 from app.database import get_session
-from app.enums import ExpenseCategory, ExpensePeriod, UserRoles
+from app.enums import DatePeriod, ExpenseCategory, UserRoles
 from app.models import User
 from app.schemas.expense import ExpenseCreate, ExpenseList, ExpensePublic
 from app.services.dependencies import get_current_active_user
@@ -27,14 +27,14 @@ def read_all(
     limit: Annotated[int, Query(le=100)] = 100,
     db: Session = Depends(get_session),
     include_archived: bool = False,
-    period: ExpensePeriod = ExpensePeriod.ALL,
+    period: DatePeriod = DatePeriod.ALL,
     category: ExpenseCategory | None = None,
     search: str | None = None,
     current_user: User = Depends(get_current_active_user),
 ):
     # Non-owners can only view today's expenses
     if current_user.role != UserRoles.OWNER:
-        if period != ExpensePeriod.TODAY:
+        if period != DatePeriod.TODAY:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Non-owner users can only access today's expenses.",

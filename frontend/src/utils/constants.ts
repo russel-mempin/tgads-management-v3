@@ -25,3 +25,20 @@ export const PAYMENT_STATUSES = [
   { label: "Refunded", value: "REFUNDED" },
   { label: "Overcharged", value: "OVERCHARGED" },
 ] as const
+
+export type DATE_PERIODS =
+  | 'today'
+  | 'this_week'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'all'
+
+export type TRANSACTION_CATEGORIES = 
+  | "payment"
+  | "expense"
+  | "misc_sale"
+  | "transfer"
+  | "adjustment"
+  | "reversal"
+  | "refund"

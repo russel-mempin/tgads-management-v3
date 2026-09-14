@@ -92,7 +92,7 @@ class ReasonCategory(str, Enum):
     EDIT_REQUIRES_APPROVAL = "Needs Approval"
     
     
-class ExpensePeriod(str, Enum):
+class DatePeriod(str, Enum):
     TODAY = "today"
     THIS_WEEK = "this_week"
     THIS_MONTH = "this_month"

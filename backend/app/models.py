@@ -665,6 +665,10 @@ class AccountTransaction(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     account: Account = Relationship(back_populates="transactions")
+    
+    @property
+    def account_name(self) -> str:
+        return self.account.name
 
 
 # ====================== UNLINKED PAYMENTS =========================

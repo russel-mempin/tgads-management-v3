@@ -13,6 +13,7 @@ from app.routes import (
     misc_sales,
     reports,
     services,
+    transactions,
     users,
 )
 
@@ -46,3 +47,4 @@ app.include_router(expenses.router)
 app.include_router(misc_sales.router)
 app.include_router(reports.router)
 app.include_router(accounts.router)
+app.include_router(transactions.router)
