@@ -54,6 +54,7 @@ declare module 'vue' {
     ReviewHeader: typeof import('./src/components/ReviewHeader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ServicesTable: typeof import('./src/components/ServicesTable.vue')['default']
     Sidebar: typeof import('./src/components/Sidebar.vue')['default']
     SpendingByCategory: typeof import('./src/components/SpendingByCategory.vue')['default']
     TransactionsTable: typeof import('./src/components/TransactionsTable.vue')['default']

@@ -167,6 +167,16 @@ const router = createRouter({
             subtitle: 'View transaction history and see where money comes in and goes out.'
           }
         },
+        {
+          path: 'manage-services',
+          component: () => import('@/views/ManageServices.vue'),
+          meta: {
+            title: 'Manage Services',
+            breadcrumb: 'Manage Services',
+            breadcrumbParent: { label: 'Manage Services', to: 'manage-services' },
+            subtitle: 'View and manage services.'
+          }
+        },
       ]
     }
   ],

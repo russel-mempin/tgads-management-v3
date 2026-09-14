@@ -88,7 +88,6 @@ export default defineConfig({
           slots: {
             th: 'bg-elevated text-muted font-semibold uppercase text-sm tracking-wide',
             td: 'text-base text-highlighted',
-            tr: 'even:bg-muted',
             separator: 'bg-(--ui-border)',
           },
         },
