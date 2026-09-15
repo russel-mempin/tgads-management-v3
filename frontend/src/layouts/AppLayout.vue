@@ -37,7 +37,8 @@ const subtitle = computed(() => {
             </p>
 
             <!-- ONLY THIS AREA SCROLLS -->
-            <div class="flex-1 min-h-0 overflow-y-auto bg-[#fbfbfb] dark:bg-[#132440]">
+            <div
+                class="app-background flex-1 min-h-0 overflow-y-auto">
                 <RouterView />
             </div>
         </div>

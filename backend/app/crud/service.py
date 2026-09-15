@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlmodel import Session, select
 
@@ -34,6 +34,15 @@ def get_all_extras(db: Session, offset: int = 0, limit: int = 100) -> list[Extra
             .limit(limit)
         ).all()
     )
+    
+    
+def get_service_data(db: Session, service_id: uuid.UUID) -> Service:
+    service = db.exec(select(Service).where(Service.id == service_id)).first()
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service not found."
+        )
+    return service
 
 
 def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID):
@@ -155,6 +164,7 @@ def create_extra(db: Session, data: ExtraCreate, current_user_id: uuid.UUID):
     except Exception:
         db.rollback()
         raise
+    
     
 def update_extra(
     db: Session, extra_id: uuid.UUID, data: ExtraCreate, current_user_id: uuid.UUID

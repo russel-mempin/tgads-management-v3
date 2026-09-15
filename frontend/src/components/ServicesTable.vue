@@ -1,99 +1,107 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import type { Cell } from '@tanstack/vue-table'
+import { ref, h, resolveComponent } from 'vue'
+import type { TableColumn, TableRow } from '@nuxt/ui'
+import type { Service } from '@/types/service'
+import { formatCurrency } from '@/utils/formatters';
+import { useRouter } from 'vue-router';
 
-type Product = {
-    category: string
-    name: string
-    price: number
-    stock: number
-}
+const router = useRouter()
+const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
 
-const data = ref<Product[]>([
-    { category: 'Electronics', name: 'Laptop', price: 999, stock: 45 },
-    { category: 'Electronics', name: 'Phone', price: 699, stock: 120 },
-    { category: 'Electronics', name: 'Tablet', price: 499, stock: 78 },
-    { category: 'Clothing', name: 'T-Shirt', price: 29, stock: 200 },
-    { category: 'Clothing', name: 'Jeans', price: 59, stock: 150 }
-])
+const props = defineProps<{
+    services: Service[]
+}>()
 
-function getCategoryRowSpan(cell: Cell<Product, unknown>) {
-    const category = cell.row.original.category
-    const rows = cell.getContext().table.getRowModel().rows
-    const rowIndex = rows.findIndex((r: (typeof rows)[number]) => r.id === cell.row.id)
 
-    if (rowIndex > 0 && rows[rowIndex - 1]!.original.category === category) {
-        return '1'
-    }
-
-    let span = 1
-    for (let i = rowIndex + 1; i < rows.length; i++) {
-        if (rows[i]!.original.category === category) span++
-        else break
-    }
-
-    return `${span}`
-}
-
-function getCategoryClass(cell: Cell<Product, unknown>) {
-    const category = cell.row.original.category
-    const rows = cell.getContext().table.getRowModel().rows
-    const rowIndex = rows.findIndex((r: (typeof rows)[number]) => r.id === cell.row.id)
-
-    if (rowIndex > 0 && rows[rowIndex - 1]!.original.category === category) {
-        return 'hidden'
-    }
-
-    return 'font-medium align-middle border-r border-default'
-}
-
-const columns: TableColumn<Product>[] = [
+const columns: TableColumn<Service>[] = [
     {
-        accessorKey: 'category',
-        header: 'Base Service',
-        meta: {
-            rowspan: {
-                td: getCategoryRowSpan
-            },
-            class: {
-                td: getCategoryClass
-            }
-        }
+        id: 'expand',
+        cell: ({ row }) =>
+            h(UButton, {
+                color: 'neutral',
+                variant: 'ghost',
+                icon: 'i-lucide-chevron-down',
+                square: true,
+                'aria-label': 'Expand',
+                ui: {
+                    leadingIcon: [
+                        'transition-transform',
+                        row.getIsExpanded() ? 'duration-200 rotate-180' : ''
+                    ]
+                },
+            })
     },
     {
         accessorKey: 'name',
-        header: 'Option'
+        header: 'Name',
     },
     {
-        accessorKey: 'price',
-        header: 'Price',
-        meta: {
-            class: {
-                th: 'text-right',
-                td: 'text-right'
-            }
-        },
-        cell: ({ row }) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD'
-            }).format(row.getValue('price'))
-        }
+        accessorKey: 'abbreviation',
+        header: 'Abbreviation',
     },
     {
-        accessorKey: 'stock',
-        header: 'Stock',
-        meta: {
-            class: {
-                th: 'text-right',
-                td: 'text-right'
-            }
-        }
-    }
+        accessorKey: 'pricing_strategy',
+        header: 'Pricing By',
+    },
+    {
+        accessorKey: 'unit',
+        header: 'Unit',
+    },
+    {
+        accessorKey: 'actions',
+        header: '',
+        cell: ({ row }) =>
+            h('div', { class: 'flex items-center gap-2' }, [
+                h(UButton, {
+                    color: 'neutral',
+                    variant: 'outline',
+                    icon: 'i-lucide-eye',
+                    label: 'View',
+                    size: 'md',
+                    onClick: (event: Event) => {
+                        event.stopPropagation()
+                        router.push(`/manage-services/view/${row.original.id}`)
+                    }
+                }),
+            ])
+    },
 ]
+
+const expanded = ref({})
+const onSelect = (_e: Event, row: TableRow<Service>) => {
+    row.toggleExpanded()
+}
 </script>
 
 <template>
-    <UTable :data="data" :columns="columns" class="flex-1" />
+    <UTable v-model:expanded="expanded" :data="services" :columns="columns"
+        :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }" class="flex-1" @select="onSelect">
+        <template #expanded="{ row }">
+            <div class="p-2">
+                <p class="text-sm font-semibold text-muted uppercase mb-2">Options</p>
+                <div v-if="row.original.options" class="border border-default rounded-md overflow-hidden bg-default">
+                    <table class="w-full text-sm">
+                        <thead class="bg-elevated">
+                            <tr class="text-left text-muted uppercase">
+                                <th class="p-2.5">Name</th>
+                                <th class="p-2.5">Base Rate</th>
+                                <th class="p-2.5">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="option in row.original.options" :key="option.id" class="border-t border-default">
+                                <td class="p-2.5">{{ option.name }}</td>
+                                <td class="p-2.5">{{ formatCurrency(option.base_rate) }}</td>
+                                <td class="p-2.5">
+                                    <UBadge :color="option.is_active ? 'success' : 'error'">{{ option.is_active ?
+                                        'Active' : 'Inactive' }}</UBadge>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+    </UTable>
 </template>

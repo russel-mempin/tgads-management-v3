@@ -20,23 +20,6 @@ type NavItem = NavigationMenuItem & {
   superuserOnly?: boolean
 }
 
-// const allItems: NavItem[] = [
-//   { to: '/dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard', category: 'None' },
-//   { to: '/job-orders', label: 'Job Orders', icon: 'i-lucide-briefcase-business', category: 'Operations' },
-//   { to: '/review-data', label: 'Needs Review', icon: 'i-lucide-scan-eye', category: 'Operations', ownerOnly: true },
-//   { to: '/voided-jobs', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
-//   // { to: '/customers', label: 'Customers', icon: 'i-lucide-book-user', category: 'Operations' },
-//   // { to: '/sales', label: authStore.isOwner ? 'Sales' : 'Daily Sales', icon: 'i-lucide-banknote-arrow-up', category: 'Finance' },
-//   // { to: '/expenses', label: authStore.isOwner ? 'Expenses' : 'Daily Expenses', icon: 'i-lucide-banknote-arrow-down', category: 'Finance' },
-//   // { to: '/deposits', label: 'Deposits', icon: 'i-lucide-landmark', category: 'Finance', adminOnly: true },
-//   // { to: '/reports/daily', label: 'Daily Collection', icon: 'i-lucide-sheet', category: 'Reports', ownerOnly: true },
-//   // { to: '/reports/monthly', label: 'Monthly Performance', icon: 'i-lucide-sheet', category: 'Reports', ownerOnly: true },
-//   // { to: '/manage-services', label: 'Manage Services', icon: 'i-lucide-concierge-bell', category: 'Settings', adminOnly: true },
-//   // { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
-//   // { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
-//   // { to: '/audit-logs', label: 'Audit Logs', icon: 'i-lucide-activity', category: 'Settings', superuserOnly: true }
-// ]
-
 const allItems = computed<NavItem[]>(() => [
   {
     to: '/dashboard',
@@ -70,7 +53,14 @@ const allItems = computed<NavItem[]>(() => [
   { to: '/expenses', label: 'Expenses', icon: 'i-lucide-banknote-arrow-down', category: 'Finance' },
   { to: '/transactions', label: 'Transactions', icon: 'i-lucide-badge-dollar-sign', category: 'Finance', ownerOnly: true },
   // { to: '/deposits', label: 'Deposits', icon: 'i-lucide-landmark', category: 'Finance', adminOnly: true },
-  { to: '/manage-services', label: 'Manage Services', icon: 'i-lucide-concierge-bell', category: 'Settings', adminOnly: true },
+  { 
+    to: '/manage-services', 
+    label: 'Manage Services', 
+    icon: 'i-lucide-concierge-bell',
+    category: 'Settings', 
+    adminOnly: true,
+    active: route.path.startsWith('/manage-services') 
+  },
   // { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
   // { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
 ])

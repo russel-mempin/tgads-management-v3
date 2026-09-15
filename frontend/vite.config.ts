@@ -86,7 +86,7 @@ export default defineConfig({
         },
         table: {
           slots: {
-            th: 'bg-elevated text-muted font-semibold uppercase text-sm tracking-wide',
+            th: 'font-semibold text-muted uppercase text-sm tracking-wide',
             td: 'text-base text-highlighted',
             separator: 'bg-(--ui-border)',
           },
@@ -106,15 +106,13 @@ export default defineConfig({
           },
         },
         badge: {
+          defaultVariants: {
+            variant: 'subtle'
+          },
           slots: {
-            base: 'font-semibold uppercase',
+            base: 'font-semibold rounded-full!',
           },
         },
-        button: {
-          slots: {
-            base: 'font-semibold'
-          }
-        }
       },
     }),
   ],

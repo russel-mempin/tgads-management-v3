@@ -110,7 +110,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'payment_status',
         header: 'Payment',
         cell: ({ row }) => {
-            return h(UBadge, { color: getPaymentStatusColor(row.original.payment_status) }, () =>
+            return h(UBadge, { color: getPaymentStatusColor(row.original.payment_status), variant: 'subtle', class: 'rounded-full' }, () =>
                 row.getValue('payment_status')
             )
         }
@@ -119,7 +119,7 @@ const columns: TableColumn<JobOrder>[] = [
         accessorKey: 'overall_job_status',
         header: 'Status',
         cell: ({ row }) => {
-            return h(UBadge, { color: getJobStatusColor(row.original.overall_job_status) }, () =>
+            return h(UBadge, { color: getJobStatusColor(row.original.overall_job_status), variant: 'subtle', class: 'rounded-full' }, () =>
                 row.getValue('overall_job_status')
             )
         }
@@ -136,7 +136,7 @@ const columns: TableColumn<JobOrder>[] = [
             h('div', { class: 'flex items-center gap-2' }, [
                 h(UButton, {
                     color: 'neutral',
-                    variant: 'outline',
+                    variant: 'subtle',
                     icon: 'i-lucide-eye',
                     label: 'View',
                     size: 'md',
@@ -147,7 +147,7 @@ const columns: TableColumn<JobOrder>[] = [
                 }),
                 h(UButton, {
                     color: 'neutral',
-                    variant: 'outline',
+                    variant: 'subtle',
                     icon: 'i-lucide-printer',
                     label: 'Print',
                     size: 'md',
@@ -171,7 +171,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
         <!-- Operation KPI's -->
         <section v-if="authStore.isLoggedIn" class="shrink-0 mx-6 mt-6 grid grid-cols-4 gap-6">
             <div @click="setFilter('overdue')"
-                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                class="shadow-xs p-4 rounded-sm flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
                 :class="activeFilter === 'overdue'
                     ? 'bg-orange-100 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900'
                     : 'bg-default border-default hover:bg-orange-50 dark:hover:bg-orange-950/20'">
@@ -185,7 +185,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                 </div>
             </div>
             <div @click="setFilter('in-progress')"
-                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                class="shadow-xs p-4 rounded-sm flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
                 :class="activeFilter === 'in-progress'
                     ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900'
                     : 'bg-default border-default hover:bg-blue-50 dark:hover:bg-blue-950/20'">
@@ -199,7 +199,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                 </div>
             </div>
             <div @click="setFilter('due-today')"
-                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                class="shadow-xs p-4 rounded-sm flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
                 :class="activeFilter === 'due-today'
                     ? 'bg-yellow-100 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-900'
                     : 'bg-default border-default hover:bg-yellow-50 dark:hover:bg-yellow-950/20'">
@@ -213,7 +213,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                 </div>
             </div>
             <div @click="setFilter('for-pickup')"
-                class="border shadow-xs p-4 rounded-md flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
+                class="shadow-xs p-4 rounded-sm flex items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md"
                 :class="activeFilter === 'for-pickup'
                     ? 'bg-green-100 dark:bg-green-950/40 border-green-200 dark:border-green-900'
                     : 'bg-default border-default hover:bg-green-50 dark:hover:bg-green-950/20'">
@@ -240,7 +240,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
             <UButton @click="() => $router.push('/job-orders/add')" size="lg" icon="i-lucide-file-plus-corner"
                 label="Add Job Order" color="primary" variant="solid" />
         </section>
-        <section class="shrink-0 flex-1 min-h-0 mx-6 mt-6 border border-default bg-default rounded-md">
+        <section class="shrink-0 flex-1 min-h-0 mx-6 mt-6 border border-default bg-default rounded-sm">
             <UTable sticky class="overflow-y-auto h-full" :data="job_orders" :columns="columns" :loading="loading"
                 @select="(_: any, row: TableRow<JobOrder>) => row.toggleExpanded()">
                 <template #expanded="{ row }">
@@ -251,7 +251,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                 Job Items ({{ row.original.job_items.length }})
                             </p>
                             <div v-if="row.original.job_items.length"
-                                class="border border-default rounded-md overflow-hidden bg-default">
+                                class="border border-default rounded-sm overflow-hidden bg-default">
                                 <table class="w-full text-sm">
                                     <thead class="bg-elevated">
                                         <tr class="text-left text-muted uppercase">
@@ -300,7 +300,7 @@ watch([debouncedSearch, jobStatus, paymentStatus], () => {
                                 Payments ({{ row.original.payments.length }})
                             </p>
                             <div v-if="row.original.payments.length"
-                                class="border border-default rounded-md overflow-hidden bg-default">
+                                class="border border-default rounded-sm overflow-hidden bg-default">
                                 <table class="w-full text-sm">
                                     <thead class="bg-elevated">
                                         <tr class="text-left text-muted uppercase">

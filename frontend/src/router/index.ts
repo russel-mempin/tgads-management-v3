@@ -169,12 +169,22 @@ const router = createRouter({
         },
         {
           path: 'manage-services',
-          component: () => import('@/views/ManageServices.vue'),
+          component: () => import('@/views/manage_services/ManageServices.vue'),
           meta: {
             title: 'Manage Services',
             breadcrumb: 'Manage Services',
             breadcrumbParent: { label: 'Manage Services', to: 'manage-services' },
             subtitle: 'View and manage services.'
+          }
+        },
+        {
+          path: 'manage-services/view/:service_id',
+          component: () => import('@/views/manage_services/ViewService.vue'),
+          meta: {
+            title: 'Manage Services - View',
+            breadcrumb: 'View Service',
+            breadcrumbParent: { label: 'Manage Service', to: 'manage-services' },
+            subtitle: 'See full information about a service.'
           }
         },
       ]

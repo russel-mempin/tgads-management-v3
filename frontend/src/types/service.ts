@@ -1,4 +1,4 @@
-interface ServicePriceTier {
+export interface ServicePriceTier {
 	min_threshold: number
 	max_threshold: number
 	rate: number
@@ -12,6 +12,7 @@ export interface ServiceOption {
 	minimum_consumption: number
 	stock_increment: number
 	price_tiers?: ServicePriceTier[]
+	full_service_name: string
 }
 
 export interface Service {
