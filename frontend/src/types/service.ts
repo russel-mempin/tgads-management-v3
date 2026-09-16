@@ -1,4 +1,5 @@
 export interface ServicePriceTier {
+	id: string
 	min_threshold: number
 	max_threshold: number
 	rate: number

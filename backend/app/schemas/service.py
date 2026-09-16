@@ -7,6 +7,7 @@ from app.models import ServiceBase
 
 
 class ServicePriceTierPublic(SQLModel):
+    id: uuid.UUID
     min_threshold: float
     max_threshold: float | None
     rate: float
