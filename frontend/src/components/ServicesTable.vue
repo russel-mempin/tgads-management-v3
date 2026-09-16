@@ -94,8 +94,16 @@ const onSelect = (_e: Event, row: TableRow<Service>) => {
                                 <td class="p-2.5">{{ option.name }}</td>
                                 <td class="p-2.5">{{ formatCurrency(option.base_rate) }}</td>
                                 <td class="p-2.5">
-                                    <UBadge :color="option.is_active ? 'success' : 'error'">{{ option.is_active ?
-                                        'Active' : 'Inactive' }}</UBadge>
+                                    <span :class="[
+                                        'flex items-center gap-1.5 font-medium',
+                                        option.is_active ? 'text-green-700' : 'text-red-700'
+                                    ]">
+                                        <span :class="[
+                                            'size-2 rounded-full',
+                                            option.is_active ? 'bg-green-700' : 'bg-red-700'
+                                        ]" />
+                                        {{ option.is_active ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
                             </tr>
                         </tbody>

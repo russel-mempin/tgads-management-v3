@@ -13,6 +13,8 @@ export interface ServiceOption {
 	stock_increment: number
 	price_tiers?: ServicePriceTier[]
 	full_service_name: string
+	is_active: boolean
+	is_priced: boolean
 }
 
 export interface Service {
