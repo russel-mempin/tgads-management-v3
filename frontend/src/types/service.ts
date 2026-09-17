@@ -38,3 +38,11 @@ export interface Extra {
 	created_at?: Date
 	updated_at?: Date
 }
+
+export interface ServiceOptionCreate {
+	parent_service_id: string
+	name: string
+	base_rate: number
+	minimum_consumption: number
+	stock_increment?: number
+}

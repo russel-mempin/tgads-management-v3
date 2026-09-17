@@ -12,18 +12,17 @@ const UButton = resolveComponent('UButton')
 const serviceData = ref<Service>()
 
 // UI Variables
+const serviceId = route.params.service_id
 const loading = ref(false)
 
 // Data Functions
 const fetchData = async () => {
     loading.value = true
     try {
-        const serviceId = route.params.service_id
         if (typeof serviceId !== 'string') {
             throw new Error('Invalid service ID')
         }
         serviceData.value = await getServiceData(serviceId)
-        console.log(serviceData.value)
     }
     finally {
         loading.value = false
