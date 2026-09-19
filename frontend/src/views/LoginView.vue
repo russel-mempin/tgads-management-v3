@@ -29,7 +29,7 @@ const login = async () => {
 </script>
 
 <template>
-    <div class="px-10 py-8 rounded-md border border-primary">
+    <div class="bg-default px-10 py-8 rounded-md border border-primary">
         <div class="mb-8">
             <h1 class="text-2xl text-highlighted font-semibold">Welcome back!</h1>
             <p class="text-muted">Sign in to start managing job order data.</p>

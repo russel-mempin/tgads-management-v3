@@ -11,30 +11,35 @@ const props = defineProps<{
     serviceUnit?: string
 }>()
 
+const emit = defineEmits<{
+    editOption: [option: ServiceOption]
+    deleteOption: [option: ServiceOption]
+}>()
+
 const columns: TableColumn<ServicePriceTier>[] = [
-  {
-    accessorKey: 'consumption',
-    header: `Consumption (${props.serviceUnit})`,
-    cell: ({ row }) => {
-      const tier = row.original
-      return tier.max_threshold
-        ? `${tier.min_threshold} - ${tier.max_threshold}`
-        : `${tier.min_threshold} UP`
+    {
+        accessorKey: 'consumption',
+        header: `Consumption (${props.serviceUnit})`,
+        cell: ({ row }) => {
+            const tier = row.original
+            return tier.max_threshold
+                ? `${tier.min_threshold} - ${tier.max_threshold}`
+                : `${tier.min_threshold} UP`
+        }
+    },
+    {
+        accessorKey: 'rate',
+        header: 'Rate',
+        cell: ({ row }) => formatCurrency(row.original.rate)
+    },
+    {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => h('div', { class: 'flex justify-end gap-1' }, [
+            h(UButton, { variant: 'ghost', icon: 'i-lucide-pen-square' }),
+            h(UButton, { variant: 'ghost', icon: 'i-lucide-trash-2', color: 'error' })
+        ])
     }
-  },
-  {
-    accessorKey: 'rate',
-    header: 'Rate',
-    cell: ({ row }) => formatCurrency(row.original.rate)
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'flex justify-end gap-1' }, [
-      h(UButton, { variant: 'ghost', icon: 'i-lucide-pen-square' }),
-      h(UButton, { variant: 'ghost', icon: 'i-lucide-trash-2', color: 'error' })
-    ])
-  }
 ]
 </script>
 
@@ -57,8 +62,13 @@ const columns: TableColumn<ServicePriceTier>[] = [
                 </span>
                 <p class="text-muted text-sm">{{ option.full_service_name }}</p>
             </div>
-
-            <p class="text-xl font-semibold text-green-700">{{ formatCurrency(option.base_rate) }}</p>
+            <div class="flex gap-2 items-center">
+                <p class="text-xl font-semibold text-green-700">{{ formatCurrency(option.base_rate) }}</p>
+                <div class="flex items-center">
+                    <UButton icon="i-lucide-pen-square" variant="ghost" @click="$emit('editOption', option)" />
+                    <UButton icon="i-lucide-trash-2" variant="ghost" color="error" @click="$emit('deleteOption', option)" />
+                </div>
+            </div>
         </div>
         <UTable v-if="option.price_tiers?.length" :data="option.price_tiers" :columns="columns" />
         <div v-else class="p-4 flex items-center justify-between">

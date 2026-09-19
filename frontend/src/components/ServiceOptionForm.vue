@@ -2,57 +2,77 @@
 import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { ServiceOption } from '@/types/service';
-import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters';
 
 const props = defineProps<{
     parent_service_id: string,
-	editingOption?: ServiceOption | null
+    editingOption?: ServiceOption | null
 }>()
 
 const isOpen = defineModel<boolean>('isOpen', { required: true })
 
 // Validation Schema
 const schema = z.object({
-	claimed_item_id: z.string().min(1, 'Identify what item was claimed'),
-	pcs_claimed: z.number({ error: 'Pieces Claimed is required' }).positive('Value must be greater than 0'),
-	date_claimed: z.string().min(1, 'Date claimed is required'),
-	name: z.string().min(1, 'Name is required'),
+    name: z.string().min(1, 'Name of the option is required.'),
+    base_rate: z.number({ error: 'Base rate is required' }).positive('Value must be greater than 0'),
+    minimum_consumption: z.number().optional(),
+    stock_increment: z.number().optional(),
 })
 type Schema = z.output<typeof schema>
 const getInitialState = (): Schema => ({
-	claimed_item_id: '',
-	pcs_claimed: 1,
-	date_claimed: nowForInput(),
-	name: '',
+    name: '',
+    base_rate: 1,
+    minimum_consumption: 0,
+    stock_increment: 0
 })
 const state = reactive<Schema>(getInitialState())
+const resetForm = () => {
+	Object.assign(state, getInitialState())
+}
+
+watch([() => props.editingOption, isOpen], ([option, open]) => {
+    if (open && option) {
+        Object.assign(state, {
+            name: option.name,
+            base_rate: option.base_rate,
+            minimum_consumption: option.minimum_consumption,
+            stock_increment: option.stock_increment
+        })
+    }
+    else {
+        resetForm()
+    }
+})
+
+const onSubmit = () => {
+    console.log("hehe")
+}
 </script>
 
 <template>
     <UModal :title="editingOption ? 'Edit Option' : 'Add Option'" v-model:open="isOpen"
         :close="{ color: 'error', class: 'rounded-full' }"
-        description="Enter payment data and click save to prepare it for saving.">
+        description="Enter service option data to use it in job orders.">
         <template #body>
             <UForm :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSubmit">
-                <div class="grid grid-cols-2 gap-6">
-                    <UFormField label="Claimed Item" name="claimed_item_id" required class="w-full">
-                        <USelect v-model="state.claimed_item_id" :items="claimableItemIds"
-                            placeholder="Select item to claim" class="w-full" value-key="value" />
+                <UFormField label="Option Name" name="name" required class="w-full">
+                    <UInput v-model="state.name" placeholder="Enter option name" class="w-full" />
+                </UFormField>
+                <div class="grid grid-cols-3 gap-4">
+                    <UFormField label="Base Rate" name="base_rate" required class="w-full">
+                        <UInputNumber v-model="state.base_rate" class="w-full" :increment="false" :decrement="false"
+                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
-                    <UFormField label="Pieces Claimed" name="pcs_claimed" required class="w-full">
-                        <UInputNumber v-model="state.pcs_claimed" class="w-full" :increment="false" :decrement="false"
+                    <UFormField label="Min. Consumption" name="minimum_consumption" class="w-full">
+                        <UInputNumber v-model="state.minimum_consumption" class="w-full" :increment="false" :decrement="false"
+                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                    </UFormField>
+                    <UFormField label="Stock Increment" name="stock_increment" class="w-full">
+                        <UInputNumber v-model="state.stock_increment" class="w-full" :increment="false" :decrement="false"
                             @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                 </div>
-                <UFormField label="Date Claimed" name="date_claimed" required class="w-full">
-                    <UInput v-model="state.date_claimed" type="datetime-local" class="w-full" />
-                </UFormField>
-                <UFormField label="Name" name="name" required class="w-full">
-                    <UInput v-model="state.name" class="w-full" placeholder="e.g. Juan Dela Cruz" />
-                </UFormField>
                 <div class="flex justify-end gap-4">
-                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28"
-                        @click="handleCancel" />
+                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28" />
                     <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold"
                         type="submit" />
                 </div>
