@@ -118,7 +118,7 @@ class ServiceOption(SQLModel, table=True):
 
     @property
     def is_priced(self) -> bool:
-        return self.base_rate is not None
+        return self.base_rate is not None and self.base_rate > 0
 
 
 # ====================== SERVICE TYPES =========================
