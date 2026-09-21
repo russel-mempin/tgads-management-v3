@@ -45,6 +45,7 @@ watch([() => props.editingOption, isOpen], ([option, open]) => {
 
 const onSubmit = () => {
     console.log("hehe")
+    resetForm()
 }
 </script>
 

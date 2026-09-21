@@ -144,7 +144,7 @@ const router = createRouter({
             title: 'Misc Sales',
             breadcrumb: 'Misc Sales',
             breadcrumbParent: { label: 'Misc Sales', to: 'misc-sales' },
-            subtitle: 'View and record payments for miscellaneous sales without job orders.'
+            subtitle: 'View and record payments for sales without job orders.'
           }
         },
         {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, resolveComponent, computed } from 'vue';
+import { ref, onMounted, resolveComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { getServiceData } from '@/api/services';
 import type { Service, ServiceOption } from '@/types/service';

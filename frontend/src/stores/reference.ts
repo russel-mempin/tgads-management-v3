@@ -12,11 +12,14 @@ export const useReferenceStore = defineStore('reference', () => {
     const loaded = ref(false)
 
     const initialize = async () => {
+        if (loaded.value) return
+
         const [servicesData, extrasData, accountsData] = await Promise.all([
             getAllServices(),
             getAllExtras(),
             getAccountOptions(),
         ])
+
         services.value = servicesData
         extraServices.value = extrasData
         accountOptions.value = accountsData

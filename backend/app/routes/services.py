@@ -34,14 +34,14 @@ def read_all_services(offset: int = 0, limit: Annotated[int, Query(le=100)] = 10
     return get_all_services(db, offset=offset, limit=limit)
 
 
-@router.get("/{service_id}", response_model=ServicePublic)
-def read_service(service_id: uuid.UUID, db: Session = Depends(get_session)):
-    return get_service_data(db, service_id)
-
-
 @router.get("/extras", response_model=list[ExtraService])
 def read_all_extras(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
     return get_all_extras(db, offset=offset, limit=limit)
+
+
+@router.get("/{service_id}", response_model=ServicePublic)
+def read_service(service_id: uuid.UUID, db: Session = Depends(get_session)):
+    return get_service_data(db, service_id)
 
 
 @router.post("/", response_model=ServicePublic)

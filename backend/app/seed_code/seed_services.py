@@ -1,11 +1,13 @@
 import csv
 import os
+
 from sqlmodel import Session, select
+
 from app.database import engine
+from app.enums import PriceUnit, PricingStrategy
 from app.models import Service, ServiceOption, ServicePriceTier
-from app.enums import PricingStrategy, PriceUnit
 from app.utils.utils import to_float
- 
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SERVICES_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "services.csv")
 SERVICE_OPTIONS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_options.csv")
@@ -69,11 +71,15 @@ def seed_service_options_from_csv(file_path: str = SERVICE_OPTIONS_CSV_PATH):
                 continue
  
             base_rate_raw = row.get("base_rate", "").strip()
+            minimum_consumption_raw = row.get("minimum_consumption", "").strip()
+            stock_increment_raw = row.get("stock_increment", "").strip()
  
             option = ServiceOption(
                 service_id=service.id,
                 name=row["option_name"],
                 base_rate=to_float(base_rate_raw) if base_rate_raw else None,
+                minimum_consumption=to_float(minimum_consumption_raw) if minimum_consumption_raw else None,
+                stock_increment=to_float(stock_increment_raw) if stock_increment_raw else None
             )
  
             session.add(option)
