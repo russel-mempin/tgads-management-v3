@@ -2,6 +2,7 @@
 import { reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { ServiceOption } from '@/types/service';
+import OptionPriceTierFields from './OptionPriceTierFields.vue';
 
 const props = defineProps<{
     parent_service_id: string,
@@ -71,6 +72,9 @@ const onSubmit = () => {
                         <UInputNumber v-model="state.stock_increment" class="w-full" :increment="false" :decrement="false"
                             @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
+                </div>
+                <div>
+                    <OptionPriceTierFields />
                 </div>
                 <div class="flex justify-end gap-4">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28" />

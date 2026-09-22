@@ -17,10 +17,8 @@ from app.crud.service import (
     update_service,
 )
 from app.database import get_session
-from app.models import ExtraService, User
+from app.models import User
 from app.schemas.service import (
-    ExtraCreate,
-    ExtraPublic,
     ServiceCreate,
     ServiceOptionCreate,
     ServicePublic,
@@ -36,9 +34,7 @@ def read_all_services(offset: int = 0, limit: Annotated[int, Query(le=100)] = 10
     return get_all_services(db, offset=offset, limit=limit)
 
 
-@router.get("/extras", response_model=list[ExtraService])
-def read_all_extras(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100, db: Session = Depends(get_session)):
-    return get_all_extras(db, offset=offset, limit=limit)
+
 
 
 @router.get("/{service_id}", response_model=ServicePublic)
@@ -54,28 +50,3 @@ def create(data: ServiceCreate, db: Session = Depends(get_session), current_user
 @router.post("/options")
 def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_option(db, data, service_id, current_user.id)
-
-
-@router.patch("/{service_id}", response_model=ServicePublic)
-def update(service_id: uuid.UUID, data: ServiceUpdate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return update_service(db, service_id, data, current_user.id)
-
-
-@router.patch("/{service_id}/archive")
-def archive(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return archive_service(db, service_id, current_user.id)
-
-
-@router.post("/extras", response_model=ExtraPublic)
-def create_extra_service(data: ExtraCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return create_extra(db, data, current_user.id)
-
-
-@router.put("/extras/{extra_id}", response_model=ExtraPublic)
-def update_extra_service(extra_id: uuid.UUID, data: ExtraCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return update_extra(db, extra_id, data, current_user.id)
-
-
-@router.patch("/extras/{extra_id}/archive")
-def archive_extra_service(extra_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return archive_extra(db, extra_id, current_user.id)
