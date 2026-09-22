@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from pydantic import EmailStr
-from sqlalchemy import Column, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric, UniqueConstraint
 from sqlmodel import JSON, Field, Relationship, SQLModel
 
 from app.enums import (
@@ -119,6 +119,11 @@ class ServiceOption(SQLModel, table=True):
     @property
     def is_priced(self) -> bool:
         return self.base_rate is not None and self.base_rate > 0
+    
+    
+    __table_args__ = (
+        UniqueConstraint("service_id", "name"),
+    )
 
 
 # ====================== SERVICE TYPES =========================
@@ -161,14 +166,17 @@ class Service(ServiceBase, table=True):
 # For services that have different tiers of pricing based on consumption.
 # min_threshold defines the minimum consumption to reach a tier
 # max_threshold defines the highest consumption before the next tier
-class ServicePriceTier(SQLModel, table=True):
+class ServicePriceTierBase(SQLModel):
+    min_threshold: float
+    max_threshold: float | None = None
+    rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+
+
+class ServicePriceTier(ServicePriceTierBase, table=True):
     __tablename__ = "service_price_tiers"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     service_option_id: uuid.UUID = Field(foreign_key="service_options.id")
-
-    min_threshold: float
-    max_threshold: float | None = None
 
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -186,8 +194,6 @@ class ServicePriceTier(SQLModel, table=True):
             onupdate=lambda: datetime.now(UTC),
         ),
     )
-
-    rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
 
     service_option: ServiceOption = Relationship(back_populates="price_tiers")
 

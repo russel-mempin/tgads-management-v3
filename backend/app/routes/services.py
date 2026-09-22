@@ -8,6 +8,7 @@ from app.crud.service import (
     archive_extra,
     archive_service,
     create_extra,
+    create_option,
     create_service,
     get_all_extras,
     get_all_services,
@@ -21,6 +22,7 @@ from app.schemas.service import (
     ExtraCreate,
     ExtraPublic,
     ServiceCreate,
+    ServiceOptionCreate,
     ServicePublic,
     ServiceUpdate,
 )
@@ -47,6 +49,11 @@ def read_service(service_id: uuid.UUID, db: Session = Depends(get_session)):
 @router.post("/", response_model=ServicePublic)
 def create(data: ServiceCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_service(db, data, current_user.id)
+
+
+@router.post("/options")
+def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_option(db, data, service_id, current_user.id)
 
 
 @router.patch("/{service_id}", response_model=ServicePublic)

@@ -85,6 +85,35 @@ def get_system_admin(session: Session) -> User:
 		)
         
     return sysadmin
+
+
+def validate_price_tiers(price_tiers) -> None:
+    tiers = sorted(price_tiers, key=lambda t: t.min_threshold)
+
+    for tier in tiers:
+        if tier.max_threshold is not None and tier.max_threshold < tier.min_threshold:
+                raise ValueError(
+                    f"Invalid price tier: minimum threshold "
+                    f"({tier.min_threshold}) cannot be greater than "
+                    f"maximum threshold ({tier.max_threshold})."
+                )
+
+    for i in range(len(tiers) - 1):
+        current = tiers[i]
+        next_tier = tiers[i + 1]
+
+        if current.max_threshold is None:
+            raise ValueError(
+                "An open-ended price tier must be the last tier."
+            )
+
+        if next_tier.min_threshold <= current.max_threshold:
+            raise ValueError(
+                f"Price tiers overlap: "
+                f"{current.min_threshold}-{current.max_threshold} and "
+                f"{next_tier.min_threshold}-"
+                f"{next_tier.max_threshold if next_tier.max_threshold is not None else '∞'}."
+            )
     
     
 def compute_unit_price(height: float | None, width: float | None, service_type: Service, option: ServiceOption, size_unit: SizeUnit | None, quantity: int) -> PricingData:

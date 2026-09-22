@@ -1,16 +1,14 @@
 import uuid
+from decimal import Decimal
 
 from sqlmodel import Field, SQLModel
 
 from app.enums import SizeUnit
-from app.models import ServiceBase
+from app.models import ServiceBase, ServicePriceTierBase
 
 
-class ServicePriceTierPublic(SQLModel):
+class ServicePriceTierPublic(ServicePriceTierBase):
     id: uuid.UUID
-    min_threshold: float
-    max_threshold: float | None
-    rate: float
 
 
 class ServiceOptionPublic(SQLModel):
@@ -19,8 +17,8 @@ class ServiceOptionPublic(SQLModel):
     name: str
     base_rate: float
     is_active: bool
-    minimum_consumption: float | None
-    stock_increment: float | None
+    minimum_consumption: float | None = None
+    stock_increment: float | None = None
     full_service_name: str
     is_priced: bool
     price_tiers: list[ServicePriceTierPublic] = Field(default_factory=list)
@@ -29,6 +27,14 @@ class ServiceOptionPublic(SQLModel):
 class ServicePublic(ServiceBase):
     id: uuid.UUID
     options: list[ServiceOptionPublic] = Field(default_factory=list)
+
+
+class ServiceOptionCreate(SQLModel):
+    name: str
+    base_rate: Decimal
+    minimum_consumption: float | None = None
+    stock_increment: float | None = None
+    price_tiers: list[ServicePriceTierBase] | None = None 
 
 
 class ServiceCreate(ServiceBase):

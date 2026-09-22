@@ -68,7 +68,7 @@ const columns: TableColumn<ServicePriceTier>[] = [
                     <UButton icon="i-lucide-pen-square" variant="ghost" @click="$emit('editOption', option)" />
                     <UButton icon="i-lucide-trash-2" variant="ghost" color="error" @click="$emit('deleteOption', option)" />
                 </div>
-            </div>ex
+            </div>
         </div>
         <UTable v-if="option.price_tiers?.length" :data="option.price_tiers" :columns="columns" />
         <div v-else class="p-4 flex items-center justify-between">

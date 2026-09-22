@@ -5,7 +5,7 @@ import { getServiceData } from '@/api/services';
 import type { Service, ServiceOption } from '@/types/service';
 import ServiceHeader from '@/components/ServiceHeader.vue';
 import OptionCard from '@/components/OptionCard.vue';
-import ServiceOptionForm from '@/components/ServiceOptionForm.vue';
+import ServiceOptionForm from '@/components/service-option-form/ServiceOptionForm.vue';
 
 const route = useRoute()
 const UButton = resolveComponent('UButton')

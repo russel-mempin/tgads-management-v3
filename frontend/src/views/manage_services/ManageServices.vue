@@ -25,6 +25,10 @@ onMounted(fetchData)
 </script>
 
 <template>
+    <section class="m-4 flex items-center gap-4">
+        <UInput placeholder="Search by service name..." class="flex-1"/>
+        <UButton label="Add Service" icon="i-lucide-plus"/>
+    </section>
     <section class="m-4 bg-default border-default border rounded-md">
         <ServicesTable :services="data" />
     </section>
