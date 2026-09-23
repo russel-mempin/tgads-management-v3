@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters'
-import type { AccountOption } from '@/types/account'
 import { getAccountOptions } from '@/api/accounts'
 import type { Payment } from '@/types/jobOrder'
+import { useReferenceStore } from '@/stores/reference'
 
 const props = defineProps<{
     balance: number
@@ -19,7 +19,8 @@ const emit = defineEmits<{
 
 // UI Variables
 const isOpen = defineModel<boolean>('isOpen', { required: true })
-const accountsList = ref<AccountOption[]>([])
+const referenceStore = useReferenceStore()
+const accountsList = computed(() => referenceStore.accountOptions)
 
 // Validation Schema
 const schema = z.object({
@@ -32,23 +33,21 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 // Input variables
-const getInitialState = (): Schema => ({
-    dateReceived: nowForInput(),
-    referenceNumber: '',
-    amount: 0,
-    notes: '',
-    accountName: '',
-})
+const getInitialState = (): Schema => {
+    const cashAccount = referenceStore.accountOptions.find(
+        a => a.name === 'Cash'
+    )
+    return {
+        dateReceived: nowForInput(),
+        referenceNumber: '',
+        amount: 0,
+        notes: '',
+        accountName: cashAccount?.id ?? '',
+    }
+}
 const state = reactive<Schema>(getInitialState())
 
 // UI Functions
-onMounted(async () => {
-    accountsList.value = await getAccountOptions()
-    const cashAccount = accountsList.value.find(a => a.name === 'Cash')
-    if (cashAccount) {
-        state.accountName = cashAccount.id
-    }
-})
 const resetForm = () => {
     Object.assign(state, getInitialState())
 }
@@ -113,7 +112,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
                 </UFormField>
                 <UFormField label="Method" name="accountName" required class="w-full">
                     <USelect v-model="state.accountName" class="w-full" value-key="id" label-key="name"
-                        :items="accountsList" />
+                        :items="referenceStore.accountOptions" />
                 </UFormField>
                 <UFormField label="Notes" name="notes" class="w-full">
                     <UInput v-model="state.notes" class="w-full" />

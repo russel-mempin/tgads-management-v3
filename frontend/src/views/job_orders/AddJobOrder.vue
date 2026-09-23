@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router';
 // Type imports
 import type { JobItemTableRow, JobItemCreate, JobItem, Payment, ClaimingHistory } from '@/types/jobOrder';
-import type { Service, Extra } from '@/types/service';
 // API call imports
-import { getAllServices, getAllExtras } from '@/api/services';
 import { createJobOrder, getUnitPrice } from '@/api/jobOrders';
 // Component imports
 import JobItemTable from '@/components/JobItemTable.vue';
@@ -19,9 +17,11 @@ import { inputToUtc, nowForInput } from '@/utils/formatters';
 import { useJobOrderTotals } from '@/composables/jobOrderTotals';
 import { useCustomerSearch } from '@/composables/customerSearch';
 import { useJobItemBuilder } from '@/composables/jobItemBuilder';
+import { useReferenceStore } from '@/stores/reference'
 
 const toast = useToast()
 const router = useRouter()
+const referenceStore = useReferenceStore()
 
 // Data Variables
 const joNumber = ref(0)
@@ -30,16 +30,10 @@ const dateReceived = ref(nowForInput())
 const payments = ref<Payment[]>([])
 const claimingHistory = ref<ClaimingHistory[]>([])
 
-// Data Functions
-onMounted(async () => {
-	serviceList.value = await getAllServices()
-	extraList.value = await getAllExtras()
-})
-
 // UI Variables
 const isWalkIn = ref(false)
-const serviceList = ref<Service[]>([])
-const extraList = ref<Extra[]>([])
+const serviceList = computed(() => referenceStore.services)
+const extraList = computed(() => referenceStore.extraServices)
 const isItemFormOpen = ref(false)
 const selectedIndex = ref<number | null>(null)
 const selectedJobItem = ref<JobItem | null>(null)
@@ -61,7 +55,6 @@ const {
 	selectCustomerToSearch,
 } = useCustomerSearch()
 const { buildJobItem, resolveServiceId, resolveOptionId } = useJobItemBuilder(serviceList, extraList, getUnitPrice)
-
 
 
 // UI Functions
@@ -290,5 +283,5 @@ const saveToDb = async () => {
 		</ClaimTable>
 	</div>
 	<JobOrderFooter :total-due="totalDue" :total-paid="totalPaid" :balance="balance" :can-save="!canSave"
-		@save="saveToDb" />
+		@save="saveToDb" @cancel="() => router.push('/job-orders')" />
 </template>

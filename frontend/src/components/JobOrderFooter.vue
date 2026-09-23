@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	save: []
+	cancel: []
 }>()
 </script>
 
@@ -31,7 +32,7 @@ const emit = defineEmits<{
 			</div>
 		</div>
 		<div class="flex gap-8 items-center justify-end">
-			<UButton icon="i-lucide-arrow-left" color="neutral" class="w-45 font-bold" variant="outline">Back to Job
+			<UButton icon="i-lucide-arrow-left" @click="emit('cancel')" color="neutral" class="w-45 font-bold" variant="outline">Back to Job
 				Orders
 			</UButton>
 			<UButton class="w-45 font-bold relative" @click="emit('save')" :disabled="canSave" loading-auto>

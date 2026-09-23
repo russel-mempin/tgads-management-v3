@@ -1,18 +1,16 @@
 <script setup lang="ts">
 // Framework/Library imports
-import { reactive, watch, ref, computed, onMounted } from 'vue';
+import { reactive, watch, computed } from 'vue';
 import { z } from 'zod'
 import isEqual from 'lodash/isEqual'
 // Type imports
 import type { JobItem, JobItemUpdate } from '@/types/jobOrder';
 import type { FormSubmitEvent } from '@nuxt/ui';
-import type { Service, Extra } from '@/types/service'
-// API call imports
-import { getAllServices, getAllExtras } from '@/api/services';
 // Component imports
 import JobItemExtrasFields from './JobItemExtrasFields.vue';
 import JobItemPriceAdjustFields from './JobItemPriceAdjustFields.vue';
 import JobItemPricingBreakdown from './JobItemPricingBreakdown.vue';
+import { useReferenceStore } from '@/stores/reference'
 
 const emit = defineEmits<{
     submit: [payload: {
@@ -25,6 +23,8 @@ const props = defineProps<{
     jobItem: JobItem
 }>()
 const isOpen = defineModel<boolean>('isOpen', { required: true })
+
+const referenceStore = useReferenceStore()
 
 // Form schemas
 const extraSchema = z.object({
@@ -50,8 +50,8 @@ const form = reactive<Schema>({
 })
 
 // Data variables
-const serviceList = ref<Service[]>([])
-const extraList = ref<Extra[]>([])
+const serviceList = computed(() => referenceStore.services)
+const extraList = computed(() => referenceStore.extraServices)
 
 // UI Variables
 const statusOptions = ["Pending", "For Layout", "For Approval", "For Printing", "For Pickup", "Released", "Cancelled"]
@@ -62,11 +62,6 @@ const isAreaBased = computed(() =>
     selectedServiceData.value?.pricing_strategy === 'Area'
 )
 
-// Data functions
-onMounted(async () => {
-    serviceList.value = await getAllServices()
-    extraList.value = await getAllExtras()
-})
 // Put data to form
 watch(
     () => props.jobItem,

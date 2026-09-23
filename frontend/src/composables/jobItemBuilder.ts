@@ -1,7 +1,8 @@
 // composables/useJobItemBuilder.ts
 import type { Ref } from 'vue'
 import type { JobItemCreate, JobItemTableRow, JobItemExtra } from '@/types/jobOrder'
-import type { Service, Extra } from '@/types/service'
+import type { Service } from '@/types/service'
+import type { Extra } from '@/types/extra'
 
 export function useJobItemBuilder(
   serviceList: Ref<Service[]>,

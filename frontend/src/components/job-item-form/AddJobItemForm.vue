@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { reactive, computed, ref, onMounted, watch } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import { z } from 'zod'
 // Type imports
 import type { JobItemCreate, SizeUnit, JobStatus, JobItemExtraCreate } from '@/types/jobOrder.ts';
-import type { Service, Extra } from '@/types/service.ts';
-// API call imports
-import { getAllServices, getAllExtras } from '@/api/services.ts';
 // Component imports
 import JobItemServiceFields from './JobItemServiceFields.vue';
 import JobItemWorkflowFields from './JobItemWorkflowFields.vue';
@@ -14,6 +11,7 @@ import JobItemPriceAdjustFields from './JobItemPriceAdjustFields.vue';
 import JobItemPricingBreakdown from './JobItemPricingBreakdown.vue';
 import { nowForInput, utcToInput } from '@/utils/formatters.ts';
 import type { FormSubmitEvent } from '@nuxt/ui';
+import { useReferenceStore } from '@/stores/reference'
 
 const props = defineProps<{
     editingItem?: JobItemCreate | null
@@ -24,6 +22,8 @@ const emit = defineEmits<{
     save: [item: JobItemCreate]
 }>()
 const isOpen = defineModel<boolean>('isOpen', { required: true })
+
+const referenceStore = useReferenceStore()
 
 // Validation Schema
 const extraSchema = z.object({
@@ -75,14 +75,9 @@ const getInitialState = (): Schema => ({
 const state = reactive<Schema>(getInitialState())
 
 // Data variables
-const serviceList = ref<Service[]>([])
-const extraList = ref<Extra[]>([])
+const serviceList = computed(() => referenceStore.services)
+const extraList = computed(() => referenceStore.extraServices)
 
-// Data functions
-onMounted(async () => {
-    serviceList.value = await getAllServices()
-    extraList.value = await getAllExtras()
-})
 const resetForm = () => {
     Object.assign(state, getInitialState())
     isOpen.value = false

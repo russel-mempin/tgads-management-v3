@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 
 from sqlmodel import Field, SQLModel
@@ -86,6 +87,7 @@ class JobOrderPublic(JobOrderBase):
     customer_contact_no: str | None = None
     created_by_name: str | None = None
     updated_by_name: str | None = None
+    updated_at: datetime
     voided_by_name: str | None = None
     void_reason: str | None = None
     
