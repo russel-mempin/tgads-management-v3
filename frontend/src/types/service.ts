@@ -30,15 +30,6 @@ export interface Service {
 	options: ServiceOption[]
 }
 
-export interface Extra {
-	id?: string
-	name: string
-	price: number
-	is_active: boolean
-	created_at?: Date
-	updated_at?: Date
-}
-
 export interface ServiceOptionCreate {
 	parent_service_id: string
 	name: string

@@ -8,6 +8,7 @@ from app.routes import (
     accounts,
     customers,
     expenses,
+    extras,
     for_reviews,
     job_orders,
     misc_sales,
@@ -39,12 +40,13 @@ elif os.getenv("APP_ENV") == "prod":
     seed_prod_data()
 
 app.include_router(users.router)
+app.include_router(services.router)
+app.include_router(extras.router)
+app.include_router(accounts.router)
+app.include_router(transactions.router)
 app.include_router(job_orders.router)
 app.include_router(for_reviews.router)
 app.include_router(customers.router)
-app.include_router(services.router)
 app.include_router(expenses.router)
 app.include_router(misc_sales.router)
 app.include_router(reports.router)
-app.include_router(accounts.router)
-app.include_router(transactions.router)

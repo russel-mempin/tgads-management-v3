@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue'
-import { getAllServices, getAllExtras } from '@/api/services';
+import { getAllServices } from '@/api/services';
+import { getAllExtras } from '@/api/extras';
 import { getAccountOptions } from '@/api/accounts';
-import type { Service, Extra } from '@/types/service';
+import type { Service } from '@/types/service';
+import type { Extra } from '@/types/extra';
 import type { AccountOption } from '@/types/account';
 
 export const useReferenceStore = defineStore('reference', () => {
