@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { z } from 'zod'
-import type { ServiceOption } from '@/types/service';
+import type { ServiceOption, ServiceOptionCreate } from '@/types/service';
 import OptionPriceTierFields from './OptionPriceTierFields.vue';
 
 const props = defineProps<{
     parent_service_id: string,
     editingOption?: ServiceOption | null
+}>()
+
+const emit = defineEmits<{
+    save: [option: ServiceOptionCreate]
+    cancel: []
 }>()
 
 const isOpen = defineModel<boolean>('isOpen', { required: true })
@@ -17,13 +22,13 @@ const schema = z.object({
     base_rate: z.number({ error: 'Base rate is required' }).positive('Value must be greater than 0'),
     minimum_consumption: z.number().optional(),
     stock_increment: z.number().optional(),
-    pricing_tier: z.array(
+    pricing_tiers: z.array(
         z.object({
             min_threshold: z.number().int().positive(),
             max_threshold: z.number().int().positive().nullable(),
             rate: z.number().positive()
         })
-    ).optional(),
+    ),
 })
 type Schema = z.output<typeof schema>
 const getInitialState = (): Schema => ({
@@ -31,7 +36,7 @@ const getInitialState = (): Schema => ({
     base_rate: 1,
     minimum_consumption: 0,
     stock_increment: 0,
-    pricing_tier: []
+    pricing_tiers: []
 })
 const state = reactive<Schema>(getInitialState())
 const resetForm = () => {
@@ -44,7 +49,8 @@ watch([() => props.editingOption, isOpen], ([option, open]) => {
             name: option.name,
             base_rate: option.base_rate,
             minimum_consumption: option.minimum_consumption,
-            stock_increment: option.stock_increment
+            stock_increment: option.stock_increment,
+            pricing_tiers: option.price_tiers ?? []
         })
     }
     else {
@@ -53,8 +59,15 @@ watch([() => props.editingOption, isOpen], ([option, open]) => {
 })
 
 const onSubmit = () => {
-    console.log("hehe")
+    emit('save', {
+        name: state.name,
+        base_rate: state.base_rate,
+        minimum_consumption: state.minimum_consumption,
+        stock_increment: state.stock_increment,
+        price_tiers: state.pricing_tiers,
+    })
     resetForm()
+    isOpen.value = false
 }
 </script>
 
@@ -81,7 +94,7 @@ const onSubmit = () => {
                             :decrement="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                 </div>
-                <OptionPriceTierFields />
+                <OptionPriceTierFields v-model:price-tiers="state.pricing_tiers" />
                 <div class="flex justify-end gap-4">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
                         class="w-28" />

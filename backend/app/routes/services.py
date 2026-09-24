@@ -37,6 +37,6 @@ def create(data: ServiceCreate, db: Session = Depends(get_session), current_user
     return create_service(db, data, current_user.id)
 
 
-@router.post("/options")
+@router.post("/{service_id}/options/")
 def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_option(db, data, service_id, current_user.id)
