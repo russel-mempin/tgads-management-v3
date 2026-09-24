@@ -82,6 +82,56 @@ def create_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         raise
 
 
+def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        option = db.exec(
+            select(ServiceOption)
+            .where(
+                ServiceOption.id == option_id,
+                ServiceOption.service_id == service_id,
+            )
+        ).first()
+        if not option:
+            raise HTTPException(
+                status_code=404,
+                detail="Service option not found",
+            )
+        update_data = data.model_dump(
+            exclude_unset=True,
+            exclude={"price_tiers"}
+        )
+        # Update ServiceOption fields
+        for field, value in update_data.items():
+            setattr(option, field, value)
+            
+        # Update price tiers if they were included
+        if data.price_tiers is not None:
+            option.price_tiers.clear()
+            for tier_data in data.price_tiers:
+                option.price_tiers.append(
+                    ServicePriceTier(
+                        min_threshold=tier_data.min_threshold,
+                        max_threshold=tier_data.max_threshold,
+                        rate=tier_data.rate,
+                    )
+                )
+        db.add(option)
+        db.commit()
+        db.refresh(option)
+
+        audit = AuditLog(
+            action=f"Created service option named {option.name}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        
+        return option
+        
+    except Exception:
+        db.rollback()
+        raise
+
+
 def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID):
     try:
         existing = db.exec(
@@ -93,12 +143,12 @@ def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID)
         if existing:
             if existing.name == data.name:
                 raise HTTPException(
-                    status_code=409,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Service type with name '{data.name}' already exists.",
                 )
             if existing.abbreviation == data.abbreviation:
                 raise HTTPException(
-                    status_code=409,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Service type with abbreviation '{data.abbreviation}' already exists.",
                 )
         service_type = Service(**data.model_dump())

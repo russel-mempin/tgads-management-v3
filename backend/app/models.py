@@ -89,7 +89,14 @@ class Customer(CustomerBase, table=True):
 
 # ====================== SERVICE OPTIONS =========================
 # Defines the options available for the services.
-class ServiceOption(SQLModel, table=True):
+class ServiceOptionBase(SQLModel):
+    name: str
+    base_rate: Decimal
+    minimum_consumption: float | None = None
+    stock_increment: float | None = None
+
+
+class ServiceOption(ServiceOptionBase, table=True):
     __tablename__ = "service_options"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 

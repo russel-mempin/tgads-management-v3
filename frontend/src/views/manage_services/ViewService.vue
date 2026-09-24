@@ -71,16 +71,16 @@ const openDeleteOptionConfirm = (option: ServiceOption) => {
 
 <template>
     <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" :parent_service_id="serviceId" :editing-option="selectedOption"/>
-    <section class="m-4">
+    <section class="m-6">
         <ServiceHeader v-if="serviceData" :service-data="serviceData"/>
     </section>
     <!-- Options -->
-    <section class="px-4 my-4">
+    <section class="px-6 my-6">
         <span class="flex justify-between items-center mb-4">
             <p class="text-xl font-semibold">Options ({{ serviceData?.options.length }})</p>
             <UButton label="Add Option" icon="i-lucide-plus" @click="() => isServiceOptionFormOpen = true" />
         </span>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-6">
             <OptionCard v-for="option in serviceData?.options" :key="option.id" :option="option"
                 :service-unit="serviceData?.unit" @edit-option="openEditOptionForm" @delete-option="openDeleteOptionConfirm"/>
         </div>
