@@ -113,7 +113,7 @@ const columns: TableColumn<ForReview>[] = [
 <template>
     <Transition name="fade" mode="out-in">
         <div class="h-full min-h-0 flex flex-col">
-            <section v-if="!loading" class="flex-1 min-h-0 m-6 border border-default rounded-md overflow-hidden">
+            <section v-if="!loading" class="bg-default flex-1 min-h-0 m-6 border border-default rounded-md overflow-hidden">
                 <UTable sticky class="overflow-y-auto h-full" :data="data" :columns="columns" :ui="{
                     th: 'text-muted font-semibold uppercase',
                     td: 'text-base text-highlighted',

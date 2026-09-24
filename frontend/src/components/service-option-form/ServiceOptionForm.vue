@@ -17,17 +17,25 @@ const schema = z.object({
     base_rate: z.number({ error: 'Base rate is required' }).positive('Value must be greater than 0'),
     minimum_consumption: z.number().optional(),
     stock_increment: z.number().optional(),
+    pricing_tier: z.array(
+        z.object({
+            min_threshold: z.number().int().positive(),
+            max_threshold: z.number().int().positive().nullable(),
+            rate: z.number().positive()
+        })
+    ).optional(),
 })
 type Schema = z.output<typeof schema>
 const getInitialState = (): Schema => ({
     name: '',
     base_rate: 1,
     minimum_consumption: 0,
-    stock_increment: 0
+    stock_increment: 0,
+    pricing_tier: []
 })
 const state = reactive<Schema>(getInitialState())
 const resetForm = () => {
-	Object.assign(state, getInitialState())
+    Object.assign(state, getInitialState())
 }
 
 watch([() => props.editingOption, isOpen], ([option, open]) => {
@@ -65,19 +73,18 @@ const onSubmit = () => {
                             @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                     <UFormField label="Min. Consumption" name="minimum_consumption" class="w-full">
-                        <UInputNumber v-model="state.minimum_consumption" class="w-full" :increment="false" :decrement="false"
-                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                        <UInputNumber v-model="state.minimum_consumption" class="w-full" :increment="false"
+                            :decrement="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                     <UFormField label="Stock Increment" name="stock_increment" class="w-full">
-                        <UInputNumber v-model="state.stock_increment" class="w-full" :increment="false" :decrement="false"
-                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                        <UInputNumber v-model="state.stock_increment" class="w-full" :increment="false"
+                            :decrement="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                 </div>
-                <div>
-                    <OptionPriceTierFields />
-                </div>
+                <OptionPriceTierFields />
                 <div class="flex justify-end gap-4">
-                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28" />
+                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
+                        class="w-28" />
                     <UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold"
                         type="submit" />
                 </div>

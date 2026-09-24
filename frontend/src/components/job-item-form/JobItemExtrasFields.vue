@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Extra } from '@/types/service';
+import type { Extra } from '@/types/extra';
 import type { JobItemExtraCreate } from '@/types/jobOrder'
 
 const props = defineProps<{
