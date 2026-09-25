@@ -37,3 +37,5 @@ export interface ServiceOptionCreate {
 	stock_increment?: number
 	price_tiers: ServicePriceTier[]
 }
+
+export type ServiceOptionUpdate = Partial<ServiceOptionCreate>

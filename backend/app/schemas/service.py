@@ -35,6 +35,7 @@ class ServiceOptionUpdate(SQLModel):
     is_active: bool | None = None
     minimum_consumption: float | None = None
     stock_increment: float | None = None
+    price_tiers: list[ServicePriceTierBase] | None = None
 
 
 class ServiceCreate(ServiceBase):

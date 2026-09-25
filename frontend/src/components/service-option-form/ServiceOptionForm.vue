@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { z } from 'zod'
-import type { ServiceOption, ServiceOptionCreate } from '@/types/service';
+import type { ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 import OptionPriceTierFields from './OptionPriceTierFields.vue';
 
 const props = defineProps<{
@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     save: [option: ServiceOptionCreate]
+    update: [option: ServiceOptionUpdate]
     cancel: []
 }>()
 
@@ -22,7 +23,7 @@ const schema = z.object({
     base_rate: z.number({ error: 'Base rate is required' }).positive('Value must be greater than 0'),
     minimum_consumption: z.number().optional(),
     stock_increment: z.number().optional(),
-    pricing_tiers: z.array(
+    price_tiers: z.array(
         z.object({
             min_threshold: z.number().int().positive(),
             max_threshold: z.number().int().positive().nullable(),
@@ -36,36 +37,76 @@ const getInitialState = (): Schema => ({
     base_rate: 1,
     minimum_consumption: 0,
     stock_increment: 0,
-    pricing_tiers: []
+    price_tiers: []
 })
 const state = reactive<Schema>(getInitialState())
+const originalState = ref<Schema | null>(null)
 const resetForm = () => {
     Object.assign(state, getInitialState())
 }
 
 watch([() => props.editingOption, isOpen], ([option, open]) => {
     if (open && option) {
-        Object.assign(state, {
+        const initial: Schema = {
             name: option.name,
             base_rate: option.base_rate,
             minimum_consumption: option.minimum_consumption,
             stock_increment: option.stock_increment,
-            pricing_tiers: option.price_tiers ?? []
-        })
+            price_tiers: (option.price_tiers ?? []).map(tier => ({
+                min_threshold: tier.min_threshold,
+                max_threshold: tier.max_threshold ?? null,
+                rate: tier.rate,
+            })),
+        }
+        Object.assign(state, initial)
+        originalState.value = structuredClone(initial)
     }
     else {
         resetForm()
+        originalState.value = null
     }
 })
 
+const getChangedFields = () => {
+    if (!originalState.value) return {}
+    const changes: Partial<Schema> = {}
+    if (state.name !== originalState.value.name) {
+        changes.name = state.name
+    }
+    if (state.base_rate !== originalState.value.base_rate) {
+        changes.base_rate = state.base_rate
+    }
+    if (state.minimum_consumption !== originalState.value.minimum_consumption) {
+        changes.minimum_consumption = state.minimum_consumption
+    }
+    if (state.stock_increment !== originalState.value.stock_increment) {
+        changes.stock_increment = state.stock_increment
+    }
+    if (
+        JSON.stringify(state.price_tiers) !==
+        JSON.stringify(originalState.value.price_tiers)
+    ) {
+        changes.price_tiers = structuredClone(state.price_tiers)
+    }
+    return changes
+}
+
 const onSubmit = () => {
-    emit('save', {
-        name: state.name,
-        base_rate: state.base_rate,
-        minimum_consumption: state.minimum_consumption,
-        stock_increment: state.stock_increment,
-        price_tiers: state.pricing_tiers,
-    })
+    if (props.editingOption) {
+        const changes = getChangedFields()
+        if (Object.keys(changes).length > 0) {
+            emit('update', changes)
+        }
+    }
+    else {
+        emit('save', {
+            name: state.name,
+            base_rate: state.base_rate,
+            minimum_consumption: state.minimum_consumption,
+            stock_increment: state.stock_increment,
+            price_tiers: state.price_tiers,
+        })
+    }
     resetForm()
     isOpen.value = false
 }
@@ -94,7 +135,7 @@ const onSubmit = () => {
                             :decrement="false" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                 </div>
-                <OptionPriceTierFields v-model:price-tiers="state.pricing_tiers" />
+                <OptionPriceTierFields v-model:price-tiers="state.price_tiers" />
                 <div class="flex justify-end gap-4">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
                         class="w-28" />

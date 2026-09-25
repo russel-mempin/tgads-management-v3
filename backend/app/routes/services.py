@@ -16,6 +16,7 @@ from app.models import User
 from app.schemas.service import (
     ServiceCreate,
     ServiceOptionCreate,
+    ServiceOptionUpdate,
     ServicePublic,
 )
 from app.services.dependencies import get_current_active_user
@@ -44,5 +45,5 @@ def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Ses
 
 
 @router.patch("/{service_id}/option")
-def update_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+def update_option_data(data: ServiceOptionUpdate, service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_option(db, data, service_id, option_id, current_user.id)

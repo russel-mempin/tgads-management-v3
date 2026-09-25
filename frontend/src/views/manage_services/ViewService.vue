@@ -3,7 +3,7 @@ import { ref, onMounted, resolveComponent } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 import { getServiceData, createOption } from '@/api/services';
-import type { Service, ServiceOption, ServiceOptionCreate } from '@/types/service';
+import type { Service, ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 import ServiceHeader from '@/components/ServiceHeader.vue';
 import OptionCard from '@/components/OptionCard.vue';
 import ServiceOptionForm from '@/components/service-option-form/ServiceOptionForm.vue';
@@ -59,10 +59,12 @@ const saveOptionToDb = async(option: ServiceOptionCreate) => {
         })
     }
 }
-
 const openEditOptionForm = (option: ServiceOption) => {
     selectedOption.value = option
     isServiceOptionFormOpen.value = true
+}
+const saveEditOptionToDb = async(option: ServiceOptionUpdate) => {
+    console.log(option)
 }
 const openDeleteOptionConfirm = (option: ServiceOption) => {
     selectedOption.value = option
@@ -70,7 +72,7 @@ const openDeleteOptionConfirm = (option: ServiceOption) => {
 </script>
 
 <template>
-    <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" :parent_service_id="serviceId" :editing-option="selectedOption"/>
+    <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" @update="saveEditOptionToDb" :parent_service_id="serviceId" :editing-option="selectedOption"/>
     <section class="m-6">
         <ServiceHeader v-if="serviceData" :service-data="serviceData"/>
     </section>

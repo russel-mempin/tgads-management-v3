@@ -1,4 +1,4 @@
-import type { ServiceOptionCreate } from '@/types/service'
+import type { ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service'
 import http from './http'
 
 export const getAllServices = async() => {
@@ -13,5 +13,10 @@ export const getServiceData = async(service_id: string) => {
 
 export const createOption = async(parent_service_id: string, option: ServiceOptionCreate) => {
 	const res = await http.post(`/services/${parent_service_id}/options/`, option)
+	return res.data
+}
+
+export const updateOption = async(parent_service_id: string, option: ServiceOptionUpdate) => {
+	const res = await http.patch(`/services/${parent_service_id}/options`, option)
 	return res.data
 }
