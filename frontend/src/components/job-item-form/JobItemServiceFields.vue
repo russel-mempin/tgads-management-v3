@@ -49,7 +49,7 @@ const applicableOptions = computed(() =>
                     @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
             </UFormField>
             <UFormField label="Unit" name="unit" required class="w-full">
-                <UInputMenu v-model="unit" :items="MEASUREMENT_UNITS" label-key="label" value-key="value" class="w-full" />
+                <USelect v-model="unit" :items="MEASUREMENT_UNITS" label-key="label" value-key="value" class="w-full" />
             </UFormField>
             <UFormField label="Quantity" required class="w-full">
                 <UInputNumber v-model="quantity" :min="1" class="w-full"
