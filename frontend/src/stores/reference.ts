@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getAllServices } from '@/api/services';
-import { getAllExtras } from '@/api/extras';
-import { getAccountOptions } from '@/api/accounts';
-import type { Service } from '@/types/service';
-import type { Extra } from '@/types/extra';
-import type { AccountOption } from '@/types/account';
+import { getAllServices } from '@/api/services'
+import { getAllExtras } from '@/api/extras'
+import { getAccountOptions } from '@/api/accounts'
+import type { Service } from '@/types/service'
+import type { Extra } from '@/types/extra'
+import type { AccountOption } from '@/types/account'
 
 export const useReferenceStore = defineStore('reference', () => {
     const services = ref<Service[]>([])
@@ -13,9 +13,7 @@ export const useReferenceStore = defineStore('reference', () => {
     const accountOptions = ref<AccountOption[]>([])
     const loaded = ref(false)
 
-    const initialize = async () => {
-        if (loaded.value) return
-
+    const refresh = async () => {
         const [servicesData, extrasData, accountsData] = await Promise.all([
             getAllServices(),
             getAllExtras(),
@@ -28,10 +26,17 @@ export const useReferenceStore = defineStore('reference', () => {
         loaded.value = true
     }
 
+    const initialize = async () => {
+        if (loaded.value) return
+
+        await refresh()
+    }
+
     return {
         services,
         extraServices,
         accountOptions,
         initialize,
+        refresh,
     }
 })

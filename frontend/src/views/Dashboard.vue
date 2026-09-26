@@ -56,7 +56,7 @@ const max = Math.max(...services.map(s => s.count))
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                                <ArrowUp class="size-3" />
+                                <UIcon name="i-lucide-arrow-up" class="size-3" />
                                 100.0%
                             </span>
                             <span class="text-xs text-muted">vs. yesterday</span>
@@ -70,7 +70,7 @@ const max = Math.max(...services.map(s => s.count))
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                                <ArrowUp class="size-3" />
+                                <UIcon name="i-lucide-arrow-up" class="size-3" />
                                 100.0%
                             </span>
                             <span class="text-xs text-muted">vs. last month</span>
@@ -85,7 +85,7 @@ const max = Math.max(...services.map(s => s.count))
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                                <ArrowUp class="size-3" />
+                                <UIcon name="i-lucide-arrow-up" class="size-3" />
                                 100.0%
                             </span>
                             <span class="text-xs text-muted">31.3% margin</span>
@@ -122,7 +122,7 @@ const max = Math.max(...services.map(s => s.count))
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                                <ArrowUp class="size-3" />
+                                <UIcon name="i-lucide-arrow-up" class="size-3" />
                                 100.0
                             </span>
                             <span class="text-xs text-muted">vs. yesterday</span>
@@ -136,7 +136,7 @@ const max = Math.max(...services.map(s => s.count))
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
-                                <ArrowUp class="size-3" />
+                                <UIcon name="i-lucide-arrow-up" class="size-3" />
                                 100.0%
                             </span>
                             <span class="text-xs text-muted">vs. yesterday</span>

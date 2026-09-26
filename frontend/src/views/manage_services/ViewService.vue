@@ -2,15 +2,17 @@
 import { ref, onMounted, resolveComponent } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
-import { getServiceData, createOption } from '@/api/services';
+import { getServiceData, createOption, updateOption } from '@/api/services';
 import type { Service, ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 import ServiceHeader from '@/components/ServiceHeader.vue';
 import OptionCard from '@/components/OptionCard.vue';
 import ServiceOptionForm from '@/components/service-option-form/ServiceOptionForm.vue';
+import { useReferenceStore } from '@/stores/reference';
 
 const route = useRoute()
 const UButton = resolveComponent('UButton')
 const toast = useToast()
+const referenceStore = useReferenceStore()
 
 // Data Variables
 const serviceData = ref<Service>()
@@ -35,7 +37,7 @@ const fetchData = async () => {
     }
 }
 onMounted(fetchData)
-const saveOptionToDb = async(option: ServiceOptionCreate) => {
+const saveOptionToDb = async (option: ServiceOptionCreate) => {
     try {
         await createOption(serviceId, option)
         toast.add({
@@ -44,6 +46,7 @@ const saveOptionToDb = async(option: ServiceOptionCreate) => {
             icon: 'i-lucide-circle-check'
         })
         fetchData()
+        await referenceStore.refresh()
     }
     catch (error: unknown) {
         console.error("Failed to create option:", error)
@@ -63,8 +66,30 @@ const openEditOptionForm = (option: ServiceOption) => {
     selectedOption.value = option
     isServiceOptionFormOpen.value = true
 }
-const saveEditOptionToDb = async(option: ServiceOptionUpdate) => {
-    console.log(option)
+const saveEditOptionToDb = async (option_id: string, option: ServiceOptionUpdate) => {
+    try {
+        await updateOption(serviceId, option_id, option)
+        toast.add({
+            title: 'Service Option Updated.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        fetchData()
+        await referenceStore.refresh()
+    }
+    catch (error: unknown) {
+        console.error("Failed to create option:", error)
+        let message = "An unexpected error occured."
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to create payment.'
+        }
+        toast.add({
+            title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
 }
 const openDeleteOptionConfirm = (option: ServiceOption) => {
     selectedOption.value = option
@@ -72,9 +97,10 @@ const openDeleteOptionConfirm = (option: ServiceOption) => {
 </script>
 
 <template>
-    <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" @update="saveEditOptionToDb" :parent_service_id="serviceId" :editing-option="selectedOption"/>
+    <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" @update="saveEditOptionToDb"
+        :parent_service_id="serviceId" :editing-option="selectedOption" />
     <section class="m-6">
-        <ServiceHeader v-if="serviceData" :service-data="serviceData"/>
+        <ServiceHeader v-if="serviceData" :service-data="serviceData" />
     </section>
     <!-- Options -->
     <section class="px-6 my-6">
@@ -84,7 +110,8 @@ const openDeleteOptionConfirm = (option: ServiceOption) => {
         </span>
         <div class="flex flex-col gap-6">
             <OptionCard v-for="option in serviceData?.options" :key="option.id" :option="option"
-                :service-unit="serviceData?.unit" @edit-option="openEditOptionForm" @delete-option="openDeleteOptionConfirm"/>
+                :service-unit="serviceData?.unit" @edit-option="openEditOptionForm"
+                @delete-option="openDeleteOptionConfirm" />
         </div>
     </section>
 </template>

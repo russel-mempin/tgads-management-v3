@@ -77,23 +77,23 @@ export const formatNullable = (value: string | null | undefined) => {
 export const mapExpenseCategory = (category: string): string => {
   switch (category) {
     case 'Food':
-      return '!bg-orange-500 !text-white'
+      return 'bg-orange-500/10 text-orange-500 ring ring-inset ring-orange-500/25'
     case 'Maintenance':
-      return '!bg-gray-500 !text-white'
+      return 'bg-gray-500/10 text-gray-500 ring ring-inset ring-gray-500/25'
     case 'Utilities':
-      return '!bg-yellow-500 !text-white'
+      return 'bg-yellow-500/10 text-yellow-600 ring ring-inset ring-yellow-500/25'
     case 'Transportation':
-      return '!bg-blue-500 !text-white'
+      return 'bg-blue-500/10 text-blue-500 ring ring-inset ring-blue-500/25'
     case 'Supplies':
-      return '!bg-teal-500 !text-white'
+      return 'bg-teal-500/10 text-teal-500 ring ring-inset ring-teal-500/25'
     case 'Payroll':
-      return '!bg-green-600 !text-white'
+      return 'bg-green-600/10 text-green-600 ring ring-inset ring-green-600/25'
     case 'Benefits':
-      return '!bg-purple-500 !text-white'
+      return 'bg-purple-500/10 text-purple-500 ring ring-inset ring-purple-500/25'
     case 'Production':
-      return '!bg-red-500 !text-white'
+      return 'bg-red-500/10 text-red-500 ring ring-inset ring-red-500/25'
     case 'Miscellaneous':
-      return '!bg-slate-400 !text-white'
+      return 'bg-slate-400/10 text-slate-500 ring ring-inset ring-slate-400/25'
     default:
       return ''
   }

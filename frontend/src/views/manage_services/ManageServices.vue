@@ -14,7 +14,6 @@ const fetchData = async () => {
     loading.value = true
     try {
         data.value = await getAllServices()
-        console.log(data.value)
     }
     finally {
         loading.value = false

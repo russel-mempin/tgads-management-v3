@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, toRaw } from 'vue'
 import { z } from 'zod'
 import type { ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 import OptionPriceTierFields from './OptionPriceTierFields.vue';
@@ -11,7 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     save: [option: ServiceOptionCreate]
-    update: [option: ServiceOptionUpdate]
+    update: [option_id: string, option: ServiceOptionUpdate]
     cancel: []
 }>()
 
@@ -49,17 +49,19 @@ watch([() => props.editingOption, isOpen], ([option, open]) => {
     if (open && option) {
         const initial: Schema = {
             name: option.name,
-            base_rate: option.base_rate,
-            minimum_consumption: option.minimum_consumption,
-            stock_increment: option.stock_increment,
+            base_rate: Number(option.base_rate),
+            minimum_consumption: Number(option.minimum_consumption),
+            stock_increment: Number(option.stock_increment),
             price_tiers: (option.price_tiers ?? []).map(tier => ({
-                min_threshold: tier.min_threshold,
-                max_threshold: tier.max_threshold ?? null,
-                rate: tier.rate,
+                min_threshold: Number(tier.min_threshold),
+                max_threshold: tier.max_threshold !== null
+                    ? Number(tier.max_threshold)
+                    : null,
+                rate: Number(tier.rate),
             })),
         }
         Object.assign(state, initial)
-        originalState.value = structuredClone(initial)
+        originalState.value = structuredClone(toRaw(initial))
     }
     else {
         resetForm()
@@ -86,7 +88,7 @@ const getChangedFields = () => {
         JSON.stringify(state.price_tiers) !==
         JSON.stringify(originalState.value.price_tiers)
     ) {
-        changes.price_tiers = structuredClone(state.price_tiers)
+        changes.price_tiers = structuredClone(toRaw(state.price_tiers))
     }
     return changes
 }
@@ -95,7 +97,7 @@ const onSubmit = () => {
     if (props.editingOption) {
         const changes = getChangedFields()
         if (Object.keys(changes).length > 0) {
-            emit('update', changes)
+            emit('update', props.editingOption.id, changes)
         }
     }
     else {

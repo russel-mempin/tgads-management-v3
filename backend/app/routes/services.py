@@ -44,6 +44,6 @@ def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Ses
     return create_option(db, data, service_id, current_user.id)
 
 
-@router.patch("/{service_id}/option")
+@router.patch("/{service_id}/options/{option_id}")
 def update_option_data(data: ServiceOptionUpdate, service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_option(db, data, service_id, option_id, current_user.id)

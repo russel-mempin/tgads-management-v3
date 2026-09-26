@@ -16,7 +16,7 @@ export const createOption = async(parent_service_id: string, option: ServiceOpti
 	return res.data
 }
 
-export const updateOption = async(parent_service_id: string, option: ServiceOptionUpdate) => {
-	const res = await http.patch(`/services/${parent_service_id}/options`, option)
+export const updateOption = async(parent_service_id: string, option_id: string, option: ServiceOptionUpdate) => {
+	const res = await http.patch(`/services/${parent_service_id}/options/${option_id}`, option)
 	return res.data
 }
