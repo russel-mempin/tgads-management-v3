@@ -7,13 +7,14 @@ from sqlmodel import Session, select
 from app.database import engine
 from app.enums import ExpenseCategory
 from app.models import Account, AccountTransaction, Expense
-from app.utils.utils import parse_date
+from app.utils.utils import get_system_admin, parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "seed_data", "2026expenses.csv")
 
 def seed_expenses_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
+        sysadmin = get_system_admin(session)
         reader = csv.DictReader(f)
         METHOD_TO_ACCOUNT = {
             "Cash": "Cash",
@@ -37,7 +38,8 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
                 description=row["description"],
                 amount=Decimal(row["amount"].replace(",", "").strip()),
                 account_id=account.id,
-                account_name_snapshot=account.name
+                account_name_snapshot=account.name,
+                created_by_id=sysadmin.id
             )
             session.add(expense)
             

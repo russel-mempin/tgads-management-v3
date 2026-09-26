@@ -58,14 +58,6 @@ class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     audit_logs: list[AuditLog] = Relationship(back_populates="user")
-    voided_job_orders: list[JobOrder] = Relationship(
-        back_populates="voided_by",
-        sa_relationship_kwargs={"foreign_keys": "[JobOrder.voided_by_id]"},
-    )
-    created_for_reviews: list[ForReview] = Relationship(
-        back_populates="created_by",
-        sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"},
-    )
     hashed_password: str = Field()
 
 
@@ -273,28 +265,27 @@ class JobOrder(JobOrderBase, table=True):
         sa_column=Column(ForeignKey("customers.id"), nullable=True)
     )
     created_by_id: uuid.UUID | None = Field(
-        sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+        sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
     )
     updated_by_id: uuid.UUID | None = Field(
         sa_column=Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     )
+    voided_by_id: uuid.UUID | None = Field(
+            default=None,
+            sa_column=Column(
+                ForeignKey("users.id", ondelete="SET NULL"),
+                nullable=True,
+            ),
+        )
 
-    created_by: User | None = Relationship(
+    created_by: User = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.created_by_id]"}
     )
     updated_by: User | None = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.updated_by_id]"}
     )
-    voided_by_id: uuid.UUID | None = Field(
-        default=None,
-        sa_column=Column(
-            ForeignKey("users.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-    )
 
     voided_by: User | None = Relationship(
-        back_populates="voided_job_orders",
         sa_relationship_kwargs={"foreign_keys": "[JobOrder.voided_by_id]"},
     )
     customer: Customer | None = Relationship(back_populates="job_orders")
@@ -391,8 +382,8 @@ class JobOrder(JobOrderBase, table=True):
     @property
     def voided_by_name(self) -> str | None:
         return (
-            f"{self.updated_by.first_name} {self.updated_by.last_name}"
-            if self.updated_by
+            f"{self.voided_by.first_name} {self.voided_by.last_name}"
+            if self.voided_by
             else None
         )
 
@@ -604,12 +595,69 @@ class Expense(ExpenseBase, table=True):
             onupdate=lambda: datetime.now(UTC),
         ),
     )
+    
+    created_by_id: uuid.UUID | None = Field(
+    sa_column=Column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    )
+    updated_by_id: uuid.UUID | None = Field(
+        sa_column=Column(
+            ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        )
+    )
+
+    created_by: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Expense.created_by_id]"}
+    )
+
+    updated_by: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Expense.updated_by_id]"}
+    )
+
+    voided_by_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(
+            ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+    )
+
+    voided_by: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Expense.voided_by_id]"},
+    )
 
     account: Account = Relationship(back_populates="expenses")
 
     @property
     def account_name(self) -> str:
         return self.account.name
+    
+    @property
+    def created_by_name(self) -> str | None:
+        return (
+            f"{self.created_by.first_name} {self.created_by.last_name}"
+            if self.created_by
+            else None
+        )
+
+    @property
+    def updated_by_name(self) -> str | None:
+        return (
+            f"{self.updated_by.first_name} {self.updated_by.last_name}"
+            if self.updated_by
+            else None
+        )
+
+    @property
+    def voided_by_name(self) -> str | None:
+        return (
+            f"{self.voided_by.first_name} {self.voided_by.last_name}"
+            if self.voided_by
+            else None
+        )
 
 
 # ====================== MISC SALES =========================
@@ -727,7 +775,6 @@ class ForReview(SQLModel, table=True):
     created_by_id: uuid.UUID = Field(foreign_key="users.id")
 
     created_by: User = Relationship(
-        back_populates="created_for_reviews",
         sa_relationship_kwargs={"foreign_keys": "[ForReview.created_by_id]"},
     )
 
