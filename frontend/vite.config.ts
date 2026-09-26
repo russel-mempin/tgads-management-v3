@@ -95,7 +95,7 @@ export default defineConfig({
           variants: {
             active: {
               true: {
-                link: 'font-semibold text-primary bg-primary-50 dark:bg-primary-950/40',
+                link: 'rounded-md font-semibold text-primary bg-primary-50 dark:bg-primary-950/40',
                 linkLeadingIcon: 'text-primary opacity-100',
               },
               false: {

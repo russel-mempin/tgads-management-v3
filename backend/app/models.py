@@ -199,12 +199,15 @@ class ServicePriceTier(ServicePriceTierBase, table=True):
 
 # ====================== EXTRA SERVICES =========================
 # Holds all information about extra services similar to Service
-class ExtraService(SQLModel, table=True):
-    __tablename__ = "extra_services"  # type: ignore
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+class ExtraServiceBase(SQLModel):
     name: str = Field(unique=True, index=True)
     price: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
+
+
+class ExtraService(ExtraServiceBase, table=True):
+    __tablename__ = "extra_services"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(

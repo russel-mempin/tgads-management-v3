@@ -187,6 +187,16 @@ const router = createRouter({
             subtitle: 'See full information about a service.'
           }
         },
+        {
+          path: 'manage-extras',
+          component: () => import('@/views/ManageExtras.vue'),
+          meta: {
+            title: 'Manage Extras',
+            breadcrumb: 'Manage Extras',
+            breadcrumbParent: { label: 'Manage Extras', to: 'manage-extras' },
+            subtitle: 'View and manage extras to be used with the main services.'
+          }
+        },
       ]
     }
   ],

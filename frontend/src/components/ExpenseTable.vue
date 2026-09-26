@@ -40,6 +40,10 @@ const columns: TableColumn<Expense>[] = [
         header: 'Method',
     },
     {
+        accessorKey: 'created_by_name',
+        header: 'Created By',
+    },
+    {
         id: 'actions',
         header: ''
     }

@@ -7,7 +7,6 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter()
 const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
     services: Service[]

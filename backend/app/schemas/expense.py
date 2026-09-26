@@ -11,6 +11,7 @@ from app.models import ExpenseBase
 class ExpensePublic(ExpenseBase):
     id: uuid.UUID
     account_name: str
+    created_by_name: str
     
 class ExpenseCreate(SQLModel):
     date: datetime

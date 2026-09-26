@@ -22,6 +22,7 @@ declare module 'vue' {
     Expense: typeof import('./src/components/ExpenseTable.vue/index.js')['default']
     ExpenseCards: typeof import('./src/components/ExpenseCards.vue')['default']
     ExpenseTable: typeof import('./src/components/ExpenseTable.vue')['default']
+    ExtrasTable: typeof import('./src/components/ExtrasTable.vue')['default']
     FlagDetails: typeof import('./src/components/FlagDetails.vue')['default']
     FlagHeader: typeof import('./src/components/FlagHeader.vue')['default']
     JobItemExtrasFields: typeof import('./src/components/job-item-form/JobItemExtrasFields.vue')['default']

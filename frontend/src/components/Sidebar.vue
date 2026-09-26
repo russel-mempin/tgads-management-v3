@@ -59,9 +59,9 @@ const allItems = computed<NavItem[]>(() => [
     icon: 'i-lucide-concierge-bell',
     category: 'Settings', 
     adminOnly: true,
-    active: route.path.startsWith('/manage-services') 
+    active: route.path.startsWith('/manage-services')
   },
-  // { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
+  { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
   // { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
 ])
 
