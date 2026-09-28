@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
 import { z } from 'zod';
-import type { Extra, ExtraCreate } from '@/types/extra';
+import type { Extra, ExtraCreate, ExtraUpdate } from '@/types/extra';
 import type { FormSubmitEvent } from '@nuxt/ui';
 
 const isOpen = defineModel<boolean>('isOpen', { required: true })
@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     save: [extra: ExtraCreate]
+    update: [extra_id: string, extra: ExtraUpdate]
 }>()
 
 const schema = z.object({
@@ -29,7 +30,7 @@ const getInitialState = (): Schema => ({
 const state = reactive<Schema>(getInitialState())
 
 const resetForm = () => {
-	Object.assign(state, getInitialState())
+    Object.assign(state, getInitialState())
 }
 const handleCancel = () => {
     resetForm()
@@ -44,49 +45,58 @@ watch([() => props.editingExtra, isOpen], ([extra, open]) => {
             price: Number(extra.price),
             status: extra.is_active,
         })
-    } 
-	else {
+    }
+    else {
         resetForm()
     }
 })
-const onSubmit = (event:FormSubmitEvent<Schema>) => {
-    const payload: ExtraCreate = {
-        name: event.data.name,
-        price: event.data.price,
-        is_active: event.data.status,
+const onSubmit = (event: FormSubmitEvent<Schema>) => {
+    if (props.editingExtra) {
+        const update: ExtraUpdate = {}
+        if (event.data.name !== props.editingExtra.name) {
+            update.name = event.data.name
+        }
+        if (event.data.price !== Number(props.editingExtra.price)) {
+            update.price = event.data.price
+        }
+        if (event.data.status !== props.editingExtra.is_active) {
+            update.is_active = event.data.status
+        }
+        if (Object.keys(update).length === 0) {
+            isOpen.value = false
+            return
+        }
+        emit('update', props.editingExtra.id!, update)
+    } else {
+        const payload: ExtraCreate = {
+            name: event.data.name,
+            price: event.data.price,
+            is_active: event.data.status,
+        }
+        emit('save', payload)
     }
-    emit('save', payload)
     resetForm()
     isOpen.value = false
 }
 </script>
 
 <template>
-    <UModal 
-        :title="editingExtra ? 'Edit Extra' : 'Add Extra'"
-        v-model:open="isOpen"
+    <UModal :title="editingExtra ? 'Edit Extra' : 'Add Extra'" v-model:open="isOpen"
         description="Enter information about the extra service and save to database."
-        :close="{ color: 'error', class: 'rounded-full'}"
-    >
+        :close="{ color: 'error', class: 'rounded-full' }">
         <template #body>
             <UForm :schema="schema" v-model:state="state" @submit="onSubmit">
                 <UFormField label="Name" required>
-                    <UInput v-model="state.name" class="w-full" placeholder="Layout"/>
+                    <UInput v-model="state.name" class="w-full" placeholder="Layout" />
                 </UFormField>
                 <div class="grid grid-cols-2 gap-6 mt-6">
                     <UFormField label="Price" required>
-                        <UInputNumber 
-                            v-model="state.price"
-                            :increment="false"
-                            :decrement="false"
-                            :format-options="{
-                                style: 'currency',
-                                currency: 'PHP',
-                                currencyDisplay: 'code',
-                                currencySign: 'accounting'
-                            }"
-                            @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
-                        />
+                        <UInputNumber v-model="state.price" :increment="false" :decrement="false" :format-options="{
+                            style: 'currency',
+                            currency: 'PHP',
+                            currencyDisplay: 'code',
+                            currencySign: 'accounting'
+                        }" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                     </UFormField>
                     <UFormField label="Status" class="flex flex-col justify-evenly" required>
                         <div class="flex gap-2">
@@ -96,11 +106,11 @@ const onSubmit = (event:FormSubmitEvent<Schema>) => {
                     </UFormField>
                 </div>
                 <div class="flex justify-end gap-6 mt-6">
-					<UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28 justify-center"
-						@click="handleCancel" />
-					<UButton label="Save" icon="i-lucide-save" color="primary" size="lg" class="w-28 font-semibold justify-center items-center"
-						type="submit" />
-				</div>
+                    <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
+                        class="w-28 justify-center" @click="handleCancel" />
+                    <UButton label="Save" icon="i-lucide-save" color="primary" size="lg"
+                        class="w-28 font-semibold justify-center items-center" type="submit" />
+                </div>
             </UForm>
         </template>
     </UModal>

@@ -78,10 +78,10 @@ const saveEditOptionToDb = async (option_id: string, option: ServiceOptionUpdate
         await referenceStore.refresh()
     }
     catch (error: unknown) {
-        console.error("Failed to create option:", error)
+        console.error("Failed to update option:", error)
         let message = "An unexpected error occured."
         if (axios.isAxiosError(error)) {
-            message = error.response?.data?.detail ?? 'Failed to create payment.'
+            message = error.response?.data?.detail ?? 'Failed to update option.'
         }
         toast.add({
             title: 'Saving data failed.',
