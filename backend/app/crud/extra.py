@@ -3,7 +3,7 @@ import uuid
 from sqlmodel import Session, select
 
 from app.models import AuditLog, ExtraService
-from app.schemas.extra import ExtraCreate
+from app.schemas.extra import ExtraCreate, ExtraUpdate
 
 
 def get_all_extras(db: Session, offset: int = 0, limit: int = 100) -> list[ExtraService]:
@@ -32,6 +32,23 @@ def create_extra(db: Session, data: ExtraCreate, current_user_id: uuid.UUID):
         db.add(AuditLog(action="Created extra service", user_id=current_user_id))
         db.commit()
         return "Extra service created successfully."
+    except Exception:
+        db.rollback()
+        raise
+
+
+def update_extra(db: Session, extra_id: uuid.UUID, data: ExtraUpdate, current_user_id: uuid.UUID):
+    try:
+        extra = db.get(ExtraService, extra_id)
+        if not extra:
+            return "Extra service not found."
+        # Update data sent by front end
+        update_data = data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(extra, field, value)
+        db.add(AuditLog(action=f"Updated extra service named {extra.name}", user_id=current_user_id))
+        db.commit()
+        return "Extra service updated successfully."
     except Exception:
         db.rollback()
         raise

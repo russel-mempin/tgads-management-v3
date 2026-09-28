@@ -20,3 +20,8 @@ def read_all_extras(offset: int = 0, limit: Annotated[int, Query(le=100)] = 100,
 @router.post("/")
 def create_extra_data(data: ExtraCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_extra(db, data, current_user.id)
+
+
+@router.patch("/{extra_id}")
+def update_extra_data(extra_id: str, data: ExtraCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return update_extra(db, extra_id, data, current_user.id)
