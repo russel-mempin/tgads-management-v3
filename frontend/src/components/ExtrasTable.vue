@@ -10,6 +10,10 @@ const props = defineProps<{
     extra: Extra[]
 }>()
 
+const emit = defineEmits<{
+    editExtra: [extra: Extra]
+}>()
+
 const columns: TableColumn<Extra>[] = [
     {
         accessorKey: 'name',
@@ -58,7 +62,7 @@ const columns: TableColumn<Extra>[] = [
                     size: 'md',
                     onClick: (event: Event) => {
                         event.stopPropagation()
-                        console.log("Test")
+                        emit('editExtra', row.original)
                     }
                 }),
                 h(UButton, {

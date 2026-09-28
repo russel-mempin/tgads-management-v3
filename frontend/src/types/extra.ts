@@ -4,3 +4,9 @@ export interface Extra {
 	price: number
 	is_active: boolean
 }
+
+export interface ExtraCreate {
+	name: string
+	price: number
+	is_active: boolean
+}
