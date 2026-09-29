@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.crud.service import (
+    activate_option,
+    archive_option,
     create_option,
     create_service,
     get_all_services,
@@ -47,3 +49,13 @@ def create_option_data(data: ServiceOptionCreate, service_id: uuid.UUID, db: Ses
 @router.patch("/{service_id}/options/{option_id}")
 def update_option_data(data: ServiceOptionUpdate, service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_option(db, data, service_id, option_id, current_user.id)
+
+
+@router.patch("/{service_id}/options/{option_id}/archive")
+def archive_option_data(service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return archive_option(db, service_id, option_id, current_user.id)
+
+
+@router.patch("/{service_id}/options/{option_id}/activate")
+def activate_option_data(service_id: uuid.UUID, option_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return activate_option(db, service_id, option_id, current_user.id)

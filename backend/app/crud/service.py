@@ -49,7 +49,7 @@ def create_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         ).first()
         if existing:
             raise HTTPException(
-                status_code=409,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Service option with name '{data.name}' already exists.",
             )
         option_data = data.model_dump(exclude={"price_tiers"})
@@ -93,7 +93,7 @@ def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         ).first()
         if not option:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Service option not found",
             )
         update_data = data.model_dump(
@@ -127,6 +127,68 @@ def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         
         return option
         
+    except Exception:
+        db.rollback()
+        raise
+
+
+def archive_option(db: Session, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        option = db.exec(
+            select(ServiceOption)
+            .where(
+                ServiceOption.id == option_id,
+                ServiceOption.service_id == service_id,
+            )
+        ).first()
+        if not option:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Service option not found",
+            )
+        if option.is_active is False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Service option is already inactive.",
+            )
+        option.is_active = False
+        db.add(option)
+        db.add(AuditLog(
+            action=f"Archived service option named {option.name}", user_id=current_user_id
+        ))
+        db.commit()
+        return f"Service option {option.name} marked inactive."
+    except Exception:
+        db.rollback()
+        raise
+
+
+def activate_option(db: Session, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        option = db.exec(
+            select(ServiceOption)
+            .where(
+                ServiceOption.id == option_id,
+                ServiceOption.service_id == service_id,
+            )
+        ).first()
+        if not option:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Service option not found",
+            )
+        if option.is_active is True:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Service option is already active.",
+            )
+        option.is_active = True
+        db.add(option)
+        db.add(AuditLog(
+            action=f"Restored service option named {option.name}", user_id=current_user_id
+        ))
+        db.commit()
+        return f"Service option {option.name} marked active."
     except Exception:
         db.rollback()
         raise

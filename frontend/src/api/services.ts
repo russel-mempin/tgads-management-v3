@@ -20,3 +20,13 @@ export const updateOption = async(parent_service_id: string, option_id: string, 
 	const res = await http.patch(`/services/${parent_service_id}/options/${option_id}`, option)
 	return res.data
 }
+
+export const archiveOption = async(parent_service_id: string, option_id: string) => {
+	const res = await http.patch(`/services/${parent_service_id}/options/${option_id}/archive`)
+	return res.data
+}
+
+export const activateOption = async(parent_service_id: string, option_id: string) => {	
+	const res = await http.patch(`/services/${parent_service_id}/options/${option_id}/activate`)
+	return res.data
+}

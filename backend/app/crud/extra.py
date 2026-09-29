@@ -1,5 +1,6 @@
 import uuid
 
+from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.models import AuditLog, ExtraService
@@ -10,6 +11,7 @@ def get_all_extras(db: Session, offset: int = 0, limit: int = 100) -> list[Extra
     return list(
         db.exec(
             select(ExtraService)
+            .where(ExtraService.is_active == True)
             .offset(offset)
             .limit(limit)
         ).all()
@@ -20,7 +22,10 @@ def create_extra(db: Session, data: ExtraCreate, current_user_id: uuid.UUID):
     try:
         existing = db.exec(select(ExtraService).where(ExtraService.name == data.name)).first()
         if existing:
-            return "Extra service with this name already exists."
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Extra service with name '{data.name}' already exists.",
+            )
         extra = ExtraService(
             name=data.name,
             price=data.price,
@@ -40,7 +45,9 @@ def update_extra(db: Session, extra_id: uuid.UUID, data: ExtraUpdate, current_us
     try:
         extra = db.get(ExtraService, extra_id)
         if not extra:
-            return "Extra service not found."
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Extra service not found."
+            )
         # Update data sent by front end
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():

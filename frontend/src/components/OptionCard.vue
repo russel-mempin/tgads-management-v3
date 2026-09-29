@@ -14,6 +14,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     editOption: [option: ServiceOption]
     deleteOption: [option: ServiceOption]
+    activateOption: [option: ServiceOption]
 }>()
 
 const columns: TableColumn<ServicePriceTier>[] = [
@@ -58,13 +59,21 @@ const columns: TableColumn<ServicePriceTier>[] = [
                 <p class="text-xl font-semibold" :class="option.is_priced ? 'text-green-700' : 'text-red-700'">{{
                     formatCurrency(option.base_rate) }}</p>
                 <div class="flex items-center">
-                    <UButton icon="i-lucide-pen-square" variant="ghost" @click="$emit('editOption', option)" />
-                    <UButton icon="i-lucide-trash-2" variant="ghost" color="error"
-                        @click="$emit('deleteOption', option)" />
+                    <UTooltip text="Edit Option">
+                        <UButton icon="i-lucide-pen-square" variant="ghost" @click="$emit('editOption', option)" />
+                    </UTooltip>
+                    <UTooltip text="Deactivate Option" v-if="option.is_active">
+                        <UButton icon="i-lucide-layers-arrow-down" variant="ghost" color="warning"
+                            @click="$emit('deleteOption', option)" />
+                    </UTooltip>
+                    <UTooltip text="Activate Option" v-else>
+                        <UButton icon="i-lucide-layers-arrow-up" variant="ghost" color="success" @click="$emit('activateOption', option)" />
+                    </UTooltip>
                 </div>
             </div>
         </div>
         <UTable v-if="option.price_tiers?.length" :data="option.price_tiers" :columns="columns" />
-        <p v-else class="p-4 text-sm text-muted">No tiered pricing - flat base rate applies at all quantities/consumption</p>
+        <p v-else class="p-4 text-sm text-muted">No tiered pricing - flat base rate applies at all
+            quantities/consumption</p>
     </div>
 </template>

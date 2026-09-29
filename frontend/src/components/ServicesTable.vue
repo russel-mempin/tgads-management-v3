@@ -48,6 +48,32 @@ const columns: TableColumn<Service>[] = [
         header: 'Unit',
     },
     {
+        accessorKey: 'is_active',
+        header: 'Status',
+        cell: ({ row }) => {
+            const isActive = row.getValue('is_active') as boolean
+
+            return h(
+                'span',
+                {
+                    class: [
+                        'flex items-center gap-1.5 font-medium',
+                        isActive ? 'text-green-700' : 'text-red-700'
+                    ]
+                },
+                [
+                    h('span', {
+                        class: [
+                            'size-2 rounded-full',
+                            isActive ? 'bg-green-700' : 'bg-red-700'
+                        ]
+                    }),
+                    isActive ? 'Active' : 'Inactive'
+                ]
+            )
+        }
+    },
+    {
         accessorKey: 'actions',
         header: '',
         cell: ({ row }) =>

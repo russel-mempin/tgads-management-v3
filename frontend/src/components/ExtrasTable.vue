@@ -65,16 +65,6 @@ const columns: TableColumn<Extra>[] = [
                         emit('editExtra', row.original)
                     }
                 }),
-                h(UButton, {
-                    color: 'error',
-                    variant: 'ghost',
-                    icon: 'i-lucide-trash-2',
-                    size: 'md',
-                    onClick: (event: Event) => {
-                        event.stopPropagation()
-                        console.log("Test")
-                    }
-                }),
             ])
     }
 ]
