@@ -203,7 +203,7 @@ def update_service(
             select(Service).where(Service.id == service_id)
         ).first()
         if not service:
-            raise HTTPException(status_code=404, detail="Service type not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service type not found")
         updated_data = data.model_dump(exclude_unset=True)  # only fields that were sent
         for key, value in updated_data.items():
             setattr(service, key, value)
@@ -222,26 +222,32 @@ def update_service(
         raise
 
 
-def archive_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UUID):
+def deactivate_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UUID):
     try:
         service = db.exec(
             select(Service).where(Service.id == service_id)
         ).first()
         if not service:
-            raise HTTPException(status_code=404, detail="Service type not found")
-
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service type not found")
         service.is_active = False
+        options = db.exec(
+            select(ServiceOption).where(
+                ServiceOption.service_id == service_id
+            )
+        ).all()
+        for option in options:
+            option.is_active = False
+            db.add(option)
         db.add(service)
-
         audit = AuditLog(
-            action=f"Deleted service named {service.name}", user_id=current_user_id
+            action=f"Deactivated service named {service.name}", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
         db.refresh(service)
-        return "Service deleted."
+        return "Service and related options deactivated."
     except HTTPException:
-        raise  # don't rollback for 404s, nothing was changed
+        raise
     except Exception:
         db.rollback()
         raise

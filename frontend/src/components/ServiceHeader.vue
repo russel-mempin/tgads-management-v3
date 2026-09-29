@@ -34,7 +34,20 @@ const pricedOptionCount = computed(() =>
         </span>
         <span class="flex gap-4">
             <UButton @click="() => emit('editService')" label="Edit Base Service" icon="i-lucide-pen-square" />
-            <UButton @click="() => emit('deactivateService')" label="Deactivate Service" icon="i-lucide-layers-arrow-down" color="warning" />
+            <UButton 
+                v-if="serviceData.is_active" 
+                @click="() => emit('deactivateService')"
+                label="Deactivate Service"
+                icon="i-lucide-layers-arrow-down"
+                color="warning"
+            />
+            <UButton 
+                v-else="serviceData.is_active" 
+                @click="() => emit('deactivateService')" 
+                label="Reactivate Service" 
+                icon="i-lucide-layers-arrow-up" 
+                color="success" 
+            />
         </span>
     </div>
     <div class="p-4 grid grid-cols-3 gap-4 bg-default border border-default rounded-md divide-x divide-default">

@@ -8,6 +8,7 @@ from app.crud.service import (
     activate_option,
     archive_option,
     create_option,
+    deactivate_service,
     get_all_services,
     get_service_data,
     update_option,
@@ -59,3 +60,8 @@ def activate_option_data(service_id: uuid.UUID, option_id: uuid.UUID, db: Sessio
 @router.patch("/{service_id}")
 def update_service_data(data: ServiceUpdate, service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_service(db, data, service_id, current_user.id)
+
+
+@router.patch("/{service_id}/deactivate")
+def deactivate_service_data(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return deactivate_service(db, service_id, current_user.id)

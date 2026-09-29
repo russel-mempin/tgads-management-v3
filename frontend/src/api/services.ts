@@ -35,3 +35,8 @@ export const updateService = async(service_id: string, service: ServiceBaseEdit)
 	const res = await http.patch(`/services/${service_id}`, service)
 	return res.data
 }
+
+export const deactivateService = async(service_id: string) => {
+	const res = await http.patch(`/services/${service_id}/deactivate`)
+	return res.data
+}

@@ -4,7 +4,7 @@ import { ref, onMounted, resolveComponent, watch } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 // API call imports
-import { getServiceData, createOption, updateOption, archiveOption, activateOption, updateService } from '@/api/services';
+import { getServiceData, createOption, updateOption, archiveOption, activateOption, updateService, deactivateService } from '@/api/services';
 // Type imports
 import type { Service, ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 // Component imports
@@ -31,6 +31,7 @@ const isServiceOptionFormOpen = ref(false)
 const isDeactivateOptionConfirmOpen = ref(false)
 const isActivateOptionConfirmOpen = ref(false)
 const isEditServiceFormOpen = ref(false)
+const isDeactivateServiceConfirmOpen = ref(false)
 
 // Data Functions
 const fetchData = async () => {
@@ -191,6 +192,7 @@ const saveEditServiceToDb = async (service: ServiceOptionUpdate) => {
         })
         fetchData()
         await referenceStore.refresh()
+        isEditServiceFormOpen.value = false
     }
     catch (error: unknown) {
         console.error("Failed to update service:", error)
@@ -200,6 +202,37 @@ const saveEditServiceToDb = async (service: ServiceOptionUpdate) => {
         }
         toast.add({
             title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+    finally {
+        loading.value = false
+    }
+}
+// Deactivate Service
+const deactivateServiceInDb = async () => {
+    loading.value = true
+    try {
+        await deactivateService(serviceId)
+        toast.add({
+            title: 'Service deactivated.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        fetchData()
+        await referenceStore.refresh()
+        isDeactivateServiceConfirmOpen.value = false
+    }
+    catch (error: unknown) {
+        console.error("Failed to deactivate service:", error)
+        let message = "An unexpected error occured."
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to deactivate service.'
+        }
+        toast.add({
+            title: 'Saving changes failed.',
             description: message,
             color: 'error',
             icon: 'i-lucide-x'
@@ -239,8 +272,24 @@ const saveEditServiceToDb = async (service: ServiceOptionUpdate) => {
         icon-background="bg-success/10"
         @confirm="activateSelectedOption"
     />
+    <ConfirmActionModal
+        v-model:is-open="isDeactivateServiceConfirmOpen"
+        title="Deactivate Service"
+        :description="`Are you sure you want to deactivate the whole service? This will also deactivate the options related to it.`"
+        confirm-label="Yes, deactivate"
+        confirm-icon="i-lucide-layers-arrow-down"
+        confirm-color="warning"
+        icon="i-lucide-layers-arrow-down"
+        icon-color="text-warning"
+        icon-background="bg-warning/10"
+        @confirm="deactivateServiceInDb"
+    />
     <section class="m-6">
-        <ServiceHeader v-if="serviceData" :service-data="serviceData" @edit-service="openEditServiceForm" />
+        <ServiceHeader v-if="serviceData" 
+            :service-data="serviceData" 
+            @edit-service="openEditServiceForm" 
+            @deactivate-service="() => isDeactivateServiceConfirmOpen = true" 
+        />
     </section>
     <!-- Options -->
     <section class="px-6 my-6">
