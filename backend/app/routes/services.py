@@ -11,6 +11,7 @@ from app.crud.service import (
     deactivate_service,
     get_all_services,
     get_service_data,
+    reactivate_service,
     update_option,
     update_service,
 )
@@ -65,3 +66,8 @@ def update_service_data(data: ServiceUpdate, service_id: uuid.UUID, db: Session 
 @router.patch("/{service_id}/deactivate")
 def deactivate_service_data(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return deactivate_service(db, service_id, current_user.id)
+
+
+@router.patch("/{service_id}/reactivate")
+def reactivate_service_data(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return reactivate_service(db, service_id, current_user.id)

@@ -73,7 +73,7 @@ const columns: TableColumn<ServicePriceTier>[] = [
             </div>
         </div>
         <UTable v-if="option.price_tiers?.length" :data="option.price_tiers" :columns="columns" />
-        <p v-else class="p-4 text-sm text-muted">No tiered pricing - flat base rate applies at all
+        <p v-else class="p-4 text-sm text-muted text-center">No tiered pricing - flat base rate applies at all
             quantities/consumption</p>
     </div>
 </template>

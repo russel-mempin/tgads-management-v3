@@ -229,6 +229,8 @@ def deactivate_service(db: Session, service_id: uuid.UUID, current_user_id: uuid
         ).first()
         if not service:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service type not found")
+        if not service.is_active:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Service named {service.name} already inactive")
         service.is_active = False
         options = db.exec(
             select(ServiceOption).where(
@@ -246,6 +248,31 @@ def deactivate_service(db: Session, service_id: uuid.UUID, current_user_id: uuid
         db.commit()
         db.refresh(service)
         return "Service and related options deactivated."
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def reactivate_service(db: Session, service_id: uuid.UUID, current_user_id: uuid.UUID):
+    try:
+        service = db.exec(
+            select(Service).where(Service.id == service_id)
+        ).first()
+        if not service:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service type not found")
+        if service.is_active:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Service named {service.name} already active")
+        service.is_active = True
+        db.add(service)
+        audit = AuditLog(
+            action=f"Reactivated service named {service.name}", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(service)
+        return f"Service named {service.name} reactivated."
     except HTTPException:
         raise
     except Exception:

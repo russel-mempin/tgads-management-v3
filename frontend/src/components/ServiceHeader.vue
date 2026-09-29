@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     editService: []
     deactivateService: []
+    reactivateService: []
 }>()
 
 const pricedOptionCount = computed(() =>
@@ -42,8 +43,8 @@ const pricedOptionCount = computed(() =>
                 color="warning"
             />
             <UButton 
-                v-else="serviceData.is_active" 
-                @click="() => emit('deactivateService')" 
+                v-else="!serviceData.is_active" 
+                @click="() => emit('reactivateService')" 
                 label="Reactivate Service" 
                 icon="i-lucide-layers-arrow-up" 
                 color="success" 

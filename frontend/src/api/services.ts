@@ -40,3 +40,8 @@ export const deactivateService = async(service_id: string) => {
 	const res = await http.patch(`/services/${service_id}/deactivate`)
 	return res.data
 }
+
+export const reactivateService = async(service_id: string) => {
+	const res = await http.patch(`/services/${service_id}/reactivate`)
+	return res.data
+}

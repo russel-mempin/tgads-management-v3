@@ -4,7 +4,7 @@ import { ref, onMounted, resolveComponent, watch } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 // API call imports
-import { getServiceData, createOption, updateOption, archiveOption, activateOption, updateService, deactivateService } from '@/api/services';
+import { getServiceData, createOption, updateOption, archiveOption, activateOption, updateService, deactivateService, reactivateService } from '@/api/services';
 // Type imports
 import type { Service, ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 // Component imports
@@ -144,13 +144,9 @@ const deactivateSelectedOption = async () => {
     }
 }
 // Reactivate Option
-const openActivateOptionConfirm = (option: ServiceOption) => {
-    selectedOption.value = option
-    isActivateOptionConfirmOpen.value = true
-}
-const activateSelectedOption = async () => {
+const activateSelectedOption = async (option: ServiceOption) => {
     try {
-        await activateOption(serviceId, selectedOption.value!.id)
+        await activateOption(serviceId, option.id)
         toast.add({
             title: 'Service Option Activated.',
             color: 'success',
@@ -242,6 +238,37 @@ const deactivateServiceInDb = async () => {
         loading.value = false
     }
 }
+// Reactivate Service
+const reactivateServiceInDb = async () => {
+    loading.value = true
+    try {
+        await reactivateService(serviceId)
+        toast.add({
+            title: 'Service reactivated.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        fetchData()
+        await referenceStore.refresh()
+        isDeactivateServiceConfirmOpen.value = false
+    }
+    catch (error: unknown) {
+        console.error("Failed to reactivate service:", error)
+        let message = "An unexpected error occured."
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to reactivate service.'
+        }
+        toast.add({
+            title: 'Saving changes failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+    finally {
+        loading.value = false
+    }
+}
 </script>
 
 <template>
@@ -261,18 +288,6 @@ const deactivateServiceInDb = async () => {
         @confirm="deactivateSelectedOption"
     />
     <ConfirmActionModal
-        v-model:is-open="isActivateOptionConfirmOpen"
-        title="Activate Option"
-        :description="`Are you sure you want to activate ${selectedOption?.full_service_name}?`"
-        confirm-label="Yes, activate"
-        confirm-icon="i-lucide-layers-arrow-up"
-        confirm-color="success"
-        icon="i-lucide-layers-arrow-up"
-        icon-color="text-success"
-        icon-background="bg-success/10"
-        @confirm="activateSelectedOption"
-    />
-    <ConfirmActionModal
         v-model:is-open="isDeactivateServiceConfirmOpen"
         title="Deactivate Service"
         :description="`Are you sure you want to deactivate the whole service? This will also deactivate the options related to it.`"
@@ -288,7 +303,8 @@ const deactivateServiceInDb = async () => {
         <ServiceHeader v-if="serviceData" 
             :service-data="serviceData" 
             @edit-service="openEditServiceForm" 
-            @deactivate-service="() => isDeactivateServiceConfirmOpen = true" 
+            @deactivate-service="() => isDeactivateServiceConfirmOpen = true"
+            @reactivate-service="reactivateServiceInDb"
         />
     </section>
     <!-- Options -->
@@ -297,10 +313,10 @@ const deactivateServiceInDb = async () => {
             <p class="text-xl font-semibold">Options ({{ serviceData?.options.length }})</p>
             <UButton label="Add Option" icon="i-lucide-plus" @click="() => isServiceOptionFormOpen = true" />
         </span>
-        <div class="flex flex-col gap-6">
+        <div class="grid grid-cols-3 gap-6">
             <OptionCard v-for="option in serviceData?.options" :key="option.id" :option="option"
                 :service-unit="serviceData?.unit" @edit-option="openEditOptionForm"
-                @delete-option="openDeleteOptionConfirm" @activate-option="openActivateOptionConfirm" />
+                @delete-option="openDeleteOptionConfirm" @activate-option="activateSelectedOption" />
         </div>
     </section>
 </template>
