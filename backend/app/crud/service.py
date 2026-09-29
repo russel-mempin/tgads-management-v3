@@ -5,8 +5,8 @@ from sqlmodel import Session, select
 
 from app.models import AuditLog, Service, ServiceOption, ServicePriceTier
 from app.schemas.service import (
-    ServiceCreate,
     ServiceOptionCreate,
+    ServiceOptionUpdate,
     ServiceUpdate,
 )
 from app.utils.utils import validate_price_tiers
@@ -82,7 +82,7 @@ def create_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         raise
 
 
-def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
+def update_option(db: Session, data: ServiceOptionUpdate, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
     try:
         option = db.exec(
             select(ServiceOption)
@@ -110,6 +110,7 @@ def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
             for tier_data in data.price_tiers:
                 option.price_tiers.append(
                     ServicePriceTier(
+                        service_option_id=option.id,
                         min_threshold=tier_data.min_threshold,
                         max_threshold=tier_data.max_threshold,
                         rate=tier_data.rate,
@@ -131,7 +132,7 @@ def update_option(db: Session, data: ServiceOptionCreate, service_id: uuid.UUID,
         db.rollback()
         raise
 
-
+# Rename everything to deactivate
 def archive_option(db: Session, service_id: uuid.UUID, option_id: uuid.UUID, current_user_id: uuid.UUID):
     try:
         option = db.exec(
@@ -194,44 +195,8 @@ def activate_option(db: Session, service_id: uuid.UUID, option_id: uuid.UUID, cu
         raise
 
 
-def create_service(db: Session, data: ServiceCreate, current_user_id: uuid.UUID):
-    try:
-        existing = db.exec(
-            select(Service).where(
-                (Service.name == data.name)
-                | (Service.abbreviation == data.abbreviation)
-            )
-        ).first()
-        if existing:
-            if existing.name == data.name:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Service type with name '{data.name}' already exists.",
-                )
-            if existing.abbreviation == data.abbreviation:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Service type with abbreviation '{data.abbreviation}' already exists.",
-                )
-        service_type = Service(**data.model_dump())
-        db.add(service_type)
-        db.commit()
-        db.refresh(service_type)
-
-        audit = AuditLog(
-            action=f"Created service named {service_type.name}", user_id=current_user_id
-        )
-        db.add(audit)
-        db.commit()
-
-        return service_type
-    except Exception:
-        db.rollback()
-        raise
-
-
 def update_service(
-    db: Session, service_id: uuid.UUID, data: ServiceUpdate, current_user_id: uuid.UUID
+    db: Session, data: ServiceUpdate, service_id: uuid.UUID, current_user_id: uuid.UUID
 ):
     try:
         service = db.exec(
@@ -239,21 +204,17 @@ def update_service(
         ).first()
         if not service:
             raise HTTPException(status_code=404, detail="Service type not found")
-
         updated_data = data.model_dump(exclude_unset=True)  # only fields that were sent
         for key, value in updated_data.items():
             setattr(service, key, value)
-
         db.add(service)
-
         audit = AuditLog(
             action=f"Updated service {service.name}", user_id=current_user_id
         )
         db.add(audit)
-
         db.commit()
         db.refresh(service)
-        return service
+        return "Service updated."
     except HTTPException:
         raise
     except Exception:

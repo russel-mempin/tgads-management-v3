@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlmodel import Field, SQLModel
 
-from app.enums import SizeUnit
+from app.enums import PriceUnit, PricingStrategy
 from app.models import ServiceBase, ServiceOptionBase, ServicePriceTierBase
 
 
@@ -56,7 +56,5 @@ class ExtraCreate(SQLModel):
 class ServiceUpdate(SQLModel):
     name: str | None = None
     abbreviation: str | None = None
-    price: float | None = None
-    unit: str | None = None
-    is_area_based: bool | None = None
-    required_measurement_unit: SizeUnit | None = None
+    pricing_strategy: PricingStrategy | None = None
+    unit: PriceUnit | None = None

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { reactive, watch, ref } from 'vue';
 import { z } from 'zod';
 import { PRICING_STRATEGIES, PRICE_UNITS } from '@/utils/constants';
 import type { Service, ServiceBaseEdit } from '@/types/service';
@@ -10,12 +10,16 @@ const props = defineProps<{
     serviceData?: Service
 }>()
 
+const emit = defineEmits<{
+    save: [service: ServiceBaseEdit]
+}>()
+
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     abbreviation: z.string().min(1, 'Name is required'),
     pricing_strategy: z.enum(PRICING_STRATEGIES, { error: 'Pricing strategy is required' }),
     unit: z.enum(PRICE_UNITS, { error: 'Unit is required' }),
-    is_active: z.string().min(1, 'Name is required'),
+    is_active: z.boolean(),
 })
 type Schema = z.output<typeof schema>
 const getInitialState = (): Schema => ({
@@ -23,21 +27,34 @@ const getInitialState = (): Schema => ({
     abbreviation: '',
     pricing_strategy: 'Fixed',
     unit: 'pcs',
-    is_active: 'true',
+    is_active: true,
 })
 const state = reactive<Schema>(getInitialState())
+const originalState = ref<Schema | null>(null)
 
 // Initialize state with service data if provided
-if (props.serviceData) {
-    console.log(props.serviceData)
-    Object.assign(state, props.serviceData)
+watch(() => props.serviceData, (serviceData) => {
+    if (serviceData) {
+        Object.assign(state, serviceData)
+        originalState.value = { ...state }
+    }
+}, { immediate: true })
+
+const resetForm = () => {
+	Object.assign(state, getInitialState())
 }
 
-const handleCancel = () => {
-    console.log("Cancel")
-}
 const onSubmit = () => {
-    console.log("Hi")
+    if (!originalState.value) return
+    const changedFields: ServiceBaseEdit = {}
+    for (const key of Object.keys(state) as (keyof Schema)[]) {
+        if (state[key] !== originalState.value[key]) {
+            changedFields[key] = state[key] as never
+        }
+    }
+    emit('save', changedFields)
+    resetForm()
+    isOpen.value = false
 }
 </script>
 
@@ -54,15 +71,15 @@ const onSubmit = () => {
                 </UFormField>
                 <div class="grid grid-cols-2 gap-6 mt-6">
                     <UFormField label="Pricing Strategy">
-                        <USelect v-model="state.pricing_strategy" class="w-full" />
+                        <USelect v-model="state.pricing_strategy" :items="Object.values(PRICING_STRATEGIES)" class="w-full" />
                     </UFormField>
                     <UFormField label="Unit">
-                        <USelect v-model="state.unit" class="w-full" placeholder="TARP" />
+                        <USelect v-model="state.unit" :items="Object.values(PRICE_UNITS)" class="w-full" placeholder="TARP" />
                     </UFormField>
                 </div>
                 <div class="flex justify-end gap-6 mt-6">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
-                        class="w-28 justify-center" @click="handleCancel" />
+                        class="w-28 justify-center" @click="() => isOpen = false" />
                     <UButton label="Save" icon="i-lucide-save" color="primary" size="lg"
                         class="w-28 font-semibold justify-center items-center" type="submit" />
                 </div>

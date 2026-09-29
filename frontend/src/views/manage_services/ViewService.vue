@@ -4,7 +4,7 @@ import { ref, onMounted, resolveComponent, watch } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 // API call imports
-import { getServiceData, createOption, updateOption, archiveOption, activateOption } from '@/api/services';
+import { getServiceData, createOption, updateOption, archiveOption, activateOption, updateService } from '@/api/services';
 // Type imports
 import type { Service, ServiceOption, ServiceOptionCreate, ServiceOptionUpdate } from '@/types/service';
 // Component imports
@@ -51,6 +51,7 @@ watch(isServiceOptionFormOpen, (isOpen) => {
         selectedOption.value = undefined
     }
 })
+// Add Option
 const saveOptionToDb = async (option: ServiceOptionCreate) => {
     try {
         await createOption(serviceId, option)
@@ -76,6 +77,7 @@ const saveOptionToDb = async (option: ServiceOptionCreate) => {
         })
     }
 }
+// Edit Option
 const openEditOptionForm = (option: ServiceOption) => {
     selectedOption.value = option
     isServiceOptionFormOpen.value = true
@@ -105,7 +107,7 @@ const saveEditOptionToDb = async (option_id: string, option: ServiceOptionUpdate
         })
     }
 }
-
+// Deactivate Option
 const openDeleteOptionConfirm = (option: ServiceOption) => {
     selectedOption.value = option
     isDeactivateOptionConfirmOpen.value = true
@@ -140,7 +142,7 @@ const deactivateSelectedOption = async () => {
         loading.value = false
     }
 }
-
+// Reactivate Option
 const openActivateOptionConfirm = (option: ServiceOption) => {
     selectedOption.value = option
     isActivateOptionConfirmOpen.value = true
@@ -174,15 +176,45 @@ const activateSelectedOption = async () => {
         loading.value = false
     }
 }
+// Edit Service
 const openEditServiceForm = () => {
     isEditServiceFormOpen.value = true
+}
+const saveEditServiceToDb = async (service: ServiceOptionUpdate) => {
+    loading.value = true
+    try {
+        await updateService(serviceId, service)
+        toast.add({
+            title: 'Service Updated.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        fetchData()
+        await referenceStore.refresh()
+    }
+    catch (error: unknown) {
+        console.error("Failed to update service:", error)
+        let message = "An unexpected error occured."
+        if (axios.isAxiosError(error)) {
+            message = error.response?.data?.detail ?? 'Failed to update service.'
+        }
+        toast.add({
+            title: 'Saving data failed.',
+            description: message,
+            color: 'error',
+            icon: 'i-lucide-x'
+        })
+    }
+    finally {
+        loading.value = false
+    }
 }
 </script>
 
 <template>
     <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" @update="saveEditOptionToDb"
         :parent_service_id="serviceId" :editing-option="selectedOption" />
-    <EditServiceForm v-model:is-open="isEditServiceFormOpen" :service-data="serviceData" />
+    <EditServiceForm v-model:is-open="isEditServiceFormOpen" :service-data="serviceData" @save="saveEditServiceToDb" />
     <ConfirmActionModal
         v-model:is-open="isDeactivateOptionConfirmOpen"
         title="Deactivate Option"

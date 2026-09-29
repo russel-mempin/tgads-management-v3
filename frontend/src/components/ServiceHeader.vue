@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     editService: []
+    deactivateService: []
 }>()
 
 const pricedOptionCount = computed(() =>
@@ -31,7 +32,10 @@ const pricedOptionCount = computed(() =>
                 {{ serviceData?.is_active ? 'Active' : 'Inactive' }}
             </span>
         </span>
-        <UButton @click="() => emit('editService')" label="Edit Base Service" icon="i-lucide-pen-square" />
+        <span class="flex gap-4">
+            <UButton @click="() => emit('editService')" label="Edit Base Service" icon="i-lucide-pen-square" />
+            <UButton @click="() => emit('deactivateService')" label="Deactivate Service" icon="i-lucide-layers-arrow-down" color="warning" />
+        </span>
     </div>
     <div class="p-4 grid grid-cols-3 gap-4 bg-default border border-default rounded-md divide-x divide-default">
         <div>
@@ -44,7 +48,7 @@ const pricedOptionCount = computed(() =>
         </div>
         <div>
             <p class="uppercase text-sm font-semibold text-muted">Priced Options</p>
-            <p class="font-semibold">{{pricedOptionCount}} / {{ serviceData.options.length }}</p>
+            <p class="font-semibold">{{ pricedOptionCount }} / {{ serviceData.options.length }}</p>
         </div>
     </div>
 </template>
