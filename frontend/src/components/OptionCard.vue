@@ -20,12 +20,12 @@ const emit = defineEmits<{
 const columns: TableColumn<ServicePriceTier>[] = [
     {
         accessorKey: 'consumption',
-        header: `Consumption (${props.serviceUnit})`,
+        header: 'Consumption',
         cell: ({ row }) => {
             const tier = row.original
             return tier.max_threshold
-                ? `${tier.min_threshold} - ${tier.max_threshold}`
-                : `${tier.min_threshold} UP`
+                ? `${tier.min_threshold} - ${tier.max_threshold} ${props.serviceUnit}.`
+                : `${tier.min_threshold} ${props.serviceUnit}. UP`
         }
     },
     {

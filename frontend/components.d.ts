@@ -21,6 +21,7 @@ declare module 'vue' {
     CustomerSearch: typeof import('./src/components/CustomerSearch.vue')['default']
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
+    EditServiceForm: typeof import('./src/components/EditServiceForm.vue')['default']
     Expense: typeof import('./src/components/ExpenseTable.vue/index.js')['default']
     ExpenseCards: typeof import('./src/components/ExpenseCards.vue')['default']
     ExpenseTable: typeof import('./src/components/ExpenseTable.vue')['default']

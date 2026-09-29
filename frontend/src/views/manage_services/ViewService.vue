@@ -12,6 +12,7 @@ import ServiceHeader from '@/components/ServiceHeader.vue';
 import OptionCard from '@/components/OptionCard.vue';
 import ServiceOptionForm from '@/components/service-option-form/ServiceOptionForm.vue';
 import ConfirmActionModal from '@/components/ConfirmActionModal.vue';
+import EditServiceForm from '@/components/EditServiceForm.vue';
 import { useReferenceStore } from '@/stores/reference';
 
 const route = useRoute()
@@ -29,6 +30,7 @@ const loading = ref(false)
 const isServiceOptionFormOpen = ref(false)
 const isDeactivateOptionConfirmOpen = ref(false)
 const isActivateOptionConfirmOpen = ref(false)
+const isEditServiceFormOpen = ref(false)
 
 // Data Functions
 const fetchData = async () => {
@@ -172,11 +174,15 @@ const activateSelectedOption = async () => {
         loading.value = false
     }
 }
+const openEditServiceForm = () => {
+    isEditServiceFormOpen.value = true
+}
 </script>
 
 <template>
     <ServiceOptionForm v-model:is-open="isServiceOptionFormOpen" @save="saveOptionToDb" @update="saveEditOptionToDb"
         :parent_service_id="serviceId" :editing-option="selectedOption" />
+    <EditServiceForm v-model:is-open="isEditServiceFormOpen" :service-data="serviceData" />
     <ConfirmActionModal
         v-model:is-open="isDeactivateOptionConfirmOpen"
         title="Deactivate Option"
@@ -202,7 +208,7 @@ const activateSelectedOption = async () => {
         @confirm="activateSelectedOption"
     />
     <section class="m-6">
-        <ServiceHeader v-if="serviceData" :service-data="serviceData" />
+        <ServiceHeader v-if="serviceData" :service-data="serviceData" @edit-service="openEditServiceForm" />
     </section>
     <!-- Options -->
     <section class="px-6 my-6">

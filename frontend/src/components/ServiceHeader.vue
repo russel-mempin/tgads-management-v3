@@ -6,6 +6,10 @@ const props = defineProps<{
     serviceData: Service
 }>()
 
+const emit = defineEmits<{
+    editService: []
+}>()
+
 const pricedOptionCount = computed(() =>
     props.serviceData.options.filter(option => option.is_priced).length ?? 0
 )
@@ -27,7 +31,7 @@ const pricedOptionCount = computed(() =>
                 {{ serviceData?.is_active ? 'Active' : 'Inactive' }}
             </span>
         </span>
-        <UButton label="Edit Base Service" icon="i-lucide-pen-square" />
+        <UButton @click="() => emit('editService')" label="Edit Base Service" icon="i-lucide-pen-square" />
     </div>
     <div class="p-4 grid grid-cols-3 gap-4 bg-default border border-default rounded-md divide-x divide-default">
         <div>

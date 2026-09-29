@@ -26,15 +26,26 @@ export const PAYMENT_STATUSES = [
   { label: "Overcharged", value: "OVERCHARGED" },
 ] as const
 
-export type DATE_PERIODS =
-  | 'today'
-  | 'this_week'
-  | 'this_month'
-  | 'last_month'
-  | 'this_year'
-  | 'all'
+export const PRICE_UNITS = {
+  PCS: 'pcs',
+  SQIN: 'sqin',
+  SQFT: 'sqft',
+  SQM: 'sqm',
+} as const
 
-export type TRANSACTION_CATEGORIES = 
+export type PriceUnit =
+  typeof PRICE_UNITS[keyof typeof PRICE_UNITS]
+
+export const PRICING_STRATEGIES = {
+  AREA: 'Area',
+  BY_PIECE: 'By Piece',
+  FIXED: 'Fixed',
+} as const
+
+export type PricingStrategy =
+  typeof PRICING_STRATEGIES[keyof typeof PRICING_STRATEGIES]
+
+export type TRANSACTION_CATEGORIES =
   | "payment"
   | "expense"
   | "misc_sale"
@@ -42,3 +53,11 @@ export type TRANSACTION_CATEGORIES =
   | "adjustment"
   | "reversal"
   | "refund"
+
+export type DATE_PERIODS =
+  | 'today'
+  | 'this_week'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'all'
