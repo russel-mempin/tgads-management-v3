@@ -40,7 +40,7 @@ const removeOption = (index: number) => {
             <UButton type="button" label="Add Option" @click="addOption" icon="i-lucide-plus" />
         </div>
         <div v-for="(option, index) in options" :key="index" class="border-b border-default last:border-b-0">
-            <div class="flex items-end p-6 gap-6">
+            <div class="flex p-6 gap-6">
                 <UFormField label="Option Name" :name="`options.${index}.name`" class="flex-1" required>
                     <UInput v-model="option.name" placeholder="Option name" class="w-full" />
                 </UFormField>
@@ -62,10 +62,12 @@ const removeOption = (index: number) => {
                 <UFormField label="Stock Increment" :name="`options.${index}.stock_increment`">
                     <UInputNumber v-model="options[index]!.stock_increment" :min="0.1" placeholder="Option name" />
                 </UFormField>
-                <div class="flex items-center gap-4">
-                    <UButton v-if="option.price_tiers.length === 0" class="w-36 justify-center" icon="i-lucide-layers-plus" label="Enable Tiers" variant="soft" @click="enableTiers(index)" />
-                    <UButton class="w-36 justify-center" icon="i-lucide-x" label="Delete Option" variant="soft" color="error" @click="removeOption" />
-                </div>
+                <UFormField label="&nbsp;" class="shrink-0">
+                    <div class="flex items-center gap-4">
+                        <UButton v-if="option.price_tiers.length === 0" class="w-36 justify-center" icon="i-lucide-layers-plus" label="Enable Tiers" variant="soft" @click="enableTiers(index)" />
+                        <UButton class="w-36 justify-center" icon="i-lucide-x" label="Delete Option" variant="soft" color="error" @click="removeOption" />
+                    </div>
+                </UFormField>
             </div>
             <ServiceOptionPriceTierTable :option-name="option.name" v-model="option.price_tiers" />
         </div>
