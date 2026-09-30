@@ -29,10 +29,19 @@ export const useAuthStore = defineStore('auth', () => {
 
     const initialize = async () => {
         if (!user.value) return
-
-        if (['Admin', 'Owner'].includes(user.value.role)) {
-            const reviewStore = useForReviewCount()
-            await reviewStore.fetchCount()
+        try {
+            if (['Admin', 'Owner'].includes(user.value.role)) {
+                const reviewStore = useForReviewCount()
+                await reviewStore.fetchCount()
+            }
+        }
+        catch (error: any) {
+            if (error.response?.status === 401) {
+                user.value = null
+                localStorage.removeItem(STORAGE_KEY)
+                return
+            }
+            throw error
         }
     }
 

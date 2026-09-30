@@ -18,57 +18,17 @@ const addOption = () => {
     })
 }
 
+const enableTiers = (index: number) => {
+    options.value[index]!.price_tiers.push({
+        min_threshold: 1,
+        max_threshold: 10,
+        rate: 1,
+    })
+}
+
 const removeOption = (index: number) => {
     options.value.splice(index, 1)
 }
-
-const expanded = ref({})
-
-const columns: TableColumn<Schema['options'][number]>[] = [
-    {
-        accessorKey: 'name',
-        header: 'Name',
-    },
-    {
-        accessorKey: 'base_rate',
-        header: 'Base Rate',
-    },
-    {
-        accessorKey: 'minimum_consumption',
-        header: 'Minimum Consumption',
-    },
-    {
-        accessorKey: 'stock_increment',
-        header: 'Stock Increment',
-    },
-    {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) =>
-            h('div', { class: 'flex items-center gap-2' }, [
-                h(UButton, {
-                    color: 'neutral',
-                    variant: 'ghost',
-                    icon: 'i-lucide-chevron-down',
-                    size: 'md',
-                    onClick: (event: Event) => {
-                        event.stopPropagation()
-                        row.toggleExpanded()
-                    }
-                }),
-                h(UButton, {
-                    color: 'error',
-                    variant: 'ghost',
-                    icon: 'i-lucide-x',
-                    size: 'md',
-                    onClick: (event: Event) => {
-                        event.stopPropagation()
-                        removeOption(row.index)
-                    }
-                }),
-            ])
-    }
-]
 </script>
 <template>
     <section class="bg-default border border-default rounded-md m-8">
@@ -79,37 +39,35 @@ const columns: TableColumn<Schema['options'][number]>[] = [
             </div>
             <UButton type="button" label="Add Option" @click="addOption" icon="i-lucide-plus" />
         </div>
-        <UTable v-model:expanded="expanded" :data="options" :columns="columns">
-            <template #name-cell="{ row }">
-                <UFormField :name="`options.${row.index}.name`" required>
-                    <UInput v-model="options[row.index]!.name" placeholder="Option name" />
+        <div v-for="(option, index) in options" :key="index" class="border-b border-default last:border-b-0">
+            <div class="flex items-end p-6 gap-6">
+                <UFormField label="Option Name" :name="`options.${index}.name`" class="flex-1" required>
+                    <UInput v-model="option.name" placeholder="Option name" class="w-full" />
                 </UFormField>
-            </template>
-            <template #base_rate-cell="{ row }">
-                <UFormField :name="`options.${row.index}.base_rate`" required>
-                    <UInputNumber v-model="options[row.index]!.base_rate" :increment="false" :decrement="false"
+                <UFormField label="Base Rate" :name="`options.${index}.base_rate`" required>
+                    <UInputNumber v-model="options[index]!.base_rate" :increment="false" :decrement="false"
                         @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" :step="0.01"
                         :format-options="{
                             style: 'currency',
                             currency: 'PHP',
                             currencyDisplay: 'code',
                             currencySign: 'accounting'
-                        }" />
+                        }"
+                        class="w-full"
+                    />
                 </UFormField>
-            </template>
-            <template #minimum_consumption-cell="{ row }">
-                <UFormField :name="`options.${row.index}.minimum_consumption`">
-                    <UInputNumber v-model="options[row.index]!.minimum_consumption" :step="0.01" />
+                <UFormField label="Minimum Consumption" :name="`options.${index}.minimum_consumption`">
+                    <UInputNumber v-model="options[index]!.minimum_consumption" :min="0.1" :step="0.01" />
                 </UFormField>
-            </template>
-            <template #stock_increment-cell="{ row }">
-                <UFormField :name="`options.${row.index}.stock_increment`">
-                    <UInputNumber v-model="options[row.index]!.stock_increment" placeholder="Option name" />
+                <UFormField label="Stock Increment" :name="`options.${index}.stock_increment`">
+                    <UInputNumber v-model="options[index]!.stock_increment" :min="0.1" placeholder="Option name" />
                 </UFormField>
-            </template>
-            <template #expanded="{ row }">
-                <ServiceOptionPriceTierTable v-model="options[row.index]!.price_tiers" />
-            </template>
-        </UTable>
+                <div class="flex items-center gap-4">
+                    <UButton v-if="option.price_tiers.length === 0" class="w-36 justify-center" icon="i-lucide-layers-plus" label="Enable Tiers" variant="soft" @click="enableTiers(index)" />
+                    <UButton class="w-36 justify-center" icon="i-lucide-x" label="Delete Option" variant="soft" color="error" @click="removeOption" />
+                </div>
+            </div>
+            <ServiceOptionPriceTierTable :option-name="option.name" v-model="option.price_tiers" />
+        </div>
     </section>
 </template>
