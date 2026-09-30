@@ -188,6 +188,16 @@ const router = createRouter({
           }
         },
         {
+          path: 'manage-services/add',
+          component: () => import('@/views/manage_services/AddService.vue'),
+          meta: {
+            title: 'Manage Services - Add',
+            breadcrumb: 'Add Service',
+            breadcrumbParent: { label: 'Manage Service', to: 'manage-services' },
+            subtitle: 'Create a new service to be used for job orders.'
+          }
+        },
+        {
           path: 'manage-extras',
           component: () => import('@/views/ManageExtras.vue'),
           meta: {

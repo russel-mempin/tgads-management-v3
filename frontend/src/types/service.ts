@@ -5,14 +5,16 @@ interface ServiceBase {
 	abbreviation: string
 	pricing_strategy: string
 	unit: string
-	is_active: boolean
 }
 
-export interface ServicePriceTier {
-	id?: string
+interface ServicePriceTierBase {
 	min_threshold: number
 	max_threshold?: number | null
 	rate: number
+}
+
+export interface ServicePriceTier extends ServicePriceTierBase {
+	id?: string
 }
 
 export interface ServiceOption {
@@ -32,6 +34,7 @@ export interface Service extends ServiceBase {
 	created_at?: Date
 	updated_at?: Date
 	id?: string
+	is_active: boolean
 	options: ServiceOption[]
 }
 
@@ -52,3 +55,7 @@ export interface ServiceOptionCreate {
 }
 
 export type ServiceOptionUpdate = Partial<ServiceOptionCreate>
+
+export interface ServiceCreate extends ServiceBase {
+	options: ServiceOptionCreate[]
+}
