@@ -1,4 +1,4 @@
-import type { ServiceOptionCreate, ServiceOptionUpdate, ServiceBaseEdit } from '@/types/service'
+import type { ServiceOptionCreate, ServiceOptionUpdate, ServiceBaseEdit, ServiceCreate } from '@/types/service'
 import http from './http'
 
 export const getAllServices = async() => {
@@ -43,5 +43,10 @@ export const deactivateService = async(service_id: string) => {
 
 export const reactivateService = async(service_id: string) => {
 	const res = await http.patch(`/services/${service_id}/reactivate`)
+	return res.data
+}
+
+export const createService = async(service: ServiceCreate) => {
+	const res = await http.post(`/services/`, service)
 	return res.data
 }

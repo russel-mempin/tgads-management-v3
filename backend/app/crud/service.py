@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 
 from app.models import AuditLog, Service, ServiceOption, ServicePriceTier
 from app.schemas.service import (
+    ServiceCreate,
     ServiceOptionCreate,
     ServiceOptionUpdate,
     ServiceUpdate,
@@ -273,6 +274,81 @@ def reactivate_service(db: Session, service_id: uuid.UUID, current_user_id: uuid
         db.commit()
         db.refresh(service)
         return f"Service named {service.name} reactivated."
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+def create_service(db: Session, service_data: ServiceCreate, current_user_id: uuid.UUID):
+    try:
+        existing_name = db.exec(
+            select(Service).where(Service.name == service_data.name)
+        ).first()
+        if existing_name:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Service with name '{service_data.name}' already exists.",
+            )
+        existing_abbreviation = db.exec(
+            select(Service).where(Service.abbreviation == service_data.abbreviation)
+        ).first()
+        if existing_abbreviation:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Service with abbreviation '{service_data.abbreviation}' already exists.",
+            )
+        service = Service(
+            name=service_data.name,
+            abbreviation=service_data.abbreviation,
+            pricing_strategy=service_data.pricing_strategy,
+            unit=service_data.unit,
+        )
+        db.add(service)
+        db.flush()
+
+        for option_data in service_data.options:
+            existing_option = db.exec(
+                select(ServiceOption).where(
+                    ServiceOption.service_id == service.id,
+                    ServiceOption.name == option_data.name,
+                )
+            ).first()
+            if existing_option:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Service option with name '{option_data.name}' already exists.",
+                )
+            service_option = ServiceOption(
+                name=option_data.name,
+                base_rate=option_data.base_rate,
+                is_active=option_data.is_active,
+                minimum_consumption=option_data.minimum_consumption,
+                stock_increment=option_data.stock_increment,
+                service_id=service.id
+            )
+            db.add(service_option)
+            db.flush()
+
+            if option_data.price_tiers is not None:
+                try:
+                    validate_price_tiers(option_data.price_tiers)
+                    for tier in option_data.price_tiers:
+                        db.add(ServicePriceTier(
+                            service_option_id=service_option.id,
+                            min_threshold=tier.min_threshold,
+                            max_threshold=tier.max_threshold if tier.max_threshold else None,
+                            rate=tier.rate
+                        ))
+                except ValueError as e:
+                    raise HTTPException(status_code=400, detail=str(e))
+        audit = AuditLog(
+            action=f"Created service {service.name} with options", user_id=current_user_id
+        )
+        db.add(audit)
+        db.commit()
+        return "Service and options created."
     except HTTPException:
         raise
     except Exception:

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { PRICING_STRATEGIES, PRICE_UNITS } from '@/utils/constants';
 import { z } from 'zod';
+import { createService } from '@/api/services';
 import ServiceOptionFormTable from '@/components/ServiceOptionFormTable.vue';
 
-// Options Table
+const toast = useToast()
+const router = useRouter()
 
 const tierSchema = z.object({
     min_threshold: z.number().min(0.1, 'Min threshold must be higher than 0'),
@@ -63,8 +66,27 @@ const getInitialState = (): Schema => ({
 })
 const state = reactive<Schema>(getInitialState())
 
-const onSubmit = () => {
-    console.log(state)
+const onSubmit = async () => {
+    try {
+        await createService(state)
+        toast.add({
+            title: 'Service created.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await router.push('/manage-services')
+    }
+    catch (error: any) {
+        console.error('Error creating service:', error)
+        toast.add({
+            title: 'Failed to Save',
+            description: error.response?.data?.detail
+                ?? error.message
+                ?? 'An unexpected error occurred.',
+            color: 'error',
+            icon: 'i-lucide-circle-x'
+        })
+    }
 }
 </script>
 

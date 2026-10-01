@@ -133,6 +133,12 @@ class ServiceBase(SQLModel):
     pricing_strategy: PricingStrategy
     unit: PriceUnit
     is_active: bool = Field(default=True)
+
+
+class Service(ServiceBase, table=True):
+    __tablename__ = "services"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
@@ -148,11 +154,6 @@ class ServiceBase(SQLModel):
             onupdate=lambda: datetime.now(UTC),
         ),
     )
-
-
-class Service(ServiceBase, table=True):
-    __tablename__ = "services"  # type: ignore
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
     job_items: list[JobItem] = Relationship(back_populates="service")
     options: list[ServiceOption] = Relationship(

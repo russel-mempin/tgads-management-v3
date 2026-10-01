@@ -26,6 +26,7 @@ class ServicePublic(ServiceBase):
 
 
 class ServiceOptionCreate(ServiceOptionBase):
+    is_active: bool = True
     price_tiers: list[ServicePriceTierBase] | None = None
     
 
@@ -36,10 +37,6 @@ class ServiceOptionUpdate(SQLModel):
     minimum_consumption: float | None = None
     stock_increment: float | None = None
     price_tiers: list[ServicePriceTierBase] | None = None
-
-
-class ServiceCreate(ServiceBase):
-    pass
 
 
 class ExtraPublic(SQLModel):
@@ -58,3 +55,7 @@ class ServiceUpdate(SQLModel):
     abbreviation: str | None = None
     pricing_strategy: PricingStrategy | None = None
     unit: PriceUnit | None = None
+
+
+class ServiceCreate(ServiceBase):
+    options: list[ServiceOptionCreate]

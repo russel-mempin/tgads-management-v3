@@ -8,6 +8,7 @@ from app.crud.service import (
     activate_option,
     archive_option,
     create_option,
+    create_service,
     deactivate_service,
     get_all_services,
     get_service_data,
@@ -18,6 +19,7 @@ from app.crud.service import (
 from app.database import get_session
 from app.models import User
 from app.schemas.service import (
+    ServiceCreate,
     ServiceOptionCreate,
     ServiceOptionUpdate,
     ServicePublic,
@@ -71,3 +73,8 @@ def deactivate_service_data(service_id: uuid.UUID, db: Session = Depends(get_ses
 @router.patch("/{service_id}/reactivate")
 def reactivate_service_data(service_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return reactivate_service(db, service_id, current_user.id)
+
+
+@router.post("/")
+def create_service_data(service_data: ServiceCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+    return create_service(db, service_data, current_user.id)
