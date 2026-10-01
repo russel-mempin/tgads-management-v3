@@ -82,7 +82,8 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                             amount=Decimal(amount),
                             source_type=TransactionSource.PAYMENT,
                             source_id=payment.id,
-                            date=date_received
+                            date=date_received,
+                            description=f"Payment for Job Order {job_order.jo_number}. Remaining balance: {job_order.balance}"
                         )
                     )
                 else:

@@ -1,4 +1,6 @@
-from sqlalchemy.orm import selectinload
+from typing import cast
+
+from sqlalchemy.orm import InstrumentedAttribute, selectinload
 from sqlmodel import Session, select
 
 from app.enums import DatePeriod, TransactionSource
@@ -16,16 +18,20 @@ def get_all_transactions(
 ) -> list[TransactionPublic]:
 
     statement = select(AccountTransaction).options(
-        selectinload(AccountTransaction.account)
+        selectinload(
+            cast(InstrumentedAttribute, AccountTransaction.account)
+        )
     )
 
     if period != DatePeriod.ALL:
-        start, end = get_date_range(period)
+        date_range = get_date_range(period)
 
-        statement = statement.where(
-            AccountTransaction.date >= start,
-            AccountTransaction.date < end,
-        )
+        if date_range:
+            start, end = date_range
+            statement = statement.where(
+                AccountTransaction.date >= start,
+                AccountTransaction.date < end,
+            )
 
     if source:
         statement = statement.where(
@@ -34,7 +40,9 @@ def get_all_transactions(
 
     statement = (
         statement
-        .order_by(AccountTransaction.date.desc())
+        .order_by(
+            cast(InstrumentedAttribute, AccountTransaction.date).desc()
+        )
         .offset(offset)
         .limit(limit)
     )

@@ -355,7 +355,8 @@ def create_job_order(db: Session, data: JobOrderCreate, current_user_id: uuid.UU
                     account_id=payment.account_id,
                     amount=payment.amount,
                     source_type=TransactionSource.PAYMENT,
-                    source_id=payment.id
+                    source_id=payment.id,
+                    description=f"Payment for Job Order {job_order.jo_number}. Remaining Balance: {job_order.balance}"
                 ))
         if data.claiming_history:
             for claim in data.claiming_history:
@@ -594,7 +595,8 @@ def create_payment(
             account_id=payment.account_id,
             amount=payment.amount,
             source_type=TransactionSource.PAYMENT,
-            source_id=payment.id
+            source_id=payment.id,
+            description=f"Payment for Job Order {job_order.jo_number}. Remaining Balance: {job_order.balance}"
         ))
         audit = AuditLog(
             action=f"Created payment amounting to {payment.amount}",

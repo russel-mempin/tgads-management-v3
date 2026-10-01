@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlmodel import Session, select
 
 from app.database import engine
-from app.enums import ExpenseCategory
+from app.enums import ExpenseCategory, TransactionSource
 from app.models import Account, AccountTransaction, Expense
 from app.utils.utils import get_system_admin, parse_date
 
@@ -39,20 +39,17 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
                 amount=Decimal(row["amount"].replace(",", "").strip()),
                 account_id=account.id,
                 account_name_snapshot=account.name,
-                created_by_id=sysadmin.id
+                created_by_id=sysadmin.id,
+                updated_by_id=sysadmin.id
             )
             session.add(expense)
-            
-            current_balance = account.current_balance
-            new_balance = current_balance - expense.amount
 
             transaction = AccountTransaction(
                 account_id=account.id,
                 date=date,
                 description=row["description"],
                 amount=-expense.amount,
-                running_balance=new_balance,
-                source_type="expense",
+                source_type=TransactionSource.EXPENSE,
                 source_id=expense.id,
             )
 

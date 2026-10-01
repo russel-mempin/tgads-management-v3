@@ -20,6 +20,10 @@ const columns: TableColumn<Transaction>[] = [
         header: 'Category',
     },
     {
+        accessorKey: 'description',
+        header: 'Description',
+    },
+    {
         accessorKey: 'amount',
         header: 'Amount',
         meta: {

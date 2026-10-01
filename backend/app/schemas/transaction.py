@@ -11,3 +11,4 @@ class TransactionPublic(SQLModel):
     amount: Decimal
     source_type: TransactionSource
     account_name: str
+    description: str

@@ -5,4 +5,5 @@ export interface Transaction {
     amount: string
     source_type: TRANSACTION_CATEGORIES,
     account_name: string
+    description: string
 }

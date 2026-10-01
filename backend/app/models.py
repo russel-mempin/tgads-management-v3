@@ -726,6 +726,7 @@ class AccountTransaction(SQLModel, table=True):
         sa_column=Column(Numeric(12, 2), nullable=False)
     )  # positive = in, negative = out
     source_type: TransactionSource
+    description: str = Field()
     source_id: uuid.UUID | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

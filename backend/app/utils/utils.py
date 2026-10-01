@@ -141,24 +141,28 @@ def compute_unit_price(
         if height is None or width is None or size_unit is None:
             raise ValueError("Dimension data cannot be incomplete.")
 
+        area_height = height
+        area_width = width
+        area_unit = size_unit
+
         # Apply stock increment to WIDTH.
         # stock_increment is always expressed in feet.
         if option.stock_increment is not None:
             if option.stock_increment <= 0:
                 raise ValueError("Stock increment must be greater than zero.")
 
-            width_ft = width * LENGTH_TO_FEET[size_unit]
+            width_ft = area_width * LENGTH_TO_FEET[area_unit]
 
             width_ft = (
                 math.ceil(width_ft / option.stock_increment) * option.stock_increment
             )
 
             # Convert adjusted width back to the original unit.
-            width = width_ft / LENGTH_TO_FEET[size_unit]
+            area_width = width_ft / LENGTH_TO_FEET[area_unit]
 
         # Calculate area using the adjusted width.
         try:
-            area_in2 = height * width * AREA_TO_SQIN[size_unit]
+            area_in2 = area_height * area_width * AREA_TO_SQIN[area_unit]
         except KeyError:
             raise ValueError(f"Unsupported size unit: {size_unit}")
 
@@ -212,7 +216,7 @@ def compute_unit_price(
     )
 
 
-def get_date_range(period: DatePeriod):
+def get_date_range(period: DatePeriod) -> tuple[datetime, datetime] | None:
     now = datetime.now(MANILA)
 
     if period == DatePeriod.TODAY:
@@ -241,6 +245,6 @@ def get_date_range(period: DatePeriod):
         start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         end = start.replace(year=start.year + 1)
     else:
-        return None, None
+        return None
 
     return start, end
