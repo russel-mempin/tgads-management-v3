@@ -5,9 +5,11 @@ import { PRICING_STRATEGIES, PRICE_UNITS } from '@/utils/constants';
 import { z } from 'zod';
 import { createService } from '@/api/services';
 import ServiceOptionFormTable from '@/components/ServiceOptionFormTable.vue';
+import { useReferenceStore } from '@/stores/reference';
 
 const toast = useToast()
 const router = useRouter()
+const referenceStore = useReferenceStore()
 
 const tierSchema = z.object({
     min_threshold: z.number().min(0.1, 'Min threshold must be higher than 0'),
@@ -75,6 +77,7 @@ const onSubmit = async () => {
             icon: 'i-lucide-circle-check'
         })
         await router.push('/manage-services')
+        await referenceStore.refresh()
     }
     catch (error: any) {
         console.error('Error creating service:', error)

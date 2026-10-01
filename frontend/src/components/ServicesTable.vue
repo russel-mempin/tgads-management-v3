@@ -12,7 +12,6 @@ const props = defineProps<{
     services: Service[]
 }>()
 
-
 const columns: TableColumn<Service>[] = [
     {
         id: 'expand',
@@ -100,8 +99,8 @@ const onSelect = (_e: Event, row: TableRow<Service>) => {
 </script>
 
 <template>
-    <UTable v-model:expanded="expanded" :data="services" :columns="columns"
-        :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }" class="flex-1" @select="onSelect">
+    <UTable sticky v-model:expanded="expanded" :data="services" :columns="columns"
+        :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }" class="overflow-y-auto h-full rounded-md" @select="onSelect">
         <template #expanded="{ row }">
             <div class="p-2">
                 <p class="text-sm font-semibold text-muted uppercase mb-2">Options</p>

@@ -1,8 +1,8 @@
 import type { ServiceOptionCreate, ServiceOptionUpdate, ServiceBaseEdit, ServiceCreate } from '@/types/service'
 import http from './http'
 
-export const getAllServices = async() => {
-	const res = await http.get('/services/')
+export const getAllServices = async(includeInactive = false) => {
+	const res = await http.get('/services/', { params: { include_inactive: includeInactive } })
 	return res.data
 }
 

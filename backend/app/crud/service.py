@@ -14,16 +14,13 @@ from app.utils.utils import validate_price_tiers
 
 
 def get_all_services(
-    db: Session, offset: int = 0, limit: int = 100
+    db: Session, include_inactive: bool = False, offset: int = 0, limit: int = 100
 ) -> list[Service]:
-    return list(
-        db.exec(
-            select(Service)
-            .where(Service.is_active == True)
-            .offset(offset)
-            .limit(limit)
-        ).all()
-    )
+    statement = select(Service)
+    if not include_inactive:
+        statement = statement.where(Service.is_active == True)
+    statement = statement.offset(offset).limit(limit)
+    return list(db.exec(statement).all())
     
     
 def get_service_data(db: Session, service_id: uuid.UUID) -> Service:
