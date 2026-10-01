@@ -94,53 +94,55 @@ const onSubmit = async () => {
 </script>
 
 <template>
-    <section class="m-8">
-        <div class="flex items-start justify-between">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-widest text-primary mb-1">New Entry</p>
-                <h1 class="text-2xl font-bold text-highlighted">Add Service</h1>
-                <p class="text-sm text-muted mt-1">
-                    Fields marked <span class="text-error font-semibold">*</span> are required.
-                </p>
-            </div>
-        </div>
-    </section>
-    <UForm :schema="schema" v-model:state="state" @submit="onSubmit">
-        <section class="bg-default border border-default rounded-md m-8">
-            <div class="flex items-center gap-2 border-b border-default p-6">
-                <UIcon name="i-lucide-concierge-bell"
-                    class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
-                <h2 class="font-semibold text-highlighted">Service Info</h2>
-            </div>
-            <div class="grid grid-cols-[3fr_1fr_1fr_1fr] divide-x divide-default">
-                <UFormField label="Name" name="name" required class="flex-1 px-6 py-4">
-                    <UInput v-model="state.name" type="text" placeholder="e.g. Tarpaulin" class="w-full" />
-                </UFormField>
-                <UFormField label="Abbreviation" name="abbreviation" required class="px-6 py-4">
-                    <UInput v-model="state.abbreviation" type="text" placeholder="e.g. TARP" class="w-full" />
-                </UFormField>
-                <UFormField label="Pricing Strategy" name="pricing_strategy" required class="px-6 py-4">
-                    <USelect v-model="state.pricing_strategy" :items="Object.values(PRICING_STRATEGIES)"
-                        class="w-full" />
-                </UFormField>
-                <UFormField label="Unit" name="unit" required class="px-6 py-4">
-                    <USelect v-model="state.unit" :items="Object.values(PRICE_UNITS)" class="w-full" />
-                </UFormField>
+    <div class="min-h-full flex flex-col">
+        <section class="m-8">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-widest text-primary mb-1">New Entry</p>
+                    <h1 class="text-2xl font-bold text-highlighted">Add Service</h1>
+                    <p class="text-sm text-muted mt-1">
+                        Fields marked <span class="text-error font-semibold">*</span> are required.
+                    </p>
+                </div>
             </div>
         </section>
-        <ServiceOptionFormTable v-model="state.options" />
-        <div class="sticky bottom-0 px-8 py-4 w-full shrink-0 border-t border-default backdrop-blur bg-default/60">
-            <div class="flex gap-8 items-center justify-end">
-                <UButton icon="i-lucide-arrow-left" color="neutral" class="w-45 font-bold" variant="outline">
-                    Back to Services
-                </UButton>
-                <UButton class="w-45 font-bold relative" type="submit" loading-auto>
-                    <template #leading>
-                        <UIcon name="i-lucide-save" class="absolute left-3 size-5" />
-                    </template>
-                    <span class="w-full text-center">Save</span>
-                </UButton>
+        <UForm :schema="schema" v-model:state="state" @submit="onSubmit" class="flex-1 flex flex-col gap-8">
+            <section class="bg-default border border-default rounded-md mx-8">
+                <div class="flex items-center gap-2 border-b border-default p-6">
+                    <UIcon name="i-lucide-concierge-bell"
+                        class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
+                    <h2 class="font-semibold text-highlighted">Service Info</h2>
+                </div>
+                <div class="grid grid-cols-[3fr_1fr_1fr_1fr] divide-x divide-default">
+                    <UFormField label="Name" name="name" required class="flex-1 px-6 py-4">
+                        <UInput v-model="state.name" type="text" placeholder="e.g. Tarpaulin" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Abbreviation" name="abbreviation" required class="px-6 py-4">
+                        <UInput v-model="state.abbreviation" type="text" placeholder="e.g. TARP" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Pricing Strategy" name="pricing_strategy" required class="px-6 py-4">
+                        <USelect v-model="state.pricing_strategy" :items="Object.values(PRICING_STRATEGIES)"
+                            class="w-full" />
+                    </UFormField>
+                    <UFormField label="Unit" name="unit" required class="px-6 py-4">
+                        <USelect v-model="state.unit" :items="Object.values(PRICE_UNITS)" class="w-full" />
+                    </UFormField>
+                </div>
+            </section>
+            <ServiceOptionFormTable v-model="state.options" class="mx-8" />
+            <div class="mt-auto sticky bottom-0 px-8 py-4 w-full shrink-0 border-t border-default backdrop-blur bg-default/60">
+                <div class="flex gap-8 items-center justify-end">
+                    <UButton icon="i-lucide-arrow-left" color="neutral" class="w-45 font-bold" variant="outline">
+                        Back to Services
+                    </UButton>
+                    <UButton class="w-45 font-bold relative" type="submit" loading-auto>
+                        <template #leading>
+                            <UIcon name="i-lucide-save" class="absolute left-3 size-5" />
+                        </template>
+                        <span class="w-full text-center">Save</span>
+                    </UButton>
+                </div>
             </div>
-        </div>
-    </UForm>
+        </UForm>
+    </div>
 </template>

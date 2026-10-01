@@ -26,6 +26,7 @@ const allItems = computed<NavItem[]>(() => [
     label: 'Dashboard',
     icon: 'i-lucide-layout-dashboard',
     category: 'None',
+    superuserOnly: true,
   },
   {
     to: '/job-orders',
@@ -49,9 +50,9 @@ const allItems = computed<NavItem[]>(() => [
           : undefined
   },
   { to: '/voided-jobs', label: 'Voided Jobs', icon: 'i-lucide-printer-x', category: 'Operations', ownerOnly: true },
-  { to: '/misc-sales', label: 'Misc Sales', icon: 'i-lucide-hand-coins', category: 'Operations' },
-  { to: '/expenses', label: 'Expenses', icon: 'i-lucide-banknote-arrow-down', category: authStore.isOwner ? 'Finance' : 'Operations' },
-  { to: '/transactions', label: 'Transactions', icon: 'i-lucide-badge-dollar-sign', category: 'Finance', ownerOnly: true },
+  { to: '/misc-sales', label: 'Misc Sales', icon: 'i-lucide-hand-coins', category: 'Operations', superuserOnly: true },
+  { to: '/expenses', label: 'Expenses', icon: 'i-lucide-banknote-arrow-down', category: authStore.isOwner ? 'Finance' : 'Operations', superuserOnly: true },
+  { to: '/transactions', label: 'Transactions', icon: 'i-lucide-badge-dollar-sign', category: 'Finance', ownerOnly: true, superuserOnly: true },
   // { to: '/deposits', label: 'Deposits', icon: 'i-lucide-landmark', category: 'Finance', adminOnly: true },
   { 
     to: '/manage-services', 

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const DEFAULT_TITLE = 'TGADS Management System';
 
@@ -39,6 +40,7 @@ const router = createRouter({
           path: 'dashboard',
           component: () => import('@/views/Dashboard.vue'),
           meta: {
+            superuserOnly: true,
             title: 'Dashboard',
             breadcrumb: 'Dashboard',
             subtitle: (auth) => auth.isOwner
@@ -141,6 +143,7 @@ const router = createRouter({
           path: 'misc-sales',
           component: () => import('@/views/MiscSales.vue'),
           meta: {
+            superuserOnly: true,
             title: 'Misc Sales',
             breadcrumb: 'Misc Sales',
             breadcrumbParent: { label: 'Misc Sales', to: 'misc-sales' },
@@ -151,6 +154,7 @@ const router = createRouter({
           path: 'expenses',
           component: () => import('@/views/Expenses.vue'),
           meta: {
+            superuserOnly: true,
             title: 'Expenses',
             breadcrumb: 'Expenses',
             breadcrumbParent: { label: 'Expenses', to: 'expenses' },
@@ -161,6 +165,7 @@ const router = createRouter({
           path: 'transactions',
           component: () => import('@/views/Transactions.vue'),
           meta: {
+            superuserOnly: true,
             title: 'Transactions',
             breadcrumb: 'Transactions',
             breadcrumbParent: { label: 'Expenses', to: 'expenses' },
@@ -213,8 +218,14 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  const authStore = useAuthStore();
+
   // Set title from meta, fallback to default
   document.title = to.meta.title || DEFAULT_TITLE;
+
+  if (to.meta.superuserOnly && !authStore.user?.is_superAdmin) {
+    return '/job-orders'
+  }
 });
 
 export default router

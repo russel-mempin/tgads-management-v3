@@ -31,7 +31,7 @@ const removeOption = (index: number) => {
 }
 </script>
 <template>
-    <section class="bg-default border border-default rounded-md m-8">
+    <section class="bg-default border border-default rounded-md">
         <div class="flex justify-between items-center p-6 border-b border-default">
             <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-settings-2" class="bg-primary w-6 h-6 rounded-md p-1 text-inverted shrink-0" />
