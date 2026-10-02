@@ -106,10 +106,10 @@ const confirmResolution = () => {
         </div>
         <div class="grid grid-cols-2 gap-4">
             <UButton label="Link to Job Order" icon="i-lucide-briefcase" class="flex justify-center py-2"
-                :variant="resolutionType === 'job_order' ? 'solid' : 'outline'" @click="resolutionType = 'job_order'" />
+                :variant="resolutionType === 'job_order' ? 'solid' : 'outline'" @click="() => { resolutionType = 'job_order' }" />
 
             <UButton label="Mark as Misc Sale" icon="i-lucide-receipt-text" class="flex justify-center py-2"
-                :variant="resolutionType === 'misc_sale' ? 'solid' : 'outline'" @click="resolutionType = 'misc_sale'" />
+                :variant="resolutionType === 'misc_sale' ? 'solid' : 'outline'" @click="() => { resolutionType = 'misc_sale' }" />
         </div>
         <div>
             <!-- Controls -->

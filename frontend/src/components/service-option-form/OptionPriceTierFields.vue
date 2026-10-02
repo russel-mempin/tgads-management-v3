@@ -43,7 +43,7 @@ const canAddTier = computed(() => {
         <div v-for="(tier, index) in priceTiers" :key="index"
             class="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end p-4 border-b border-default last:border-b-0">
             <UFormField label="Min. Threshold" required>
-                <UInputNumber v-model="tier.min_threshold" :min="1" :max="tier.max_threshold" :disabled="index > 0"
+                <UInputNumber v-model="tier.min_threshold" :min="1" :max="tier.max_threshold ?? undefined" :disabled="index > 0"
                     class="w-full" />
             </UFormField>
 

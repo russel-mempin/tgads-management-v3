@@ -62,7 +62,7 @@ watch(
 <template>
     <section class="shrink-0 mx-6 mt-6 flex gap-2">
         <UButton v-for="item in periods" :key="item.value" :label="item.label" class="rounded-full"
-            :variant="period === item.value ? 'solid' : 'outline'" @click="period = item.value" />
+            :variant="period === item.value ? 'solid' : 'outline'" @click="() => { period = item.value }" />
     </section>
     <section class="mx-6 mt-6 border border-default bg-default rounded-md">
         <div class="flex p-4 border-b border-default">

@@ -53,7 +53,7 @@ const confirm = () => {
 
                 <div class="flex w-full gap-2">
                     <UButton class="flex-1 justify-center" size="lg" :label="cancelLabel" icon="i-lucide-x"
-                        variant="outline" color="neutral" @click="isOpen = false" />
+                        variant="outline" color="neutral" @click="() => { isOpen = false }"/>
 
                     <UButton class="flex-1 justify-center" size="lg" :label="confirmLabel" :icon="confirmIcon"
                         :color="confirmColor" @click="confirm" />

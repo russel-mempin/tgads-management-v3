@@ -90,7 +90,7 @@ const saveUpdatedInfoToDb = async (id: string, extra: ExtraUpdate) => {
     <ExtraForm v-model:isOpen="isExtraFormOpen" @save="saveExtraToDb" @update="saveUpdatedInfoToDb" :editing-extra="selectedExtra" />
     <section class="m-6 flex items-center gap-6">
         <UInput placeholder="Search by extra name..." class="flex-1"/>
-        <UButton label="Add Extra" @click="() => isExtraFormOpen = true" icon="i-lucide-plus"/>
+        <UButton label="Add Extra" @click="() => { isExtraFormOpen = true }" icon="i-lucide-plus"/>
     </section>
     <section class="m-6 bg-default border-default border rounded-md">
         <ExtrasTable :extra="data" @edit-extra="openEditForm" />

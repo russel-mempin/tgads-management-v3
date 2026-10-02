@@ -40,7 +40,7 @@ watch(includeInactive, async () => {
         <section class="shrink-0 flex items-center gap-6">
             <UInput placeholder="Search by service name..." size="lg" class="flex-1" />
             <USwitch v-model="includeInactive" label="Include inactive" size="lg" />
-            <UButton label="Add Service" size="lg" @click="() => router.push('/manage-services/add')"
+            <UButton label="Add Service" size="lg" @click="() => { router.push('/manage-services/add') }"
                 icon="i-lucide-plus" />
         </section>
         <section class="bg-default flex-1 min-h-0 border border-default rounded-md overflow-hidden">

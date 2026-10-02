@@ -24,7 +24,7 @@ const subtitle = computed(() => {
             <div
                 class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default bg-default/60 backdrop-blur-md">
                 <UButton :icon="open ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left-open'" color="neutral"
-                    variant="ghost" :aria-label="open ? 'Close sidebar' : 'Open sidebar'" @click="open = !open" />
+                    variant="ghost" :aria-label="open ? 'Close sidebar' : 'Open sidebar'" @click="() => { open = !open }" />
 
                 <h1 class="ml-4 text-lg font-semibold">
                     {{ route.meta.breadcrumb }}

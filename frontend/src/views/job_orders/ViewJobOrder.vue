@@ -286,7 +286,7 @@ const voidJobOrderToDb = async () => {
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-2">
-                    <UButton label="Cancel" color="neutral" variant="outline" @click="isVoidConfirmOpen = false" />
+                    <UButton label="Cancel" color="neutral" variant="outline" @click="() => { isVoidConfirmOpen = false }" />
 
                     <UButton label="Confirm Void" icon="i-lucide-x" color="error" :disabled="!voidReason.trim()"
                         @click="voidJobOrderToDb" />
@@ -311,7 +311,7 @@ const voidJobOrderToDb = async () => {
                 <UButton icon="i-lucide-arrow-left" label="Back to Job Orders" color="neutral" variant="outline"
                     to="/job-orders" />
                 <div class="flex gap-4">
-                    <UButton icon="i-lucide-printer-x" label="Void Job Order" color="warning" variant="subtle" @click="() => isVoidConfirmOpen = true" />
+                    <UButton icon="i-lucide-printer-x" label="Void Job Order" color="warning" variant="subtle" @click="() => { isVoidConfirmOpen = true }" />
                     <UButton icon="i-lucide-printer" label="Print Job Order" variant="subtle" @click="printJobOrder" />
                 </div>
             </div>

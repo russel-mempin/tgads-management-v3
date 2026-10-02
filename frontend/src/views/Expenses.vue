@@ -100,10 +100,10 @@ watch(
 		<section class="shrink-0 mx-6 mt-6 flex justify-between">
 			<div class="flex gap-2">
 				<UButton v-for="item in periods" :key="item.value" :label="item.label" class="rounded-full"
-					:variant="period === item.value ? 'solid' : 'outline'" @click="period = item.value" />
+					:variant="period === item.value ? 'solid' : 'outline'" @click="() => { period = item.value }" />
 			</div>
 			<UButton label="Add Expense" icon="i-lucide-plus" color="primary" size="lg"
-				@click="() => isAddMiscSaleFormOpen = true" />
+				@click="() => { isAddMiscSaleFormOpen = true }" />
 		</section>
 		<section class="shrink-0 mx-6 mt-6 grid grid-cols-3 gap-6">
 			<ExpenseCards :summary="data.summary" :period="period" />

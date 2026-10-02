@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
 import type { SizeUnit, JobItemExtraCreate } from '@/types/jobOrder';
-import type { Extra } from '@/types/service';
+import type { Extra } from '@/types/extra';
 import { useJobItemPricing } from '@/composables/jobItemPricing';
 
 const props = defineProps<{

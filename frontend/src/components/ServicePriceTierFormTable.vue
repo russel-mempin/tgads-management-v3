@@ -40,7 +40,7 @@ const removeTier = (index: number) => {
                 <UInputNumber v-model="tier.min_threshold" />
                 <UInputNumber v-model="tier.max_threshold" />
                 <UInputNumber v-model="tier.rate" />
-                <UButton icon="i-lucide-x" variant="ghost" color="error" @click="removeTier" />
+                <UButton icon="i-lucide-x" variant="ghost" color="error" @click="() => { removeTier }" />
             </div>
         </div>
     </div>

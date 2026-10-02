@@ -79,7 +79,7 @@ const onSubmit = () => {
                 </div>
                 <div class="flex justify-end gap-6 mt-6">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
-                        class="w-28 justify-center" @click="() => isOpen = false" />
+                        class="w-28 justify-center" @click="() => { isOpen = false }" />
                     <UButton label="Save" icon="i-lucide-save" color="primary" size="lg"
                         class="w-28 font-semibold justify-center items-center" type="submit" />
                 </div>

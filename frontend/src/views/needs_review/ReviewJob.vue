@@ -271,7 +271,7 @@ const confirmResolution = async () => {
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-2">
-                    <UButton label="Cancel" color="neutral" variant="outline" @click="isVoidConfirmOpen = false" />
+                    <UButton label="Cancel" color="neutral" variant="outline" @click="() => { isVoidConfirmOpen = false }" />
 
                     <UButton label="Confirm Void" icon="i-lucide-x" color="error" :disabled="!voidReason.trim()"
                         @click="voidJob" />
@@ -300,7 +300,7 @@ const confirmResolution = async () => {
                     <UTooltip
                         :text="!reviewData.entity.jo_number ? 'A valid job order number is required' : 'Add an item'">
                         <span>
-                            <UButton @click="() => isAddItemFormOpen = true"
+                            <UButton @click="() => { isAddItemFormOpen = true }"
                                 :disabled="!reviewData.entity.jo_number || reviewData.entity.jo_number <= 0"
                                 icon="i-lucide-plus" label="Add Item" variant="outline" />
                         </span>
@@ -314,7 +314,7 @@ const confirmResolution = async () => {
                 @open-form="() => isAddPaymentFormOpen = true" />
             <div class="grid grid-cols-2 gap-4">
                 <UButton label="Void Job Order" icon="i-lucide-x" color="neutral" variant="outline" size="lg"
-                    class="flex w-full justify-center" @click="() => isVoidConfirmOpen = true" />
+                    class="flex w-full justify-center" @click="() => { isVoidConfirmOpen = true }" />
                 <UButton label="Confirm and mark as resolved" icon="i-lucide-check" class="flex w-full justify-center"
                     @click="confirmResolution" />
             </div>
