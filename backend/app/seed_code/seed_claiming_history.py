@@ -1,9 +1,12 @@
-import csv, os
-from sqlmodel import Session, select
-from app.database import engine
-from app.models import JobOrder, JobItem, ClaimingHistory
-from app.utils.utils import to_int
+import csv
+import os
 from datetime import datetime
+
+from sqlmodel import Session, select
+
+from app.database import engine
+from app.models import ClaimingHistory, JobItem, JobOrder
+from app.utils.utils import to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "seed_data", "claiming_history.csv")
@@ -25,7 +28,7 @@ def seed_claiming_history_from_csv(file_path: str = CSV_PATH):
                 print(f"Item ID not found: {row['item_id']}")
                 continue
             if to_int(row["pcs_claimed"]) > item_id.quantity:
-                print(f"Pieces claimed is greater than item quantity.")
+                print("Pieces claimed is greater than item quantity.")
             claiming_history = ClaimingHistory(
                 date_claimed=datetime.fromisoformat(row["date_claimed"]),
                 name=row["name"],
