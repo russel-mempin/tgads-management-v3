@@ -279,6 +279,15 @@ const saveToDb = async () => {
 		</PaymentTable>
 		<ClaimTable :claiming-history="claimingHistory" :job-items="jobItems" :claimable-items="claimableItemIds"
 			@open-form="openAddClaimForm">
+			<template #header-actions>
+				<UTooltip :text="!claimableItemIds.length ? 'No claimable items.' : 'Add a claim'">
+					<span>
+						<UButton @click="openAddClaimForm"
+							:disabled="claimableItemIds.length === 0"
+							icon="i-lucide-plus" label="Add Claim" variant="outline" />
+					</span>
+				</UTooltip>
+			</template>
 			<template #actions="{ item, index }">
 				<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditClaimForm(item, index)" />
 				<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" @click="deleteClaim(index)" />
