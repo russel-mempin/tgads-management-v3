@@ -655,9 +655,16 @@ def create_claim(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot add claim data for a cancelled job.",
             )
+        remaining_before_claim = job_item.remaining_on_hand
         claim = _build_claiming_history(db, job_order.id, job_item.item_id, data)
         db.add(claim)
         db.flush()
+
+        remaining_after_claim = remaining_before_claim - data.pcs_claimed
+
+        if remaining_after_claim == 0:
+            job_item.job_status = JobStatus.RELEASED
+
         job_order.sync_computed_fields()
         audit = AuditLog(
             action=f"Created claim for {job_item.item_id}",
