@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 // Type imports
 import type { JobItemTableRow, JobItemCreate, JobItem, Payment, ClaimingHistory } from '@/types/jobOrder';
@@ -56,6 +56,9 @@ const {
 } = useCustomerSearch()
 const { buildJobItem, resolveServiceId, resolveOptionId } = useJobItemBuilder(serviceList, extraList, getUnitPrice)
 
+onMounted(() => {
+    referenceStore.initialize()
+})
 
 // UI Functions
 const currentItemIds = computed(() =>
