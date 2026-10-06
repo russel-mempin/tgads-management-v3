@@ -49,6 +49,7 @@ def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UU
                 source_type=TransactionSource.MISC_SALE,
                 source_id=misc_sale.id,
                 account=misc_sale.account,
+                description=f"Misc sale: {misc_sale.description}"
         ))
         audit = AuditLog(action="Created misc sale", user_id=current_user_id)
         db.add(audit)
@@ -114,6 +115,7 @@ def update_misc_sale(
                 source_type=TransactionSource.REVERSAL,
                 source_id=misc_sale.id,
                 account=old_account,
+                description=f"Reversal of misc sale: {misc_sale.description}"
             )
         )
 
@@ -125,6 +127,7 @@ def update_misc_sale(
                 source_type=TransactionSource.MISC_SALE,
                 source_id=misc_sale.id,
                 account=misc_sale.account,
+                description=f"Misc sale: {misc_sale.description}"
             )
         )
 
@@ -185,6 +188,7 @@ def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user: User):
                 source_type=TransactionSource.REVERSAL,
                 source_id=misc_sale.id,
                 account=misc_sale.account,
+                description=f"Reversal of misc sale: {misc_sale.description} due to archiving."
             )
         )
 

@@ -12,8 +12,8 @@ const router = useRouter()
 const referenceStore = useReferenceStore()
 
 const tierSchema = z.object({
-    min_threshold: z.number().min(0.1, 'Min threshold must be higher than 0'),
-    max_threshold: z.number().min(0.1, 'Max threshold must be higher than 0'),
+    min_threshold: z.number(),
+    max_threshold: z.number(),
     rate: z.number().min(0.1, 'Rate must be higher than 0'),
 })
 const schema = z.object({
@@ -24,7 +24,7 @@ const schema = z.object({
     options: z.array(
         z.object({
             name: z.string().min(1, 'Option name is required'),
-            base_rate: z.number().min(0.1, 'Base rate must be higher than 0'),
+            base_rate: z.number().min(0, 'Base rate must be higher than 0'),
             minimum_consumption: z.number().optional(),
             stock_increment: z.number().optional(),
             price_tiers: z.array(tierSchema).superRefine((tiers, ctx) => {

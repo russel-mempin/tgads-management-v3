@@ -684,9 +684,35 @@ class MiscSale(MiscSaleBase, table=True):
 
     account: Account = Relationship(back_populates="misc_sales")
 
+    created_by_id: uuid.UUID = Field(
+        foreign_key="users.id",
+        nullable=False,
+        index=True,
+    )
+    updated_by_id: uuid.UUID | None = Field(foreign_key="users.id", nullable=True, index=True)
+
+    created_by: User = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "MiscSale.created_by_id"}
+    )
+    updated_by: User | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "MiscSale.updated_by_id"}
+    )
+
     @property
     def account_name(self) -> str | None:
         return self.account.name if self.account else None
+
+    @property
+    def created_by_name(self) -> str | None:
+        if not self.created_by:
+            return None
+        return f"{self.created_by.first_name} {self.created_by.last_name}"
+
+    @property
+    def updated_by_name(self) -> str | None:
+        if not self.updated_by:
+            return None
+        return f"{self.updated_by.first_name} {self.updated_by.last_name}"
 
 
 # ====================== ACCOUNTS =========================

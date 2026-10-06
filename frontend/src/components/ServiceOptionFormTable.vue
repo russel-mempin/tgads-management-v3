@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { resolveComponent, h, ref } from 'vue';
-import type { TableColumn } from '@nuxt/ui'
+import { resolveComponent } from 'vue';
 import type { Schema } from '@/views/manage_services/AddService.vue';
 import ServiceOptionPriceTierTable from '@/components/ServicePriceTierFormTable.vue'
 
@@ -57,10 +56,10 @@ const removeOption = (index: number) => {
                     />
                 </UFormField>
                 <UFormField label="Minimum Consumption" :name="`options.${index}.minimum_consumption`">
-                    <UInputNumber v-model="options[index]!.minimum_consumption" :min="0.1" :step="0.01" />
+                    <UInputNumber v-model="options[index]!.minimum_consumption" :min="0" :step="0.01" />
                 </UFormField>
                 <UFormField label="Stock Increment" :name="`options.${index}.stock_increment`">
-                    <UInputNumber v-model="options[index]!.stock_increment" :min="0.1" placeholder="Option name" />
+                    <UInputNumber v-model="options[index]!.stock_increment" :min="0" placeholder="Option name" />
                 </UFormField>
                 <UFormField label="&nbsp;" class="shrink-0">
                     <div class="flex items-center gap-4">

@@ -39,8 +39,19 @@ const removeTier = (index: number) => {
                 <p class="self-center">Tier No. {{ index + 1 }}</p>
                 <UInputNumber v-model="tier.min_threshold" />
                 <UInputNumber v-model="tier.max_threshold" />
-                <UInputNumber v-model="tier.rate" />
-                <UButton icon="i-lucide-x" variant="ghost" color="error" @click="() => { removeTier }" />
+                <UInputNumber v-model="tier.rate" 
+                    :increment="false" 
+                    :decrement="false"
+                    @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" 
+                    :step="0.01"
+                    :format-options="{
+                        style: 'currency',
+                        currency: 'PHP',
+                        currencyDisplay: 'code',
+                        currencySign: 'accounting'
+                    }"
+                />
+                <UButton icon="i-lucide-x" variant="ghost" color="error" @click="() => { removeTier(index) }" />
             </div>
         </div>
     </div>
