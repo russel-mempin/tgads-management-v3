@@ -11,7 +11,7 @@ const columns: TableColumn<MiscSale>[] = [
 	{
 		accessorKey: 'reference_number',
 		header: 'Reference No.',
-		cell: ({ row }) => row.getValue('reference_number') || 'N/A',
+		cell: ({ row }) => row.getValue('reference_number') || '—',
 	},
 	{
 		accessorKey: 'date',
@@ -32,6 +32,15 @@ const columns: TableColumn<MiscSale>[] = [
 		header: 'Method',
 	},
 	{
+		accessorKey: 'created_by_name',
+		header: 'Added By',
+	},
+	{
+		accessorKey: 'updated_by_name',
+		header: 'Last Updated By',
+		cell: ({ row }) => row.getValue('updated_by_name') || '—',
+	},
+	{
 		id: 'actions',
 		header: ''
 	}
@@ -39,7 +48,7 @@ const columns: TableColumn<MiscSale>[] = [
 </script>
 
 <template>
-    <UTable :data="miscSale" :columns="columns">
+    <UTable :data="miscSale" :columns="columns" sticky class="overflow-y-auto h-full">
         <template #actions-cell="{ row }">
             <slot name="actions" :item="row.original" :index="row.index" />
         </template>

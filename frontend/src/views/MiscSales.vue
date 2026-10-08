@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import type { MiscSale, MiscSaleCreate, MiscSaleUpdate } from '@/types/miscSale';
-import { createMiscSale, getAllMiscSales, updateMiscSale, archiveMiscSale } from '@/api/miscSales';
+import type { DATE_PERIODS } from '@/utils/constants'
+import { createMiscSale, getAllMiscSales, getMiscSalesCount, updateMiscSale, archiveMiscSale } from '@/api/miscSales';
 import MiscSaleTable from '@/components/MiscSaleTable.vue';
 import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
@@ -13,9 +14,25 @@ import { formatDate } from '@/utils/formatters';
 const authStore = useAuthStore()
 const toast = useToast()
 const referenceStore = useReferenceStore()
+const datePeriodOptions: { label: string; value: DATE_PERIODS }[] = [
+	{ label: 'Today', value: 'today' },
+	{ label: 'This Week', value: 'this_week' },
+	{ label: 'This Month', value: 'this_month' },
+	{ label: 'Last Month', value: 'last_month' },
+	{ label: 'This Year', value: 'this_year' },
+	{ label: 'All Time', value: 'all' },
+]
 
+const selectedPeriod = ref<DATE_PERIODS>('this_month')
 const descriptionSearch = ref('')
 const includeArchived = ref(false)
+
+// Pagination
+const currentPage = ref(1)
+const rows = ref(20)
+const totalRecords = ref(0)
+const currentOffset = computed(() => (currentPage.value - 1) * rows.value)
+
 const data = ref<MiscSale[]>([])
 const selectedMiscSale = ref<MiscSale>()
 const originalMiscSale = ref<MiscSale>()
@@ -26,8 +43,22 @@ const isConfirmDeleteModalOpen = ref(false)
 
 const fetchData = async () => {
 	loading.value = true
+
 	try {
-		data.value = await getAllMiscSales(includeArchived.value)
+		data.value = await getAllMiscSales(
+			includeArchived.value,
+			descriptionSearch.value,
+			selectedPeriod.value,
+			currentOffset.value,
+			rows.value,
+		)
+
+		totalRecords.value = await getMiscSalesCount(
+			includeArchived.value,
+			descriptionSearch.value,
+			selectedPeriod.value,
+		)
+		console.log(totalRecords.value)
 	}
 	finally {
 		loading.value = false
@@ -38,7 +69,15 @@ onMounted(async () => {
 	await fetchData()
 })
 
-watch(includeArchived, async () => {
+watch(
+	[includeArchived, descriptionSearch, selectedPeriod],
+	async () => {
+		currentPage.value = 1
+		await fetchData()
+	}
+)
+
+watch(currentPage, async () => {
 	await fetchData()
 })
 
@@ -131,8 +170,10 @@ const deleteMiscSale = async () => {
 			color: 'success',
 			icon: 'i-lucide-circle-check'
 		})
+		fetchData()
+		isConfirmDeleteModalOpen.value = false
 	}
-	catch(error: unknown) {
+	catch (error: unknown) {
 		console.error('Failed to archive misc sale:', error)
 
 		let message = 'An unexpected error occurred.'
@@ -152,8 +193,8 @@ const deleteMiscSale = async () => {
 </script>
 
 <template>
-	<ConfirmDeleteMiscSale v-model:open="isConfirmDeleteModalOpen" title="You are about to delete a misc. sale"
-		description="This will delete the misc. sale data and reverse the transaction related to it."
+	<ConfirmDeleteMiscSale v-model:open="isConfirmDeleteModalOpen" title="You are about to archive a misc. sale"
+		description="This will archive the misc. sale data and reverse the transaction related to it."
 		@confirm="deleteMiscSale">
 		<template #details>
 			<div class="flex justify-between gap-4">
@@ -180,21 +221,33 @@ const deleteMiscSale = async () => {
 	</ConfirmDeleteMiscSale>
 	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb"
 		:editing-misc-sale="selectedMiscSale" />
-	<div class="m-6">
-		<section class="flex gap-6 items-center">
+	<div class="h-full min-h-0 flex flex-col">
+		<section class="shrink-0 mt-6 px-6 flex gap-6 items-center">
 			<UInput size="lg" class="flex-1" v-model="descriptionSearch" placeholder="Search by description" />
 			<USwitch v-if="authStore.isOwner" label="Include archived" v-model="includeArchived" />
+			<USelect size="lg" class="w-36" v-model="selectedPeriod" :items="datePeriodOptions" />
 			<UButton label="Add Misc Sale" icon="i-lucide-plus" color="primary" size="lg"
 				@click="openAddMiscSaleForm" />
 		</section>
-		<section class="mt-6 border border-default bg-default rounded-md">
+		<section class="bg-default flex-1 min-h-0 m-6 border border-default rounded-md overflow-hidden">
 			<MiscSaleTable :misc-sale="data">
 				<template #actions="{ item }">
 					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditMiscSaleForm(item)" />
-					<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md"
+					<UButton icon="i-lucide-eye-off" variant="ghost" color="error" size="md"
 						@click="openDeleteMiscSaleModal(item)" />
 				</template>
 			</MiscSaleTable>
+		</section>
+		<section class="shrink-0 mb-6 px-6 flex items-center justify-between">
+			<p class="text-muted text-sm">
+				Showing
+				{{ data.length ? currentOffset + 1 : 0 }}–{{
+					Math.min(currentOffset + data.length, totalRecords)
+				}}
+				of {{ totalRecords }}
+			</p>
+
+			<UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
 		</section>
 	</div>
 </template>

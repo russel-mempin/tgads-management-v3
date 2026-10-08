@@ -143,7 +143,6 @@ const router = createRouter({
           path: 'misc-sales',
           component: () => import('@/views/MiscSales.vue'),
           meta: {
-            superuserOnly: true,
             title: 'Misc Sales',
             breadcrumb: 'Misc Sales',
             breadcrumbParent: { label: 'Misc Sales', to: 'misc-sales' },
