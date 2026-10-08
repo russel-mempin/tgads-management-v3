@@ -9,6 +9,8 @@ export interface MiscSale extends MiscSaleBase {
     id: string
     amount: string
     account_name: string
+    created_by_name: string
+    updated_by_name: string | null
 }
 
 export interface MiscSaleCreate extends MiscSaleBase {

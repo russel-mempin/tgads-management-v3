@@ -2,27 +2,80 @@ import uuid
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.enums import ReasonCategory, ReviewEntityType, TransactionSource, UserRoles
+from app.enums import (
+    DatePeriod,
+    ReasonCategory,
+    ReviewEntityType,
+    TransactionSource,
+    UserRoles,
+)
 from app.models import Account, AccountTransaction, AuditLog, ForReview, MiscSale, User
 from app.schemas.misc_sale import MiscSaleCreate, MiscSalePublic, MiscSaleUpdate
+from app.utils.utils import get_date_range
 
 
 def get_all_misc_sales(
     db: Session,
     include_archived: bool = False,
+    search: str | None = None,
+    date_period: DatePeriod = DatePeriod.ALL,
     offset: int = 0,
     limit: int = 100,
 ) -> list[MiscSalePublic]:
     statement = select(MiscSale)
 
     if not include_archived:
-        statement = statement.where(MiscSale.is_archived == False)
+        statement = statement.where(MiscSale.is_archived.is_(False))
 
+    if search:
+        statement = statement.where(
+            MiscSale.description.ilike(f"%{search}%")
+        )
+
+    date_range = get_date_range(date_period)
+
+    if date_range:
+        start, end = date_range
+        statement = statement.where(
+            MiscSale.date >= start,
+            MiscSale.date < end,
+        )
+
+    statement = statement.order_by(MiscSale.date.desc())
     statement = statement.offset(offset).limit(limit)
 
     return list(db.exec(statement).all())
+
+
+def get_misc_sales_count(
+    db: Session,
+    include_archived: bool = False,
+    search: str | None = None,
+    date_period: DatePeriod = DatePeriod.ALL,
+) -> int:
+    statement = select(func.count()).select_from(MiscSale)
+
+    if not include_archived:
+        statement = statement.where(MiscSale.is_archived.is_(False))
+
+    if search:
+        statement = statement.where(
+            MiscSale.description.ilike(f"%{search}%")
+        )
+
+    date_range = get_date_range(date_period)
+
+    if date_range:
+        start, end = date_range
+        statement = statement.where(
+            MiscSale.date >= start,
+            MiscSale.date < end,
+        )
+
+    return db.exec(statement).one()
 
 
 def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UUID):
@@ -39,6 +92,7 @@ def create_misc_sale(db: Session, data: MiscSaleCreate, current_user_id: uuid.UU
             reference_number=data.reference_number,
             account_id=account.id,
             account_name_snapshot=account.name,
+            created_by_id=current_user_id
         )
         db.add(misc_sale)
         db.commit()
@@ -66,7 +120,7 @@ def update_misc_sale(
     data: MiscSaleUpdate,
     current_user: User,
 ):
-    misc_sale = db.get(MiscSale, misc_sale_id)
+    misc_sale = db.get(MiscSale, misc_sale_id, with_for_update=True)
     if not misc_sale:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -92,6 +146,7 @@ def update_misc_sale(
 
     if not new_data:
         return misc_sale
+    misc_sale.updated_by_id = current_user.id
 
     # If account/payment method changed, get the new account
     if "account_id" in new_data:
@@ -146,6 +201,8 @@ def update_misc_sale(
         )
 
     db.add(misc_sale)
+    audit = AuditLog(action="Updated misc sale", user_id=current_user.id)
+    db.add(audit)
     db.commit()
     db.refresh(misc_sale)
 
@@ -163,6 +220,11 @@ def archive_misc_sale(db: Session, misc_sale_id: uuid.UUID, current_user: User):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Misc sale already archived.",
+            )
+        if misc_sale.created_by_id != current_user.id and current_user.role != UserRoles.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to archive this misc sale.",
             )
         old_archived = misc_sale.is_archived
 
