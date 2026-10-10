@@ -1,12 +1,19 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.enums import DatePeriod, ExpenseCategory, TransactionSource
-from app.models import Account, AccountTransaction, AuditLog, Expense
+from app.enums import (
+    DatePeriod,
+    ExpenseCategory,
+    ReasonCategory,
+    ReviewEntityType,
+    TransactionSource,
+    UserRoles,
+)
+from app.models import Account, AccountTransaction, AuditLog, Expense, ForReview, User
 from app.schemas.expense import (
     ExpenseByCategory,
     ExpenseCreate,
@@ -146,7 +153,6 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
             created_by_id=current_user_id
         )
         db.add(expense)
-        db.commit()
         db.refresh(expense)
 
         transaction = AccountTransaction(
@@ -193,7 +199,7 @@ def update_expense(
                 description=f"Reversal: {expense.description}",
                 amount=expense.amount,  # positive = money back
                 running_balance=old_account.current_balance,
-                source_type=TransactionSource.EXPENSE_REVERSAL,
+                source_type=TransactionSource.REVERSAL,
                 source_id=expense.id,
             )
             db.add(reversal)
@@ -245,36 +251,53 @@ def update_expense(
         raise
 
 
-def archive_expense(db: Session, expense_id: uuid.UUID, current_user_id: uuid.UUID):
+def archive_expense(db: Session, expense_id: uuid.UUID, current_user: User):
     try:
         expense = db.exec(select(Expense).where(Expense.id == expense_id)).first()
         if not expense:
-            raise HTTPException(status_code=404, detail="Expense not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+        if expense.created_by_id != current_user.id and current_user.role != UserRoles.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to archive this expense.",
+            )
+        if expense.is_archived:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Expense is already archived.",
+            )
+        expense.is_archived = True
+        db.add(expense)
 
+        if current_user.role != UserRoles.OWNER:
+            db.add(
+                ForReview(
+                    entity_type=ReviewEntityType.EXPENSE,
+                    entity_id=expense.id,
+                    entity_reference=expense.description,
+                    reason_category=ReasonCategory.EDIT_REQUIRES_APPROVAL,
+                    old_data={"is_archived": False},
+                    new_data={"is_archived": True},
+                    reason="Expense archived by non-owner",
+                    created_by_id=current_user.id,
+                )
+            )
         # Reverse the transaction
         account = db.exec(
             select(Account).where(Account.id == expense.account_id)
         ).first()
         if account:
-            account.current_balance += expense.amount  # add back the amount
-            db.add(account)
-
-            reversal = AccountTransaction(
-                account_id=account.id,
+            db.add(AccountTransaction(
                 date=datetime.now(UTC),
-                description=f"Reversal (archived): {expense.description}",
-                amount=expense.amount,  # positive = money back
-                running_balance=account.current_balance,
-                source_type=TransactionSource.EXPENSE_REVERSAL,
+                amount=expense.amount,
+                source_type=TransactionSource.REVERSAL,
                 source_id=expense.id,
-            )
-            db.add(reversal)
-
-        expense.is_archived = True
-        db.add(expense)
+                account=account,
+                description=f"Expense Reversal: {expense.description}",
+            ))
 
         audit = AuditLog(
-            action=f"Archived expense: {expense.description}", user_id=current_user_id
+            action=f"Archived expense: {expense.description}", user_id=current_user.id
         )
         db.add(audit)
         db.commit()

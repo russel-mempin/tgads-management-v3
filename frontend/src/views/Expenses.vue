@@ -1,13 +1,19 @@
 <script setup lang="ts">
+// Package imports
 import { ref, onMounted, watch, computed } from 'vue';
+import axios from 'axios';
+// Type Imports
 import type { ExpenseList, ExpensePeriod, ExpenseCategory, ExpenseCreate } from '@/types/expense';
+// API Call Imports
 import { getAllExpenses, createExpense } from '@/api/expenses';
+// Component Imports
 import ExpenseForm from '@/components/ExpenseForm.vue';
 import ExpenseTable from '@/components/ExpenseTable.vue';
 import ExpenseCards from '@/components/ExpenseCards.vue';
-import { useAuthStore } from '@/stores/auth';
 import SpendingByCategory from '@/components/SpendingByCategory.vue';
-import axios from 'axios';
+import ConfirmActionModal from '@/components/ConfirmActionModal.vue';
+// Store Imports
+import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -54,6 +60,7 @@ const categories = [
 	{ label: 'Miscellaneous', value: 'Miscellaneous' },
 	{ label: 'Equipment', value: 'Equipment' },
 ]
+const isConfirmArchiveModalOpen = ref(false)
 
 // Pagination
 const currentPage = ref(1)
@@ -153,7 +160,7 @@ const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 			<ExpenseTable sticky class="min-h-0 flex-1 overflow-y-auto" :expense="data.items">
 				<template #actions="{ item }">
 					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" />
-					<UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="md" />
+					<UButton icon="i-lucide-eye-off" variant="ghost" color="error" size="md" />
 				</template>
 			</ExpenseTable>
 			<div class="border-t border-default flex items-center justify-between p-4">

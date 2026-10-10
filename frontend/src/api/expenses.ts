@@ -32,3 +32,8 @@ export const createExpense = async (payload: ExpenseCreate) => {
     const res = await http.post('/expenses/', payload)
     return res.data
 }
+
+export const archiveExpense = async (expenseId: string) => {
+    const res = await http.patch(`/expenses/${expenseId}/archive`)
+    return res.data
+}

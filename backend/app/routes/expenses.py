@@ -71,4 +71,4 @@ def update(expense_id: uuid.UUID, data: ExpenseCreate, db: Session = Depends(get
 
 @router.patch("/{expense_id}/archive")
 def archive(expense_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
-    return archive_expense(db, expense_id, current_user.id)
+    return archive_expense(db, expense_id, current_user)
