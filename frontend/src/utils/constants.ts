@@ -61,3 +61,20 @@ export type DATE_PERIODS =
   | 'last_month'
   | 'this_year'
   | 'all'
+
+export const EXPENSE_CATEGORIES = [
+  { label: 'All Categories', value: 'all' },
+  { label: 'Food', value: 'Food' },
+  { label: 'Maintenance', value: 'Maintenance' },
+  { label: 'Utilities', value: 'Utilities' },
+  { label: 'Transportation', value: 'Transportation' },
+  { label: 'Supplies', value: 'Supplies' },
+  { label: 'Payroll', value: 'Payroll' },
+  { label: 'Benefits', value: 'Benefits' },
+  { label: 'Production', value: 'Production' },
+  { label: 'Miscellaneous', value: 'Miscellaneous' },
+  { label: 'Equipment', value: 'Equipment' },
+] as const
+
+  export type ExpenseCategory =
+  Exclude<typeof EXPENSE_CATEGORIES[number]['value'], 'all'>

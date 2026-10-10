@@ -136,37 +136,31 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
         if not account:
             raise ValueError("Fund source not found in database")
 
-        print(data.date)
-        print(repr(data.date))
-        print(data.date.tzinfo)
-
         expense = Expense(
             date=data.date,
             category=data.category,
             amount=data.amount,
             description=data.description,
             account_id=account.id,
+            account_name_snapshot=account.name,
+            created_by_id=current_user_id
         )
         db.add(expense)
         db.commit()
         db.refresh(expense)
 
-        new_balance = account.current_balance - expense.amount
-        account.current_balance = new_balance
-        db.add(account)
         transaction = AccountTransaction(
             account_id=account.id,
             date=data.date,
             description=data.description,
             amount=expense.amount,
-            running_balance=new_balance,
             source_type=TransactionSource.EXPENSE,
             source_id=expense.id,
         )
         db.add(transaction)
         audit = AuditLog(
             action=f"Created expense {expense.description}", user_id=current_user_id
-        )
+        )   
         db.add(audit)
         db.commit()
 

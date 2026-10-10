@@ -1,46 +1,49 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters'
-import type { Payment } from '@/types/jobOrder'
+import { z } from 'zod';
+import type { Expense, ExpenseCreate } from '@/types/expense';
+import { EXPENSE_CATEGORIES } from '@/utils/constants';
 import { useReferenceStore } from '@/stores/reference'
+import { nowForInput, utcToInput, inputToUtc } from '@/utils/formatters';
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 const props = defineProps<{
-    balance: number
-    editingPayment?: Payment | null
+    editingExpense?: Expense | null
 }>()
 
 const emit = defineEmits<{
-    save: [payment: Payment]
+    save: [Expense: ExpenseCreate]
     close: []
 }>()
 
+const referenceStore = useReferenceStore()
+const CATEGORY_VALUES = EXPENSE_CATEGORIES
+  .filter((category) => category.value !== 'all')
+  .map((category) => category.value)
+
 // UI Variables
 const isOpen = defineModel<boolean>('isOpen', { required: true })
-const referenceStore = useReferenceStore()
-const accountsList = computed(() => referenceStore.accountOptions)
 
 // Validation Schema
 const schema = z.object({
-    dateReceived: z.string().min(1, 'Date received is required'),
-    referenceNumber: z.string().min(1, 'Reference number is required'),
+    date: z.string().min(1, 'Date is required'),
+    category: z.enum(CATEGORY_VALUES),
+    description: z.string().min(1, 'Description is required'),
     amount: z.number({ error: 'Amount is required' }).positive('Amount must be greater than 0'),
     accountName: z.string().min(1, 'Payment method is required'),
-    notes: z.string().optional(),
 })
 type Schema = z.output<typeof schema>
 
-// Input variables
+// Input Variables
 const getInitialState = (): Schema => {
     const cashAccount = referenceStore.accountOptions.find(
         a => a.name === 'Cash'
     )
     return {
-        dateReceived: nowForInput(),
-        referenceNumber: '',
+        date: nowForInput(),
+        category: 'Food',
+        description: '',
         amount: 0,
-        notes: '',
         accountName: cashAccount?.id ?? '',
     }
 }
@@ -52,34 +55,31 @@ const resetForm = () => {
 }
 const handleCancel = () => {
     isOpen.value = false
+    resetForm()
     emit('close')
 }
 
 // Data Functions
-watch(() => props.editingPayment, (payment) => {
-    if (payment) {
-        state.dateReceived = utcToInput(payment.date_received)
-        state.referenceNumber = payment.reference_number
-        state.amount = payment.amount
-        state.notes = payment.notes
-        state.accountName = payment.account_id ?? ''
+watch(() => props.editingExpense, (expense) => {
+    if (expense) {
+        state.date = utcToInput(expense.date)
+        state.category = expense.category
+        state.description = expense.description
+        state.amount = parseFloat(expense.amount)
+        state.accountName = expense.account_name ?? ''
     } else {
         resetForm()
     }
 }, { immediate: true })
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
-    const selectedAccount = accountsList.value.find(a => a.id === event.data.accountName)
-
-    const payload: Payment = {
-        date_received: inputToUtc(event.data.dateReceived),
-        reference_number: event.data.referenceNumber,
+    const payload: ExpenseCreate = {
+        date: inputToUtc(event.data.date),
+        category: event.data.category,
+        description: event.data.description,
         amount: event.data.amount,
-        notes: event.data.notes ?? '',
-        account_id: event.data.accountName,
-        account_name_snapshot: selectedAccount?.name ?? '',
+        fund_source: event.data.accountName
     }
-
     emit('save', payload)
     resetForm()
     isOpen.value = false
@@ -87,34 +87,37 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-    <UModal :title="editingPayment ? 'Edit Payment' : 'Add Payment'" v-model:open="isOpen"
+    <UModal 
+        :title="editingExpense ? 'Edit Expense' : 'Add Expense'"
+        v-model:open="isOpen"
         :close="{ color: 'error', class: 'rounded-full' }"
-        description="Enter payment data and click save to prepare it for saving.">
+        description="Enter expense data and click save to save it to the database."
+    >
         <template #body>
             <UForm :schema="schema" :state="state" class="flex flex-col gap-6" @submit="onSubmit">
                 <div class="grid grid-cols-2 gap-6">
-                    <UFormField label="Date Received" name="dateReceived" required class="w-full">
-                        <UInput v-model="state.dateReceived" type="datetime-local" class="w-full" />
+                    <UFormField label="Date" name="date" required class="w-full">
+                        <UInput v-model="state.date" type="datetime-local" class="w-full" />
                     </UFormField>
-                    <UFormField label="Reference No." name="referenceNumber" required class="w-full">
-                        <UInput v-model="state.referenceNumber" class="w-full" />
+                    <UFormField label="Category" name="category" required class="w-full">
+                        <USelect v-model="state.category" :items="CATEGORY_VALUES" class="w-full" />
                     </UFormField>
                 </div>
+                <UFormField label="Description" name="description" required class="w-full">
+                    <UInput v-model="state.description" class="w-full" />
+                </UFormField>
                 <UFormField label="Amount" name="amount" required class="w-full">
-                    <UInputNumber v-model="state.amount" :max="balance" class="w-full" :increment="false" :decrement="false"
+                    <UInputNumber v-model="state.amount" class="w-full" :increment="false" :decrement="false"
                         :format-options="{
-                            style: 'currency',
-                            currency: 'PHP',
-                            currencyDisplay: 'code',
-                            currencySign: 'accounting'
+                        style: 'currency',
+                        currency: 'PHP',
+                        currencyDisplay: 'code',
+                        currencySign: 'accounting'
                         }" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                 </UFormField>
                 <UFormField label="Method" name="accountName" required class="w-full">
                     <USelect v-model="state.accountName" class="w-full" value-key="id" label-key="name"
                         :items="referenceStore.accountOptions" />
-                </UFormField>
-                <UFormField label="Notes" name="notes" class="w-full">
-                    <UInput v-model="state.notes" class="w-full" />
                 </UFormField>
                 <div class="flex justify-end gap-4">
                     <UButton label="Cancel" icon="i-lucide-x" color="neutral" variant="outline" size="lg" class="w-28"

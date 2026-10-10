@@ -153,7 +153,6 @@ const router = createRouter({
           path: 'expenses',
           component: () => import('@/views/Expenses.vue'),
           meta: {
-            superuserOnly: true,
             title: 'Expenses',
             breadcrumb: 'Expenses',
             breadcrumbParent: { label: 'Expenses', to: 'expenses' },

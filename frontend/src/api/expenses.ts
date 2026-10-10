@@ -1,5 +1,5 @@
 import http from './http'
-import type { ExpenseCategory, ExpensePeriod } from '@/types/expense'
+import type { ExpenseCategory, ExpensePeriod, ExpenseCreate } from '@/types/expense'
 
 export const getAllExpenses = async (
     period: ExpensePeriod = 'all',
@@ -25,5 +25,10 @@ export const getAllExpenses = async (
 
 export const getExpenseCount = async() => {
     const res = await http.get('/expenses/count')
+    return res.data
+}
+
+export const createExpense = async (payload: ExpenseCreate) => {
+    const res = await http.post('/expenses/', payload)
     return res.data
 }

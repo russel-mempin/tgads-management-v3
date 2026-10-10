@@ -20,14 +20,20 @@ export type ExpenseCategory =
 
 interface ExpenseBase {
     date: string
-    category: string
+    category: ExpenseCategory
     description: string
 }
 
 export interface Expense extends ExpenseBase {
-    id: string
+    id?: string
     amount: string
+    account_id?: string
     account_name: string
+}
+
+export interface ExpenseCreate extends ExpenseBase {
+    amount: number
+    fund_source: string
 }
 
 export interface ExpenseSummary {
