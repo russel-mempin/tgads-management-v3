@@ -35,6 +35,14 @@ export interface ExpenseCreate extends ExpenseBase {
     amount: number
 }
 
+export interface ExpenseUpdate {
+    date?: string
+    category?: ExpenseCategory
+    description?: string
+    amount?: number
+    account_id?: string
+}
+
 export interface ExpenseSummary {
     total: string
     count: number

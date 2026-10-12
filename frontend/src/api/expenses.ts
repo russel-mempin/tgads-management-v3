@@ -1,5 +1,5 @@
 import http from './http'
-import type { ExpenseCategory, ExpensePeriod, ExpenseCreate } from '@/types/expense'
+import type { ExpenseCategory, ExpensePeriod, ExpenseCreate, ExpenseUpdate } from '@/types/expense'
 
 export const getAllExpenses = async (
     period: ExpensePeriod = 'all',
@@ -35,5 +35,10 @@ export const createExpense = async (payload: ExpenseCreate) => {
 
 export const archiveExpense = async (expenseId: string) => {
     const res = await http.patch(`/expenses/${expenseId}/archive`)
+    return res.data
+}
+
+export const updateExpense = async (expenseId: string, payload: ExpenseUpdate) => {
+    const res = await http.patch(`/expenses/${expenseId}`, payload)
     return res.data
 }

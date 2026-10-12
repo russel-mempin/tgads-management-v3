@@ -3,9 +3,9 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 // Type Imports
-import type { Expense, ExpenseList, ExpensePeriod, ExpenseCategory, ExpenseCreate } from '@/types/expense';
+import type { Expense, ExpenseList, ExpensePeriod, ExpenseCategory, ExpenseCreate, ExpenseUpdate } from '@/types/expense';
 // API Call Imports
-import { getAllExpenses, createExpense, archiveExpense } from '@/api/expenses';
+import { getAllExpenses, createExpense, archiveExpense, updateExpense } from '@/api/expenses';
 // Component Imports
 import ExpenseForm from '@/components/ExpenseForm.vue';
 import ExpenseTable from '@/components/ExpenseTable.vue';
@@ -41,6 +41,7 @@ const includeArchived = ref(false)
 
 // Data Variables
 const selectedExpense = ref<Expense>()
+const originalExpense = ref<Expense>()
 
 // UI Variables
 const periods: { label: string; value: ExpensePeriod }[] = [
@@ -110,6 +111,31 @@ const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 			await createExpense(expense)
 			toast.add({
 				title: 'Expense Added.',
+				color: 'success',
+				icon: 'i-lucide-circle-check'
+			})
+		}
+		else {
+			const id = selectedExpense.value.id
+			if (!id) throw new Error('Selected expense has no id')
+			const changes: ExpenseUpdate = {}
+			for (const key of Object.keys(expense) as (keyof ExpenseUpdate)[]) {
+				const currentValue = expense[key]
+				const originalValue = originalExpense.value?.[key]
+
+				const changed =
+					key === 'date'
+						? new Date(currentValue as string).getTime() !==
+						new Date(originalValue as string).getTime()
+						: currentValue !== originalValue
+
+				if (changed) {
+					changes[key] = currentValue as never
+				}
+			}
+			await updateExpense(selectedExpense.value.id!, changes)
+			toast.add({
+				title: 'Expense Updated.',
 				color: 'success',
 				icon: 'i-lucide-circle-check'
 			})
