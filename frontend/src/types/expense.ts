@@ -22,18 +22,17 @@ interface ExpenseBase {
     date: string
     category: ExpenseCategory
     description: string
+    account_id: string
 }
 
 export interface Expense extends ExpenseBase {
     id?: string
     amount: string
-    account_id?: string
     account_name: string
 }
 
 export interface ExpenseCreate extends ExpenseBase {
     amount: number
-    fund_source: string
 }
 
 export interface ExpenseSummary {

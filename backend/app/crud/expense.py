@@ -2,6 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func
 from sqlmodel import Session, select
 
@@ -19,6 +20,7 @@ from app.schemas.expense import (
     ExpenseCreate,
     ExpenseList,
     ExpenseSummary,
+    ExpenseUpdate,
 )
 from app.utils.utils import get_date_range
 
@@ -124,7 +126,7 @@ def count_all_expenses(db: Session) -> int:
 
 def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID):
     try:
-        account = db.exec(select(Account).where(Account.id == data.fund_source)).first()
+        account = db.exec(select(Account).where(Account.id == data.account_id)).first()
         if not account:
             raise ValueError("Fund source not found in database")
 
@@ -162,73 +164,67 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
 
 
 def update_expense(
-    db: Session, expense_id: uuid.UUID, data: ExpenseCreate, current_user_id: uuid.UUID
+    db: Session, expense_id: uuid.UUID, data: ExpenseUpdate, current_user_id: uuid.UUID
 ):
     try:
-        print(expense_id)
         expense = db.exec(select(Expense).where(Expense.id == expense_id)).first()
         if not expense:
             raise HTTPException(status_code=404, detail="Expense not found.")
 
-        # Reverse the old transaction
-        old_account = db.exec(
-            select(Account).where(Account.id == expense.account_id)
-        ).first()
-        if old_account:
-            old_account.current_balance += expense.amount  # add back the old amount
-            db.add(old_account)
+        old_amount = expense.amount
+        old_date = expense.date
+        old_account = expense.account
 
-            reversal = AccountTransaction(
-                account_id=old_account.id,
-                date=datetime.now(UTC),
-                description=f"Reversal: {expense.description}",
-                amount=expense.amount,  # positive = money back
-                running_balance=old_account.current_balance,
-                source_type=TransactionSource.REVERSAL,
-                source_id=expense.id,
+        update_data = data.model_dump(exclude_unset=True)
+        old_data = {}
+        new_data = {}
+
+        for field, value in update_data.items():
+            old_value = getattr(expense, field)
+
+            if old_value != value:
+                old_data[field] = jsonable_encoder(old_value)
+                new_data[field] = jsonable_encoder(value)
+                setattr(expense, field, value)
+
+        if not new_data:
+            return "No changes detected."
+        expense.updated_by_id = current_user_id
+
+        if "account_id" in new_data:
+            new_account = db.get(Account, expense.account_id)
+            if not new_account:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fund source account not found.")
+            expense.account_name_snapshot = new_account.name
+        
+        if any(field in new_data for field in ("amount", "date", "account_id")):
+            db.add(
+                AccountTransaction(
+                    date=old_date,
+                    amount=-old_amount,
+                    source_type=TransactionSource.REVERSAL,
+                    source_id=expense.id,
+                    account=old_account,
+                    description=f"Reversal of expense: {expense.description}"
+                )
             )
-            db.add(reversal)
-
-        # Update expense fields
-        expense.date = data.date
-        expense.category = data.category
-        expense.amount = data.amount
-        expense.description = data.description
-        expense.account_id = data.fund_source
+            db.add(
+                AccountTransaction(
+                    date=expense.date,
+                    amount=expense.amount,
+                    source_type=TransactionSource.EXPENSE,
+                    source_id=expense.id,
+                    account=expense.account,
+                    description=f"Expense: {expense.description}"
+                )
+            )
         db.add(expense)
-        db.flush()
-
-        # Create new transaction with updated values
-        new_account = db.exec(
-            select(Account).where(Account.id == data.fund_source)
-        ).first()
-        if not new_account:
-            raise HTTPException(status_code=404, detail="Account not found.")
-
-        new_account.current_balance -= data.amount
-        db.add(new_account)
-
-        new_transaction = AccountTransaction(
-            account_id=new_account.id,
-            date=data.date,
-            description=data.description,
-            amount=-data.amount,  # negative = money out
-            running_balance=new_account.current_balance,
-            source_type=TransactionSource.EXPENSE,
-            source_id=expense.id,
-        )
-        db.add(new_transaction)
-
-        db.commit()
-        db.refresh(expense)
-
         audit = AuditLog(
             action=f"Updated expense: {expense.description}", user_id=current_user_id
         )
         db.add(audit)
         db.commit()
-
-        return expense
+        return "Expense data successfully updated."
     except HTTPException:
         raise
     except Exception:

@@ -78,7 +78,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
         category: event.data.category,
         description: event.data.description,
         amount: event.data.amount,
-        fund_source: event.data.accountName
+        account_id: event.data.accountName
     }
     emit('save', payload)
     resetForm()

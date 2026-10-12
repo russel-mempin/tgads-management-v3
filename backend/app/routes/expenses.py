@@ -14,7 +14,7 @@ from app.crud.expense import (
 from app.database import get_session
 from app.enums import DatePeriod, ExpenseCategory
 from app.models import User
-from app.schemas.expense import ExpenseCreate, ExpenseList, ExpensePublic
+from app.schemas.expense import ExpenseCreate, ExpenseList, ExpensePublic, ExpenseUpdate
 from app.services.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/expenses", tags=["expenses"], dependencies=[Depends(get_current_active_user)])
@@ -59,8 +59,8 @@ def create(data: ExpenseCreate, db: Session = Depends(get_session), current_user
     return create_expense(db, data, current_user.id)
 
 
-@router.patch("/{expense_id}", response_model=ExpensePublic)
-def update(expense_id: uuid.UUID, data: ExpenseCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
+@router.patch("/{expense_id}")
+def update(expense_id: uuid.UUID, data: ExpenseUpdate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_expense(db, expense_id, data, current_user.id)
 
 

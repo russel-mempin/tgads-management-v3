@@ -106,14 +106,15 @@ watch(
 const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 	loading.value = true
 	try {
-		await createExpense(expense)
-		toast.add({
-			title: 'Expense Added.',
-			color: 'success',
-			icon: 'i-lucide-circle-check'
-		})
+		if (!selectedExpense.value) {
+			await createExpense(expense)
+			toast.add({
+				title: 'Expense Added.',
+				color: 'success',
+				icon: 'i-lucide-circle-check'
+			})
+		}
 		await fetchData()
-		isExpenseFormOpen.value = false
 	}
 	catch (error: unknown) {
 		console.error('Failed to create expense:', error)
@@ -133,6 +134,8 @@ const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 	}
 	finally {
 		loading.value = false
+		isExpenseFormOpen.value = false
+		selectedExpense.value = undefined
 	}
 }
 
@@ -174,10 +177,14 @@ const archiveSelectedExpense = async () => {
 		loading.value = false
 	}
 }
+const openEditExpenseForm = (expense: Expense) => {
+	selectedExpense.value = expense
+	isExpenseFormOpen.value = true
+}
 </script>
 
 <template>
-	<ExpenseForm v-model:is-open="isExpenseFormOpen" @save="saveNewExpenseToDb" />
+	<ExpenseForm v-model:is-open="isExpenseFormOpen" @save="saveNewExpenseToDb" :editing-expense="selectedExpense" />
 	<ConfirmModalWithDetails
 		v-model:open="isConfirmArchiveModalOpen" 
 		title="Archive Expense"
@@ -212,7 +219,7 @@ const archiveSelectedExpense = async () => {
 					:variant="period === item.value ? 'solid' : 'outline'" @click="() => { period = item.value }" />
 			</div>
 			<UButton label="Add Expense" icon="i-lucide-plus" color="primary" size="lg"
-				@click="() => { isExpenseFormOpen = true }" />
+				@click="() => { isExpenseFormOpen = true; selectedExpense = undefined }" />
 		</section>
 		<section v-if="authStore.isOwner" class="shrink-0 mx-6 mt-6 grid grid-cols-3 gap-6">
 			<ExpenseCards :summary="data.summary" :period="period" />
@@ -226,7 +233,7 @@ const archiveSelectedExpense = async () => {
 			</div>
 			<ExpenseTable sticky class="min-h-0 flex-1 overflow-y-auto" :expense="data.items">
 				<template #actions="{ item }">
-					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" />
+					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" @click="openEditExpenseForm(item)" />
 					<UButton icon="i-lucide-eye-off" variant="ghost" color="error" size="md" @click="openArchiveExpenseModel(item)" />
 				</template>
 			</ExpenseTable>

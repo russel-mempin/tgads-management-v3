@@ -18,7 +18,16 @@ class ExpenseCreate(SQLModel):
     category: ExpenseCategory
     amount: Decimal
     description: str
-    fund_source: uuid.UUID
+    account_id: uuid.UUID
+
+
+class ExpenseUpdate(SQLModel):
+    date: datetime | None = None
+    category: ExpenseCategory | None = None
+    amount: Decimal | None = None
+    description: str | None = None
+    account_id: uuid.UUID | None = None
+
     
 class ExpenseSummary(SQLModel):
     total: Decimal
