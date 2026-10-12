@@ -3,15 +3,16 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 // Type Imports
-import type { ExpenseList, ExpensePeriod, ExpenseCategory, ExpenseCreate } from '@/types/expense';
+import type { Expense, ExpenseList, ExpensePeriod, ExpenseCategory, ExpenseCreate } from '@/types/expense';
 // API Call Imports
-import { getAllExpenses, createExpense } from '@/api/expenses';
+import { getAllExpenses, createExpense, archiveExpense } from '@/api/expenses';
 // Component Imports
 import ExpenseForm from '@/components/ExpenseForm.vue';
 import ExpenseTable from '@/components/ExpenseTable.vue';
 import ExpenseCards from '@/components/ExpenseCards.vue';
 import SpendingByCategory from '@/components/SpendingByCategory.vue';
-import ConfirmActionModal from '@/components/ConfirmActionModal.vue';
+import ConfirmModalWithDetails from '@/components/ConfirmModalWithDetails.vue';
+import { formatDate } from '@/utils/formatters';
 // Store Imports
 import { useAuthStore } from '@/stores/auth';
 
@@ -37,6 +38,9 @@ const period = ref<ExpensePeriod>('this_month')
 const descriptionSearch = ref('')
 const category = ref<ExpenseCategory | 'all'>('all')
 const includeArchived = ref(false)
+
+// Data Variables
+const selectedExpense = ref<Expense>()
 
 // UI Variables
 const periods: { label: string; value: ExpensePeriod }[] = [
@@ -86,9 +90,7 @@ const fetchData = async () => {
 		loading.value = false
 	}
 }
-
 onMounted(fetchData)
-
 watch(
 	[period, includeArchived, category, descriptionSearch],
 	() => {
@@ -96,7 +98,6 @@ watch(
 		fetchData()
 	}
 )
-
 watch(
 	[currentPage, rows],
 	fetchData
@@ -134,10 +135,76 @@ const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 		loading.value = false
 	}
 }
+
+const openArchiveExpenseModel = (expense: Expense) => {
+	selectedExpense.value = expense
+	isConfirmArchiveModalOpen.value = true
+}
+
+const archiveSelectedExpense = async () => {
+	loading.value = true
+	if (!selectedExpense.value?.id) return
+	try {
+		await archiveExpense(selectedExpense.value.id)
+		toast.add({
+			title: 'Expense Archived.',
+			color: 'success',
+			icon: 'i-lucide-circle-check'
+		})
+		await fetchData()
+		isConfirmArchiveModalOpen.value = false
+	}
+	catch (error: unknown) {
+		console.error('Failed to archive expense:', error)
+
+		let message = 'An unexpected error occurred.'
+
+		if (axios.isAxiosError(error)) {
+			message = error.response?.data?.detail ?? 'Failed to archive expense.'
+		}
+
+		toast.add({
+			title: 'Archiving data failed.',
+			description: message,
+			color: 'error',
+			icon: 'i-lucide-x'
+		})
+	}
+	finally {
+		loading.value = false
+	}
+}
 </script>
 
 <template>
 	<ExpenseForm v-model:is-open="isExpenseFormOpen" @save="saveNewExpenseToDb" />
+	<ConfirmModalWithDetails
+		v-model:open="isConfirmArchiveModalOpen" 
+		title="Archive Expense"
+		description="This will archive the misc. sale data and reverse the transaction related to it."
+		@confirm="archiveSelectedExpense"
+	>
+		<template #details>
+			<div class="flex justify-between gap-4">
+				<span class="text-sm text-muted">Description</span>
+				<span class="text-sm font-medium text-highlighted">
+					{{ selectedExpense?.description }}
+				</span>
+			</div>
+			<div class="mt-2 flex justify-between gap-4">
+				<span class="text-sm text-muted">Amount</span>
+				<span class="text-sm font-medium text-highlighted">
+					₱{{ selectedExpense?.amount }}
+				</span>
+			</div>
+			<div class="mt-2 flex justify-between gap-4">
+				<span class="text-sm text-muted">Date</span>
+				<span class="text-sm font-medium text-highlighted">
+					{{ formatDate(selectedExpense?.date) }}
+				</span>
+			</div>
+		</template>
+	</ConfirmModalWithDetails>
 	<div class="flex h-full min-h-0 flex-col" :class="authStore.isOwner && 'overflow-y-auto'">
 		<section class="shrink-0 mx-6 mt-6 flex justify-between">
 			<div class="flex gap-2">
@@ -160,7 +227,7 @@ const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
 			<ExpenseTable sticky class="min-h-0 flex-1 overflow-y-auto" :expense="data.items">
 				<template #actions="{ item }">
 					<UButton icon="i-lucide-square-pen" variant="ghost" size="md" />
-					<UButton icon="i-lucide-eye-off" variant="ghost" color="error" size="md" />
+					<UButton icon="i-lucide-eye-off" variant="ghost" color="error" size="md" @click="openArchiveExpenseModel(item)" />
 				</template>
 			</ExpenseTable>
 			<div class="border-t border-default flex items-center justify-between p-4">

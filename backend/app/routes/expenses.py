@@ -9,7 +9,6 @@ from app.crud.expense import (
     count_all_expenses,
     create_expense,
     get_all_expenses,
-    get_today_expenses,
     update_expense,
 )
 from app.database import get_session
@@ -55,19 +54,15 @@ def read_count_of_expenses(db: Session = Depends(get_session)):
     return count_all_expenses(db)
 
 
-@router.get("/today", response_model=list[ExpensePublic])
-def read_all_daily(
-    db: Session = Depends(get_session)
-):
-    return get_today_expenses(db)
-
 @router.post("/", response_model=ExpensePublic)
 def create(data: ExpenseCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return create_expense(db, data, current_user.id)
 
+
 @router.patch("/{expense_id}", response_model=ExpensePublic)
 def update(expense_id: uuid.UUID, data: ExpenseCreate, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):
     return update_expense(db, expense_id, data, current_user.id)
+
 
 @router.patch("/{expense_id}/archive")
 def archive(expense_id: uuid.UUID, db: Session = Depends(get_session), current_user: User = Depends(get_current_active_user)):

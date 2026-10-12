@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -122,21 +122,6 @@ def count_all_expenses(db: Session) -> int:
     return db.exec(select(func.count()).select_from(Expense)).one()
 
 
-def get_today_expenses(db: Session) -> list[Expense]:
-    start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=1)
-
-    return list(
-        db.exec(
-            select(Expense).where(
-                Expense.is_archived == False,
-                Expense.date >= start,
-                Expense.date < end,
-            )
-        ).all()
-    )
-
-
 def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID):
     try:
         account = db.exec(select(Account).where(Account.id == data.fund_source)).first()
@@ -153,7 +138,7 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
             created_by_id=current_user_id
         )
         db.add(expense)
-        db.refresh(expense)
+        db.flush()
 
         transaction = AccountTransaction(
             account_id=account.id,

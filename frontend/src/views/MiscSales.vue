@@ -8,7 +8,7 @@ import MiscSaleForm from '@/components/MiscSaleForm.vue';
 import axios from 'axios';
 import { useReferenceStore } from '@/stores/reference';
 import { useAuthStore } from '@/stores/auth';
-import ConfirmDeleteMiscSale from '@/components/ConfirmDeleteMiscSale.vue';
+import ConfirmModalWithDetails from '@/components/ConfirmModalWithDetails.vue';
 import { formatDate } from '@/utils/formatters';
 
 const authStore = useAuthStore()
@@ -193,7 +193,7 @@ const deleteMiscSale = async () => {
 </script>
 
 <template>
-	<ConfirmDeleteMiscSale v-model:open="isConfirmDeleteModalOpen" title="You are about to archive a misc. sale"
+	<ConfirmModalWithDetails v-model:open="isConfirmDeleteModalOpen" title="You are about to archive a misc. sale"
 		description="This will archive the misc. sale data and reverse the transaction related to it."
 		@confirm="deleteMiscSale">
 		<template #details>
@@ -218,7 +218,7 @@ const deleteMiscSale = async () => {
 				</span>
 			</div>
 		</template>
-	</ConfirmDeleteMiscSale>
+	</ConfirmModalWithDetails>
 	<MiscSaleForm v-model:is-open="isAddMiscSaleFormOpen" @save="saveNewMiscSaleToDb"
 		:editing-misc-sale="selectedMiscSale" />
 	<div class="h-full min-h-0 flex flex-col">
