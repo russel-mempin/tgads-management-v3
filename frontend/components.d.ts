@@ -17,7 +17,6 @@ declare module 'vue' {
     ClaimTable: typeof import('./src/components/ClaimTable.vue')['default']
     ConfirmActionModal: typeof import('./src/components/ConfirmActionModal.vue')['default']
     ConfirmModalWithDetails: typeof import('./src/components/ConfirmModalWithDetails.vue')['default']
-    ConfirmWithDetails: typeof import('./src/components/ConfirmModalWithDetails.vue/index.js')['default']
     CustomerSelector: typeof import('./src/components/CustomerSelector.vue')['default']
     EditJobItemForm: typeof import('./src/components/job-item-form/EditJobItemForm.vue')['default']
     EditServiceForm: typeof import('./src/components/EditServiceForm.vue')['default']
