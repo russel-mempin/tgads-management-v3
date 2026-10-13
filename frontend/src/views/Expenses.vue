@@ -104,11 +104,11 @@ watch(
 	fetchData
 )
 
-const saveNewExpenseToDb = async (expense: ExpenseCreate) => {
+const saveNewExpenseToDb = async (expense: ExpenseCreate | ExpenseUpdate) => {
 	loading.value = true
 	try {
 		if (!selectedExpense.value) {
-			await createExpense(expense)
+			await createExpense(expense as ExpenseCreate)
 			toast.add({
 				title: 'Expense Added.',
 				color: 'success',

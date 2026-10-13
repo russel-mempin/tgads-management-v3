@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { z } from 'zod';
-import type { Expense, ExpenseCreate } from '@/types/expense';
+import type { Expense, ExpenseCreate, ExpenseUpdate } from '@/types/expense';
 import { EXPENSE_CATEGORIES } from '@/utils/constants';
 import { useReferenceStore } from '@/stores/reference'
 import { nowForInput, utcToInput, inputToUtc } from '@/utils/formatters';
@@ -12,7 +12,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    save: [Expense: ExpenseCreate]
+    save: [Expense: ExpenseCreate | ExpenseUpdate]
     close: []
 }>()
 
@@ -20,7 +20,7 @@ const referenceStore = useReferenceStore()
 const CATEGORY_VALUES = EXPENSE_CATEGORIES
   .filter((category) => category.value !== 'all')
   .map((category) => category.value)
-
+const originalState = ref<Schema | null>(null)
 // UI Variables
 const isOpen = defineModel<boolean>('isOpen', { required: true })
 
@@ -67,20 +67,52 @@ watch(() => props.editingExpense, (expense) => {
         state.description = expense.description
         state.amount = parseFloat(expense.amount)
         state.accountName = expense.account_name ?? ''
+
+        originalState.value = { ...state }
     } else {
+        originalState.value = null
         resetForm()
     }
 }, { immediate: true })
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
-    const payload: ExpenseCreate = {
-        date: inputToUtc(event.data.date),
-        category: event.data.category,
-        description: event.data.description,
-        amount: event.data.amount,
-        account_id: event.data.accountName
+    if (props.editingExpense && originalState.value) {
+        const current = event.data
+        const original = originalState.value
+
+        const payload: ExpenseUpdate = {}
+
+        if (current.date !== original.date)
+            payload.date = inputToUtc(current.date)
+
+        if (current.category !== original.category)
+            payload.category = current.category
+
+        if (current.description !== original.description)
+            payload.description = current.description
+
+        if (current.amount !== original.amount)
+            payload.amount = current.amount
+
+        if (current.accountName !== original.accountName)
+            payload.account_id = current.accountName
+
+        if (Object.keys(payload).length === 0) {
+            isOpen.value = false
+            return
+        }
+        emit('save', payload)
+    } else {
+        const payload: ExpenseCreate = {
+            date: inputToUtc(event.data.date),
+            category: event.data.category,
+            description: event.data.description,
+            amount: event.data.amount,
+            account_id: event.data.accountName,
+        }
+        emit('save', payload)
     }
-    emit('save', payload)
+
     resetForm()
     isOpen.value = false
 }

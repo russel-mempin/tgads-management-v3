@@ -146,7 +146,7 @@ def create_expense(db: Session, data: ExpenseCreate, current_user_id: uuid.UUID)
             account_id=account.id,
             date=data.date,
             description=data.description,
-            amount=expense.amount,
+            amount=-expense.amount,
             source_type=TransactionSource.EXPENSE,
             source_id=expense.id,
         )
@@ -169,7 +169,7 @@ def update_expense(
     try:
         expense = db.exec(select(Expense).where(Expense.id == expense_id)).first()
         if not expense:
-            raise HTTPException(status_code=404, detail="Expense not found.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found.")
 
         old_amount = expense.amount
         old_date = expense.date
@@ -201,7 +201,7 @@ def update_expense(
             db.add(
                 AccountTransaction(
                     date=old_date,
-                    amount=-old_amount,
+                    amount=old_amount,
                     source_type=TransactionSource.REVERSAL,
                     source_id=expense.id,
                     account=old_account,
@@ -211,7 +211,7 @@ def update_expense(
             db.add(
                 AccountTransaction(
                     date=expense.date,
-                    amount=expense.amount,
+                    amount=-expense.amount,
                     source_type=TransactionSource.EXPENSE,
                     source_id=expense.id,
                     account=expense.account,
