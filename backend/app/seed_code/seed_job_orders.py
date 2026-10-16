@@ -1,4 +1,5 @@
 import csv
+import decimal
 import os
 from datetime import UTC, datetime, timezone
 from decimal import Decimal
@@ -28,8 +29,8 @@ from app.models import (
 from app.utils.utils import get_system_admin, to_float, to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders.csv")
-JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
+JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders_to_20048.csv")
+JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items_to_20048.csv")
 
 
 VOID_REASONS = {
@@ -181,7 +182,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             if not service:
                 if not cancelled:
                     print(
-                        f"Service for Job {row['jo_number']} {row['service']} not found. Skipping job item."
+                        f"Service for Job {row['jo_number']} {row['service']} is blank. Skipping job item."
                     )
                 continue
             service_requires_size = service.pricing_strategy == PricingStrategy.AREA
@@ -199,7 +200,12 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             review_reason = (row.get("review_category") or "").strip()
             extra_service = row["extra_service"].strip()
             extra_quantity = to_int(row["extra_quantity"])
-            csv_unit_price = to_decimal(row["unit_price"])
+            try:
+                csv_unit_price = to_decimal(row["unit_price"])
+            except decimal.InvalidOperation:
+                print(f"Invalid unit_price: {row['unit_price']!r}")
+                print(f"CSV row: {row}")
+                raise
             discount = to_decimal(row.get("discount"))
             extra_charge = to_decimal(row.get("extra_charge"))
 
@@ -224,7 +230,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             ).first()
             if option is None:
                 print(
-                    f"Service Option {row['option']} for Service {service.name} not found. Skipping job item."
+                    f"[{row['jo_number']}]Service Option {row['option']} for Service {service.name} not found. Skipping job item."
                 )
                 continue
             extra = session.exec(
@@ -303,36 +309,36 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                         )
                     )
 
-                if (computed_unit_price + extra_service_price) > csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ITEM,
-                            entity_id=item.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=item_id,
-                            reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
-                elif (computed_unit_price + extra_service_price) < csv_unit_price:
-                    session.add(
-                        ForReview(
-                            entity_type=ReviewEntityType.JOB_ITEM,
-                            entity_id=item.id,
-                            created_by_id=sysadmin.id,
-                            entity_reference=item_id,
-                            reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
-                            reason_category=ReasonCategory(
-                                review_reason
-                                if review_reason
-                                else "Pricing Discrepancy"
-                            ),
-                        )
-                    )
+                # if (computed_unit_price + extra_service_price) > csv_unit_price:
+                #     session.add(
+                #         ForReview(
+                #             entity_type=ReviewEntityType.JOB_ITEM,
+                #             entity_id=item.id,
+                #             created_by_id=sysadmin.id,
+                #             entity_reference=item_id,
+                #             reason="Possibly undercharged based on system computation and listed unit price from JO Summary excel.",
+                #             reason_category=ReasonCategory(
+                #                 review_reason
+                #                 if review_reason
+                #                 else "Pricing Discrepancy"
+                #             ),
+                #         )
+                #     )
+                # elif (computed_unit_price + extra_service_price) < csv_unit_price:
+                #     session.add(
+                #         ForReview(
+                #             entity_type=ReviewEntityType.JOB_ITEM,
+                #             entity_id=item.id,
+                #             created_by_id=sysadmin.id,
+                #             entity_reference=item_id,
+                #             reason="Possibly overcharged based on system computation and listed unit price from JO Summary excel.",
+                #             reason_category=ReasonCategory(
+                #                 review_reason
+                #                 if review_reason
+                #                 else "Pricing Discrepancy"
+                #             ),
+                #         )
+                #     )
 
             # After inserting the job item, determine extra service (if any) and insert to db
             if extra and extra_quantity > 0:

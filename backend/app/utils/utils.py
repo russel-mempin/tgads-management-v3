@@ -147,19 +147,13 @@ def compute_unit_price(
 
         # Apply stock increment to WIDTH.
         # stock_increment is always expressed in feet.
-        if option.stock_increment is not None:
-            if option.stock_increment < 0:
-                raise ValueError("Stock increment must be greater than zero.")
+        # Round WIDTH up to the next whole foot when enabled.
+        if option.use_whole_foot_width:
+            width_ft = area_width * LENGTH_TO_FEET[area_unit]
+            width_ft = math.ceil(width_ft)
 
-            if option.stock_increment > 0:
-                width_ft = area_width * LENGTH_TO_FEET[area_unit]
-
-                width_ft = (
-                    math.ceil(width_ft / option.stock_increment) * option.stock_increment
-                )
-
-                # Convert adjusted width back to the original unit.
-                area_width = width_ft / LENGTH_TO_FEET[area_unit]
+            # Convert adjusted width back to the original unit.
+            area_width = width_ft / LENGTH_TO_FEET[area_unit]
 
         # Calculate area using the adjusted width.
         try:

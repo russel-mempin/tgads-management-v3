@@ -10,7 +10,7 @@ from app.models import Account, AccountTransaction, Expense
 from app.utils.utils import get_system_admin, parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "seed_data", "2026expenses.csv")
+CSV_PATH = os.path.join(BASE_DIR, "seed_data", "expenses_to_july.csv")
 
 def seed_expenses_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:

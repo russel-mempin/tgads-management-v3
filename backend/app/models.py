@@ -83,9 +83,11 @@ class Customer(CustomerBase, table=True):
 # Defines the options available for the services.
 class ServiceOptionBase(SQLModel):
     name: str
-    base_rate: Decimal
-    minimum_consumption: float | None = None
-    stock_increment: float | None = None
+    base_rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    minimum_consumption: float | None = Field(default=None)
+    # For AREA services whose stock only comes in whole-unit increments along
+    # one axis (e.g. tarpaulin rolls: only whole feet available, no 2.5ft).
+    use_whole_foot_width: bool = Field(default=False)
 
 
 class ServiceOption(ServiceOptionBase, table=True):
@@ -94,13 +96,7 @@ class ServiceOption(ServiceOptionBase, table=True):
 
     service_id: uuid.UUID = Field(foreign_key="services.id")
 
-    name: str
-    base_rate: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     is_active: bool = Field(default=True)
-    minimum_consumption: float | None = Field(default=None)
-    # For AREA services whose stock only comes in whole-unit increments along
-    # one axis (e.g. tarpaulin rolls: only whole feet available, no 2.5ft).
-    stock_increment: float | None = Field(default=None)
 
     service: Service = Relationship(back_populates="options")
     price_tiers: list[ServicePriceTier] = Relationship(
