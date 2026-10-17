@@ -9,8 +9,8 @@ from app.models import Service, ServiceOption, ServicePriceTier
 from app.utils.utils import to_float
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-SERVICES_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_updated.csv")
-SERVICE_OPTIONS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_option_updated.csv")
+SERVICES_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "services.csv")
+SERVICE_OPTIONS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_options.csv")
 SERVICE_PRICE_TIERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "service_price_tiers.csv")
  
  

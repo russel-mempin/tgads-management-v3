@@ -11,6 +11,7 @@ from app.seed_code.seed_customers import seed_customers_from_csv
 from app.seed_code.seed_expenses import seed_expenses_from_csv
 from app.seed_code.seed_extra_services import seed_extra_services_from_csv
 from app.seed_code.seed_job_orders import seed_job_orders_and_items
+from app.seed_code.seed_misc_sales import seed_misc_sales_from_csv
 from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_services import seed_services_data
 from app.seed_code.seed_users import seed_users_from_csv
@@ -46,6 +47,8 @@ def seed_dev_data():
         # print("Seeded claiming history.")
         seed_expenses_from_csv()
         print("Seeded expenses.")
+        seed_misc_sales_from_csv()
+        print("Seeded misc sales.")
 
     else:
         # Create tables if they don't exist
@@ -76,6 +79,8 @@ def seed_dev_data():
         print("Seeded claiming history.")
         seed_expenses_from_csv()
         print("Seeded expenses.")
+        seed_misc_sales_from_csv()
+        print("Seeded misc sales.")
         
 def seed_prod_data():
     SQLModel.metadata.create_all(engine)

@@ -29,8 +29,8 @@ from app.models import (
 from app.utils.utils import get_system_admin, to_float, to_int
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders_to_20048.csv")
-JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items_to_20048.csv")
+JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders.csv")
+JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
 
 
 VOID_REASONS = {
