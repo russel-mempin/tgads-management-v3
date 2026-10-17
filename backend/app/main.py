@@ -7,6 +7,7 @@ from app.database import engine  # noqa: F401
 from app.routes import (
     accounts,
     customers,
+    dashboards,
     expenses,
     extras,
     for_reviews,
@@ -50,3 +51,4 @@ app.include_router(customers.router)
 app.include_router(expenses.router)
 app.include_router(misc_sales.router)
 app.include_router(reports.router)
+app.include_router(dashboards.router)
