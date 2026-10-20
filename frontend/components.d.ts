@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountBalances: typeof import('./src/components/AccountBalances.vue')['default']
     AddJobItemForm: typeof import('./src/components/job-item-form/AddJobItemForm.vue')['default']
     AddJobOrderHeader: typeof import('./src/components/AddJobOrderHeader.vue')['default']
     ClaimForm: typeof import('./src/components/ClaimForm.vue')['default']

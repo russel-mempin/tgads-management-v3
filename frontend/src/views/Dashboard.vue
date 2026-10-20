@@ -5,6 +5,7 @@ import { getOwnerDashboard } from '@/api/dashboards';
 import type { OwnerDashboard } from '@/types/dashboard';
 import { formatCurrency } from '@/utils/formatters';
 import SalesPerService from '@/components/SalesPerService.vue';
+import AccountBalances from '@/components/AccountBalances.vue';
 
 const authStore = useAuthStore()
 
@@ -40,9 +41,7 @@ onMounted(fetchData)
                         <div class="w-1 h-6 bg-blue-600 rounded-r-full"></div>
                         <p class="text-sm font-semibold montserrat text-highlighted">ACCOUNT RUNNING BALANCES</p>
                     </div>
-                    <div>
-                        <p>{{ formatCurrency(totalBalance) }}</p>
-                    </div>
+                    <AccountBalances :data="ownerData.accounts_balances" />
                 </section>
                 <section>
                     <div class="flex items-center gap-3 mb-4">
@@ -104,7 +103,7 @@ onMounted(fetchData)
             <section>
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-1 h-6 bg-green-600 rounded-r-full"></div>
-                    <p class="text-sm font-semibold montserrat text-highlighted">SALES PER SERVICE</p>
+                    <p class="text-sm font-semibold montserrat text-highlighted">SALES PER SERVICE THIS YEAR</p>
                 </div>
                 <div class="bg-default border border-slate-200 border-l-4 border-l-green-600 rounded-lg">
                     <SalesPerService :data="ownerData.sales_per_service" />
