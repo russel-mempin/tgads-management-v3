@@ -50,6 +50,7 @@ declare module 'vue' {
     ReviewFields: typeof import('./src/components/ReviewFields.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SalesPerService: typeof import('./src/components/SalesPerService.vue')['default']
     ServiceHeader: typeof import('./src/components/ServiceHeader.vue')['default']
     ServiceOptionForm: typeof import('./src/components/service-option-form/ServiceOptionForm.vue')['default']
     ServiceOptionFormTable: typeof import('./src/components/ServiceOptionFormTable.vue')['default']
