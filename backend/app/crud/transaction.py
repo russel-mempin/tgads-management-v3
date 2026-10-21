@@ -1,11 +1,11 @@
 from typing import cast
 
 from sqlalchemy.orm import InstrumentedAttribute, selectinload
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from app.enums import DatePeriod, TransactionSource
 from app.models import AccountTransaction
-from app.schemas.transaction import TransactionPublic
+from app.schemas.transaction import TransactionList, TransactionPublic
 from app.utils.utils import get_date_range
 
 
@@ -15,8 +15,7 @@ def get_all_transactions(
     source: TransactionSource | None = None,
     offset: int = 0,
     limit: int = 100,
-) -> list[TransactionPublic]:
-
+) -> TransactionList:
     statement = select(AccountTransaction).options(
         selectinload(
             cast(InstrumentedAttribute, AccountTransaction.account)
@@ -38,18 +37,23 @@ def get_all_transactions(
             AccountTransaction.source_type == source
         )
 
-    statement = (
+    # Count all matching records before pagination
+    total = db.exec(
+        select(func.count()).select_from(statement.subquery())
+    ).one()
+
+    # Fetch the current page
+    transactions = db.exec(
         statement
-        .order_by(
-            cast(InstrumentedAttribute, AccountTransaction.date).desc()
-        )
+        .order_by(AccountTransaction.date.desc())
         .offset(offset)
         .limit(limit)
+    ).all()
+
+    return TransactionList(
+        items=[
+            TransactionPublic.model_validate(transaction)
+            for transaction in transactions
+        ],
+        total=total,
     )
-
-    transactions = db.exec(statement).all()
-
-    return [
-        TransactionPublic.model_validate(transaction)
-        for transaction in transactions
-    ]

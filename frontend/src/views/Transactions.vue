@@ -13,7 +13,7 @@ const category = ref<TRANSACTION_CATEGORIES | 'all'>('all')
 
 // Pagination Variables
 const currentPage = ref(1)
-const rows = ref(10)
+const rows = ref(20)
 const totalRecords = ref(0)
 const currentOffset = computed(() => (currentPage.value - 1) * rows.value)
 
@@ -32,13 +32,14 @@ const periods: { label: string; value: DATE_PERIODS }[] = [
 const fetchData = async () => {
     loading.value = true
     try {
-        data.value = await getAllTransactions(
+        const result = await getAllTransactions(
             period.value,
             category.value === 'all' ? undefined : category.value,
             currentOffset.value,
             rows.value
         )
-        console.log(data.value)
+        data.value = result.items
+        totalRecords.value = result.total
     }
     finally {
         loading.value = false
@@ -57,27 +58,43 @@ watch(
     [currentPage, rows],
     fetchData
 )
+
+// Filtering
+const categories: { label: string; value: TRANSACTION_CATEGORIES | 'all' }[] = [
+    { label: 'All Categories', value: 'all' },
+    { label: 'Payment', value: 'payment' },
+    { label: 'Expense', value: 'expense' },
+    { label: 'Miscellaneous Sale', value: 'misc_sale' },
+    { label: 'Transfer', value: 'transfer' },
+    { label: 'Adjustment', value: 'adjustment' },
+    { label: 'Reversal', value: 'reversal' },
+    { label: 'Refund', value: 'refund' },
+]
 </script>
 
 <template>
-    <section class="shrink-0 mx-6 mt-6 flex gap-2">
-        <UButton v-for="item in periods" :key="item.value" :label="item.label" class="rounded-full"
-            :variant="period === item.value ? 'solid' : 'outline'" @click="() => { period = item.value }" />
-    </section>
-    <section class="mx-6 mt-6 border border-default bg-default rounded-md">
-        <div class="flex p-4 border-b border-default">
-            <USelect class="flex-1" />
-        </div>
-        <TransactionsTable :data="data" />
-        <div class="border-t border-default flex items-center justify-between p-4">
-            <p class="text-muted text-sm">
-                Showing
-                {{ data.length ? currentOffset + 1 : 0 }}–{{
-                    Math.min(currentOffset + data.length, totalRecords)
-                }}
-                of {{ totalRecords }}
-            </p>
-            <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
-        </div>
-    </section>
+    <div class="h-full min-h-0 flex flex-col">
+        <section class="shrink-0 mx-6 mt-6 flex gap-2">
+            <UButton v-for="item in periods" :key="item.value" :label="item.label" class="rounded-full"
+                :variant="period === item.value ? 'solid' : 'outline'" @click="() => { period = item.value }" />
+        </section>
+        <section class="mx-6 mt-6 mb-6 border border-default bg-default rounded-md flex-1 min-h-0 flex flex-col">
+            <div class="shrink-0 flex p-4 border-b border-default">
+                <USelect class="flex-1" v-model="category" :items="categories" />
+            </div>
+            <div class="flex-1 min-h-0 overflow-y-auto">
+                <TransactionsTable :data="data" />
+            </div>
+            <div class="border-t border-default flex items-center justify-between p-4">
+                <p class="text-muted text-sm">
+                    Showing
+                    {{ data.length ? currentOffset + 1 : 0 }}–{{
+                        Math.min(currentOffset + data.length, totalRecords)
+                    }}
+                    of {{ totalRecords }}
+                </p>
+                <UPagination v-model:page="currentPage" :total="totalRecords" :items-per-page="rows" />
+            </div>
+        </section>
+    </div>
 </template>

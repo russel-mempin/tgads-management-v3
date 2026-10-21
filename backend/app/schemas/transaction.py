@@ -12,3 +12,8 @@ class TransactionPublic(SQLModel):
     source_type: TransactionSource
     account_name: str
     description: str
+
+
+class TransactionList(SQLModel):
+    items: list[TransactionPublic]
+    total: int

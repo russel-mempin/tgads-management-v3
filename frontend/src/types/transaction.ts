@@ -7,3 +7,8 @@ export interface Transaction {
     account_name: string
     description: string
 }
+
+export interface TransactionList {
+    items: Transaction[]
+    total: number
+}

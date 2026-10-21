@@ -15,5 +15,6 @@ export const getAllTransactions = async (
             limit
         }
     })
+    console.log(res.data)
     return res.data
 }
