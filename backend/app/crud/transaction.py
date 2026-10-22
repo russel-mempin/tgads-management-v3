@@ -12,7 +12,7 @@ from app.utils.utils import get_date_range
 def get_all_transactions(
     db: Session,
     period: DatePeriod = DatePeriod.ALL,
-    source: TransactionSource | None = None,
+    category: TransactionSource | None = None,
     offset: int = 0,
     limit: int = 100,
 ) -> TransactionList:
@@ -32,9 +32,9 @@ def get_all_transactions(
                 AccountTransaction.date < end,
             )
 
-    if source:
+    if category:
         statement = statement.where(
-            AccountTransaction.source_type == source
+            AccountTransaction.source_type == category
         )
 
     # Count all matching records before pagination

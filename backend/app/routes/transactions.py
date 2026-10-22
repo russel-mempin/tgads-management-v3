@@ -22,6 +22,6 @@ def read_all_transactions(
     limit: Annotated[int, Query(le=100)] = 100,
     db: Session = Depends(get_session),
     period: DatePeriod = DatePeriod.ALL,
-    source: TransactionSource | None = None,
+    category: TransactionSource | None = None,
 ):
-    return get_all_transactions(db, period=period, source=source, offset=offset, limit=limit)
+    return get_all_transactions(db, period=period, category=category, offset=offset, limit=limit)

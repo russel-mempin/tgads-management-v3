@@ -49,6 +49,7 @@ onMounted(fetchData)
 watch(
     [period, category],
     () => {
+        console.log(category.value)
         currentPage.value = 1
         fetchData()
     }
@@ -80,11 +81,12 @@ const categories: { label: string; value: TRANSACTION_CATEGORIES | 'all' }[] = [
         </section>
         <section class="mx-6 mt-6 mb-6 border border-default bg-default rounded-md flex-1 min-h-0 flex flex-col">
             <div class="shrink-0 flex p-4 border-b border-default">
-                <USelect class="flex-1" v-model="category" :items="categories" />
+                <span class="flex-1 flex items-center gap-4">
+                    <p class="text-muted">Show Only: </p>
+                    <USelect class="flex-1" v-model="category" :items="categories" size="lg" />
+                </span>
             </div>
-            <div class="flex-1 min-h-0 overflow-y-auto">
-                <TransactionsTable :data="data" />
-            </div>
+            <TransactionsTable :data="data" />
             <div class="border-t border-default flex items-center justify-between p-4">
                 <p class="text-muted text-sm">
                     Showing
