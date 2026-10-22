@@ -163,11 +163,21 @@ const router = createRouter({
           path: 'transactions',
           component: () => import('@/views/Transactions.vue'),
           meta: {
-            superuserOnly: true,
             title: 'Transactions',
             breadcrumb: 'Transactions',
-            breadcrumbParent: { label: 'Expenses', to: 'expenses' },
+            breadcrumbParent: { label: 'Transactions', to: 'transactions' },
             subtitle: 'View transaction history and see where money comes in and goes out.'
+          }
+        },
+        {
+          path: 'transfers',
+          component: () => import('@/views/Transfers.vue'),
+          meta: {
+            superuserOnly: true,
+            title: 'Transfers',
+            breadcrumb: 'Transfers',
+            breadcrumbParent: { label: 'Transfers', to: 'transfers' },
+            subtitle: 'View and log fund transfers between your accounts.'
           }
         },
         {
