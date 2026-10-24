@@ -571,6 +571,7 @@ class ExpenseBase(SQLModel):
     category: ExpenseCategory
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     description: str = Field()
+    check_no: str = Field(nullable=True)
     is_archived: bool = Field(default=False)
 
 
@@ -815,7 +816,7 @@ class AccountTransferBase(SQLModel):
     reference_number: str | None = Field(default=None)
     description: str | None = Field(default=None)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
-    transfered_at: datetime = Field(
+    transferred_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
             DateTime(timezone=True),
@@ -840,4 +841,5 @@ class AccountTransferBase(SQLModel):
 
 class AccountTransfer(AccountTransferBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    
+    source_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
+    destination_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
