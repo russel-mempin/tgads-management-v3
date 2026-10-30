@@ -49,9 +49,11 @@ class JobStatus(str, Enum):
     
 class TransactionSource(str, Enum):
     PAYMENT = "payment"
+    BANK_INTEREST = "bank_interest"
     EXPENSE = "expense"
     MISC_SALE = "misc_sale"
-    TRANSFER = "transfer"
+    TRANSFER_SOURCE = "transfer_source"
+    TRANSFER_DESTINATION = "transfer_destination"
     ADJUSTMENT = "adjustment"
     REVERSAL = "reversal"
     REFUND = "refund"

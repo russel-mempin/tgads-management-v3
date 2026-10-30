@@ -571,7 +571,7 @@ class ExpenseBase(SQLModel):
     category: ExpenseCategory
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     description: str = Field()
-    check_no: str = Field(nullable=True)
+    check_no: str | None = Field(default=None, nullable=True)
     is_archived: bool = Field(default=False)
 
 
@@ -840,6 +840,7 @@ class AccountTransferBase(SQLModel):
 
 
 class AccountTransfer(AccountTransferBase, table=True):
+    __tablename__ = "transfers"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     source_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
     destination_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)

@@ -19,7 +19,8 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
         METHOD_TO_ACCOUNT = {
             "Cash": "Cash",
             "GCash": "GCash",
-            "Cheque": "RCBC",
+            "RCBC Old": "RCBC Old",
+            "RCBC New": "RCBC New",
         }
         
         for row in reader:
@@ -37,6 +38,7 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
                 category=ExpenseCategory(row["category"]),
                 description=row["description"],
                 amount=Decimal(row["amount"].replace(",", "").strip()),
+                check_no=row["check_no"],
                 account_id=account.id,
                 account_name_snapshot=account.name,
                 created_by_id=sysadmin.id,

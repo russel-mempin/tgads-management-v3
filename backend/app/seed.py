@@ -14,6 +14,7 @@ from app.seed_code.seed_job_orders import seed_job_orders_and_items
 from app.seed_code.seed_misc_sales import seed_misc_sales_from_csv
 from app.seed_code.seed_payments import seed_payments_from_csv
 from app.seed_code.seed_services import seed_services_data
+from app.seed_code.seed_transfers import seed_transfers_from_csv
 from app.seed_code.seed_users import seed_users_from_csv
 
 BASE_DIR = os.path.dirname(__file__)
@@ -49,6 +50,8 @@ def seed_dev_data():
         print("Seeded expenses.")
         seed_misc_sales_from_csv()
         print("Seeded misc sales.")
+        seed_transfers_from_csv()
+        print("Seeded transfers.")
 
     else:
         # Create tables if they don't exist
@@ -81,6 +84,8 @@ def seed_dev_data():
         print("Seeded expenses.")
         seed_misc_sales_from_csv()
         print("Seeded misc sales.")
+        seed_transfers_from_csv()
+        print("Seeded transfers.")
         
 def seed_prod_data():
     SQLModel.metadata.create_all(engine)

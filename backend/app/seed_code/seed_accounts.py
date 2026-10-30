@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlmodel import Session, select
@@ -19,22 +19,29 @@ def seed_accounts():
             Account(
                 name="Cash",
                 type=AccountType.CASH_ON_HAND,
-                beginning_balance=Decimal(118642),
+                beginning_balance=-Decimal("6259.98"),
                 beginning_balance_date=datetime(2026, 4, 1, 0, 0, 0, tzinfo=UTC),
                 current_balance=Decimal(0),
             ),
             Account(
                 name="GCash",
                 type=AccountType.EWALLET,
-                beginning_balance=Decimal("46140.84"),
+                beginning_balance=Decimal("10003.46"),
                 beginning_balance_date=datetime(2026, 4, 1, 0, 0, 0, tzinfo=UTC),
                 current_balance=Decimal(0),
             ),
             Account(
-                name="RCBC (Cheque)",
+                name="RCBC Old",
                 type=AccountType.BANK,
-                beginning_balance=Decimal("880685.70"),
-                beginning_balance_date=datetime(2026, 4, 1, 0, 0, 0, tzinfo=UTC),
+                beginning_balance=Decimal("1018186.83"),
+                beginning_balance_date=datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC),
+                current_balance=Decimal(0),
+            ),
+            Account(
+                name="RCBC New",
+                type=AccountType.BANK,
+                beginning_balance=Decimal(0),
+                beginning_balance_date=datetime(2026, 8, 11, 0, 0, 0, tzinfo=UTC),
                 current_balance=Decimal(0),
             ),
         ]
