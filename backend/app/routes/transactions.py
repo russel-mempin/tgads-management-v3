@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -23,5 +24,6 @@ def read_all_transactions(
     db: Session = Depends(get_session),
     period: DatePeriod = DatePeriod.ALL,
     category: TransactionSource | None = None,
+    account_id: uuid.UUID | None = None
 ):
-    return get_all_transactions(db, period=period, category=category, offset=offset, limit=limit)
+    return get_all_transactions(db, period=period, category=category, account_id=account_id, offset=offset, limit=limit)

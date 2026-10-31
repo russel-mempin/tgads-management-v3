@@ -1,3 +1,4 @@
+import uuid
 from typing import cast
 
 from sqlalchemy.orm import InstrumentedAttribute, selectinload
@@ -13,6 +14,7 @@ def get_all_transactions(
     db: Session,
     period: DatePeriod = DatePeriod.ALL,
     category: TransactionSource | None = None,
+    account_id: uuid.UUID | None = None,
     offset: int = 0,
     limit: int = 100,
 ) -> TransactionList:
@@ -35,6 +37,11 @@ def get_all_transactions(
     if category:
         statement = statement.where(
             AccountTransaction.source_type == category
+        )
+
+    if account_id:
+        statement = statement.where(
+            AccountTransaction.account_id == account_id
         )
 
     # Count all matching records before pagination
