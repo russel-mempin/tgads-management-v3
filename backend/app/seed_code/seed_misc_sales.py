@@ -18,7 +18,8 @@ def seed_misc_sales_from_csv(file_path: str = CSV_PATH):
         METHOD_TO_ACCOUNT = {
             "Cash": "Cash",
             "GCash": "GCash",
-            "Cheque": "RCBC",
+            "RCBC Old": "RCBC Old",
+            "RCBC New": "RCBC New"
         }
         
         for row in reader:

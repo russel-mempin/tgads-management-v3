@@ -562,7 +562,7 @@ class ClaimingHistory(ClaimingHistoryBase, table=True):
     job_item: JobItem = Relationship(back_populates="claiming_history")
 
 
-# ====================== EXPENSES =========================
+# ====================== GOTO EXPENSES =========================
 class ExpenseBase(SQLModel):
     date: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -661,7 +661,7 @@ class Expense(ExpenseBase, table=True):
         )
 
 
-# ====================== MISC SALES =========================
+# ====================== GOTO MISC SALES =========================
 class MiscSaleBase(SQLModel):
     date: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -712,7 +712,7 @@ class MiscSale(MiscSaleBase, table=True):
         return f"{self.updated_by.first_name} {self.updated_by.last_name}"
 
 
-# ====================== ACCOUNTS =========================
+# ====================== GOTO ACCOUNTS =========================
 class Account(SQLModel, table=True):
     __tablename__ = "accounts"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -760,7 +760,7 @@ class AccountTransaction(SQLModel, table=True):
         return self.account.name
 
 
-# ====================== UNLINKED PAYMENTS =========================
+# ====================== GOTO UNLINKED PAYMENTS =========================
 # Temporary table. No payments should be unlinked. It should either be linked to a job order or a misc sale.
 class UnlinkedPayment(SQLModel, table=True):
     __tablename__ = "unlinked_payments"  # type: ignore
@@ -786,7 +786,7 @@ class UnlinkedPayment(SQLModel, table=True):
         return self.account.name if self.account else None
 
 
-# ====================== FOR REVIEW =========================
+# ====================== GOTO FOR REVIEW =========================
 # For any data that the owner needs to look at. E.g. Admin updating misc sales & expenses data, missing data, etc.
 # It would use their tables and just link here by ID so that the human can see the record in its original table and fix it, then remove it from this table.
 class ForReview(SQLModel, table=True):
@@ -811,7 +811,7 @@ class ForReview(SQLModel, table=True):
         return self.created_by.username
 
 
-# ====================== TRANSFERS ========================= 
+# ====================== GOTO TRANSFERS ========================= 
 class AccountTransferBase(SQLModel):
     reference_number: str | None = Field(default=None)
     description: str | None = Field(default=None)
@@ -823,6 +823,13 @@ class AccountTransferBase(SQLModel):
             nullable=False,
         ),
     )
+    is_archived: bool = Field(default=False)
+
+
+class AccountTransfer(AccountTransferBase, table=True):
+    __tablename__ = "transfers"  # type: ignore
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(
@@ -838,9 +845,54 @@ class AccountTransferBase(SQLModel):
         ),
     )
 
-
-class AccountTransfer(AccountTransferBase, table=True):
-    __tablename__ = "transfers"  # type: ignore
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     source_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
     destination_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
+
+    source_account: Account = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "AccountTransfer.source_account_id"
+        }
+    )
+
+    destination_account: Account = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "AccountTransfer.destination_account_id"
+        }
+    )
+
+    created_by_id: uuid.UUID = Field(foreign_key="users.id", nullable=False, index=True,)
+    updated_by_id: uuid.UUID | None = Field(foreign_key="users.id", nullable=True, index=True)
+    voided_by_id: uuid.UUID | None = Field(default=None, sa_column=Column( ForeignKey("users.id", ondelete="SET NULL"), nullable=True,),)
+
+    created_by: User = Relationship(sa_relationship_kwargs={"foreign_keys": "AccountTransfer.created_by_id"})
+    updated_by: User | None = Relationship(
+        sa_relationship_kwargs={
+            "foreign_keys": "AccountTransfer.updated_by_id"
+        }
+    )
+    voided_by: User | None = Relationship(sa_relationship_kwargs={"foreign_keys": "[AccountTransfer.voided_by_id]"},)
+
+    @property
+    def source_account_name(self) -> str:
+        return self.source_account.name
+        
+    @property
+    def destination_account_name(self) -> str:
+        return self.destination_account.name
+
+    @property
+    def created_by_name(self) -> str:
+        return f"{self.created_by.first_name} {self.created_by.last_name}"
+
+    @property
+    def updated_by_name(self) -> str | None:
+        if self.updated_by is None:
+            return None
+        return f"{self.updated_by.first_name} {self.updated_by.last_name}"
+
+
+    @property
+    def voided_by_name(self) -> str | None:
+        if self.voided_by is None:
+            return None
+        return f"{self.voided_by.first_name} {self.voided_by.last_name}"
