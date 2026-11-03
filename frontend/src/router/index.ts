@@ -173,11 +173,10 @@ const router = createRouter({
           path: 'transfers',
           component: () => import('@/views/Transfers.vue'),
           meta: {
-            superuserOnly: true,
             title: 'Transfers',
             breadcrumb: 'Transfers',
             breadcrumbParent: { label: 'Transfers', to: 'transfers' },
-            subtitle: 'View and log fund transfers between your accounts.'
+            subtitle: 'View and log fund transfers between accounts.'
           }
         },
         {

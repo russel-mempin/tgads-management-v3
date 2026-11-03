@@ -60,6 +60,8 @@ declare module 'vue' {
     Sidebar: typeof import('./src/components/Sidebar.vue')['default']
     SpendingByCategory: typeof import('./src/components/SpendingByCategory.vue')['default']
     TransactionsTable: typeof import('./src/components/TransactionsTable.vue')['default']
+    TransferForm: typeof import('./src/components/TransferForm.vue')['default']
+    TransfersTable: typeof import('./src/components/TransfersTable.vue')['default']
     UApp: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UBadge: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']

@@ -9,4 +9,5 @@ export interface Transfer {
     destination_account_name: string
     created_by_name: string
     updated_by_name: string
+    voided_by_name?: string
 }

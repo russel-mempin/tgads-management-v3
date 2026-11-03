@@ -38,7 +38,7 @@ const emit = defineEmits<{
                 <UButton class="flex-1 justify-center" size="lg" label="No, cancel" variant="outline" color="neutral"
                     icon="i-lucide-x" @click="emit('update:open', false)" />
 
-                <UButton class="flex-1 justify-center" size="lg" label="Yes, archive" color="error"
+                <UButton class="flex-1 justify-center" size="lg" label="Yes, proceed" color="error"
                     icon="i-lucide-eye-off" @click="emit('confirm')" />
             </div>
         </template>
