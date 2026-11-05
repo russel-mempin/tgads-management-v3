@@ -11,3 +11,12 @@ export interface Transfer {
     updated_by_name: string
     voided_by_name?: string
 }
+
+export interface TransferCreate {
+    reference_number?: string
+    description?: string
+    amount: number
+    transferred_at: string
+    source_account_id: string
+    destination_account_id: string
+}

@@ -2,16 +2,17 @@
 // Dependency imports
 import { ref, onMounted } from 'vue';
 // Type imports
-import type { Transfer } from '@/types/transfer';
+import type { Transfer, TransferCreate } from '@/types/transfer';
 // Component imports
 import { useAuthStore } from '@/stores/auth';
-import { getAllTransfers } from '@/api/transfer';
+import { getAllTransfers, createTransfer } from '@/api/transfer';
 import TransfersTable from '@/components/TransfersTable.vue';
 import TransferForm from '@/components/TransferForm.vue';
 import { formatDate } from '@/utils/formatters';
 import ConfirmModalWithDetails from '@/components/ConfirmModalWithDetails.vue';
 
 const authStore = useAuthStore()
+const toast = useToast()
 
 // UI Variables
 const loading = ref(false)
@@ -56,6 +57,31 @@ const fetchData = async () => {
 onMounted(async () => {
     await fetchData()
 })
+
+const saveNewTransferToDb = async (item: TransferCreate) => {
+    try {
+        if (!selectedTransfer.value) {
+            await createTransfer(item)
+            toast.add({
+                title: 'Transfer Added.',
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+        }
+    }
+    catch (error: unknown) {
+        console.error('Error saving transfer:', error)
+        toast.add({
+            title: 'Error saving transfer.',
+            color: 'error',
+            icon: 'i-lucide-alert-circle'
+        })
+    }
+    finally {
+        await fetchData()
+        isAddTransferFormOpen.value = false
+    }
+}
 </script>
 
 <template>
@@ -84,7 +110,7 @@ onMounted(async () => {
             </div>
         </template>
     </ConfirmModalWithDetails>
-    <TransferForm v-model:is-open="isAddTransferFormOpen" />
+    <TransferForm v-model:is-open="isAddTransferFormOpen" @save="saveNewTransferToDb" />
     <div class="h-full min-h-0 flex flex-col">
         <section class="shrink-0 mt-6 px-6 flex gap-6 items-center">
             <UInput size="lg" class="flex-1" v-model="descriptionSearch" placeholder="Search by description" />

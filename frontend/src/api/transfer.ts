@@ -1,4 +1,5 @@
 import http from './http'
+import type { TransferCreate } from '@/types/transfer'
 
 export const getAllTransfers = async (
     includeArchived = false,
@@ -10,5 +11,10 @@ export const getAllTransfers = async (
             search: search || undefined
         }
     })
+    return res.data
+}
+
+export const createTransfer = async (payload: TransferCreate) => {
+    const res = await http.post('/transfers/', payload)
     return res.data
 }
