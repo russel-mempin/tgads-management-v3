@@ -17,8 +17,20 @@ const schema = z.object({
     transferredAt: z.string().min(1, 'Transfer date is required'),
     description: z.string().min(1, 'Description is required'),
     amount: z.number({ error: 'Amount is required' }).positive('Amount must be greater than 0'),
-    sourceAccount: z.string().min(1, 'Payment method is required'),
-    destinationAccount: z.string().min(1, 'Payment method is required'),
+    sourceAccount: z.string().min(1, 'Source account is required'),
+    destinationAccount: z.string().min(1, 'Destination account is required'),
+}).superRefine((data, ctx) => {
+    if (
+        data.sourceAccount &&
+        data.destinationAccount &&
+        data.sourceAccount === data.destinationAccount
+    ) {
+        ctx.addIssue({
+            code: 'custom',
+            message: 'Source and destination accounts cannot be the same',
+            path: ['destinationAccount'],
+        })
+    }
 })
 type Schema = z.output<typeof schema>
 // Input variables
