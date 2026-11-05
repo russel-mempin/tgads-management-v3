@@ -1,8 +1,11 @@
-export interface Transfer {
-    reference_number?: string
-    description?: string
-    amount: string
+interface TransferBase {
+    reference_number: string
     transferred_at: string
+    description: string
+}
+
+export interface Transfer extends TransferBase {
+    amount: string
     created_at: string
     updated_at: string
     source_account_name: string
@@ -12,11 +15,17 @@ export interface Transfer {
     voided_by_name?: string
 }
 
-export interface TransferCreate {
-    reference_number?: string
-    description?: string
+export interface TransferCreate extends TransferBase {
     amount: number
-    transferred_at: string
     source_account_id: string
     destination_account_id: string
+}
+
+export interface TransferUpdate {
+    reference_number?: string
+    transferred_at?: string
+    description?: string
+    amount?: number
+    source_account_name?: string
+    destination_account_name?: string
 }

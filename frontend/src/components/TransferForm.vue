@@ -1,16 +1,19 @@
 <script setup lang="ts">
 // Dependency imports
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
 import { z } from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
 // Component imports
 import { useReferenceStore } from '@/stores/reference';
-import { nowForInput, inputToUtc } from '@/utils/formatters';
+import { nowForInput, inputToUtc, utcToInput } from '@/utils/formatters';
 // Type imports 
-import type { TransferCreate } from '@/types/transfer';
+import type { Transfer, TransferCreate } from '@/types/transfer';
 
 const referenceStore = useReferenceStore();
 
+const props = defineProps<{
+    editingTransfer?: Transfer | null
+}>()
 const emit = defineEmits<{
     save: [transfer: TransferCreate]
 }>()
@@ -56,6 +59,7 @@ const getInitialState = (): Schema => {
 }
 const state = reactive<Schema>(getInitialState())
 
+// Data Functions
 const resetForm = () => {
     Object.assign(state, getInitialState())
 }
@@ -63,6 +67,20 @@ const handleCancel = () => {
     resetForm()
     isOpen.value = false
 }
+
+watch(() => props.editingTransfer, (transfer) => {
+    if (transfer) {
+        state.referenceNumber = transfer.reference_number ?? ''
+        state.transferredAt = utcToInput(transfer.transferred_at)
+        state.description = transfer.description ?? ''
+        state.amount = Number(transfer.amount)
+        state.sourceAccount = transfer.source_account_name
+        state.destinationAccount = transfer.destination_account_name
+    }
+    else {
+        resetForm()
+    }
+}, { immediate: true })
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {
     const payload: TransferCreate = {
@@ -80,7 +98,7 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-    <UModal v-model:open="isOpen" size="md" title="Add Transfer" description="Enter transfer details and click Save."
+    <UModal v-model:open="isOpen" size="md" :title="props.editingTransfer ? 'Edit Transfer' : 'Add Transfer'" description="Enter transfer details and click Save."
         :close="{ color: 'error', class: 'rounded-full' }">
         <template #body>
             <UForm :schema="schema" :state="state" @submit="onSubmit" class="flex flex-col gap-4">

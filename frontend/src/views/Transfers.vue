@@ -2,7 +2,7 @@
 // Dependency imports
 import { ref, onMounted } from 'vue';
 // Type imports
-import type { Transfer, TransferCreate } from '@/types/transfer';
+import type { Transfer, TransferCreate, TransferUpdate } from '@/types/transfer';
 // Component imports
 import { useAuthStore } from '@/stores/auth';
 import { getAllTransfers, createTransfer } from '@/api/transfer';
@@ -21,6 +21,7 @@ const isConfirmVoidModalOpen = ref(false)
 
 // Data Variables
 const selectedTransfer = ref<Transfer>()
+const originalTransfer = ref<Transfer>()
 const data = ref<Transfer[]>([])
 
 // Filtering
@@ -29,11 +30,13 @@ const includeArchived = ref(false)
 
 // UI Functions
 const openAddTransferForm = () => {
+    selectedTransfer.value = undefined
+    originalTransfer.value = undefined
     isAddTransferFormOpen.value = true
-    console.log(isAddTransferFormOpen.value)
 }
 const openEditTransferForm = (transfer: Transfer) => {
     selectedTransfer.value = transfer
+    originalTransfer.value = { ...transfer }
     isAddTransferFormOpen.value = true
 }
 const openVoidTransferModal = (transfer: Transfer) => {
@@ -68,6 +71,35 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
                 icon: 'i-lucide-circle-check'
             })
         }
+        else {
+            const changes: TransferUpdate = {}
+            const keys = ['reference_number', 'transferred_at', 'description', 'amount'] as const
+
+            for (const key of keys) {
+                const currentValue = item[key]
+                const originalValue = originalTransfer.value?.[key]
+
+                const changed =
+                    key === 'transferred_at'
+                        ? new Date(currentValue as string).getTime() !==
+                        new Date(originalValue as string).getTime()
+                        : key === 'amount'
+                            ? Number(currentValue) !== Number(originalValue)
+                            : currentValue !== originalValue
+                if (changed) {
+                    changes[key] = currentValue as never
+                }
+            }
+            // await updateTransfer(selectedTransfer.value.id, changes)
+            toast.add({
+                title: 'Transfer Updated.',
+                color: 'success',
+                icon: 'i-lucide-circle-check'
+            })
+        }
+        await fetchData()
+        selectedTransfer.value = undefined
+        originalTransfer.value = undefined
     }
     catch (error: unknown) {
         console.error('Error saving transfer:', error)
@@ -78,7 +110,6 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
         })
     }
     finally {
-        await fetchData()
         isAddTransferFormOpen.value = false
     }
 }
@@ -110,7 +141,8 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
             </div>
         </template>
     </ConfirmModalWithDetails>
-    <TransferForm v-model:is-open="isAddTransferFormOpen" @save="saveNewTransferToDb" />
+    <TransferForm v-model:is-open="isAddTransferFormOpen" @save="saveNewTransferToDb"
+        :editing-transfer="selectedTransfer" />
     <div class="h-full min-h-0 flex flex-col">
         <section class="shrink-0 mt-6 px-6 flex gap-6 items-center">
             <UInput size="lg" class="flex-1" v-model="descriptionSearch" placeholder="Search by description" />
