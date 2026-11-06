@@ -824,6 +824,8 @@ class AccountTransferBase(SQLModel):
         ),
     )
     is_archived: bool = Field(default=False)
+    source_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
+    destination_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
 
 
 class AccountTransfer(AccountTransferBase, table=True):
@@ -845,8 +847,6 @@ class AccountTransfer(AccountTransferBase, table=True):
         ),
     )
 
-    source_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
-    destination_account_id: uuid.UUID = Field(foreign_key="accounts.id", index=True)
 
     source_account: Account = Relationship(
         sa_relationship_kwargs={

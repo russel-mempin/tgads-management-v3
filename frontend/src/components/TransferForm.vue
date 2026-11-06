@@ -74,8 +74,8 @@ watch(() => props.editingTransfer, (transfer) => {
         state.transferredAt = utcToInput(transfer.transferred_at)
         state.description = transfer.description ?? ''
         state.amount = Number(transfer.amount)
-        state.sourceAccount = transfer.source_account_name
-        state.destinationAccount = transfer.destination_account_name
+        state.sourceAccount = transfer.source_account_id
+        state.destinationAccount = transfer.destination_account_id
     }
     else {
         resetForm()
@@ -98,8 +98,8 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-    <UModal v-model:open="isOpen" size="md" :title="props.editingTransfer ? 'Edit Transfer' : 'Add Transfer'" description="Enter transfer details and click Save."
-        :close="{ color: 'error', class: 'rounded-full' }">
+    <UModal v-model:open="isOpen" size="md" :title="props.editingTransfer ? 'Edit Transfer' : 'Add Transfer'"
+        description="Enter transfer details and click Save." :close="{ color: 'error', class: 'rounded-full' }">
         <template #body>
             <UForm :schema="schema" :state="state" @submit="onSubmit" class="flex flex-col gap-4">
                 <UFormField label="Reference No." name="referenceNumber" required class="w-full">
@@ -112,13 +112,8 @@ const onSubmit = (event: FormSubmitEvent<Schema>) => {
                     <UTextarea v-model="state.description" class="w-full" />
                 </UFormField>
                 <UFormField label="Amount" required>
-                    <UInputNumber v-model="state.amount" class="w-full" :increment="false" :decrement="false"
-                        :format-options="{
-                            style: 'currency',
-                            currency: 'PHP',
-                            currencyDisplay: 'code',
-                            currencySign: 'accounting'
-                        }" @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
+                    <UInput v-model.number="state.amount" type="number" step="0.01" min="0.01" class="w-full"
+                        @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()" />
                 </UFormField>
                 <div class="grid grid-cols-2 items-center justify-between gap-4">
                     <UFormField class="flex-1" required label="Source Account" name="sourceAccount">

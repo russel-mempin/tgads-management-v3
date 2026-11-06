@@ -5,7 +5,7 @@ import { ref, onMounted } from 'vue';
 import type { Transfer, TransferCreate, TransferUpdate } from '@/types/transfer';
 // Component imports
 import { useAuthStore } from '@/stores/auth';
-import { getAllTransfers, createTransfer } from '@/api/transfer';
+import { getAllTransfers, createTransfer, updateTransfer } from '@/api/transfer';
 import TransfersTable from '@/components/TransfersTable.vue';
 import TransferForm from '@/components/TransferForm.vue';
 import { formatDate } from '@/utils/formatters';
@@ -73,7 +73,7 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
         }
         else {
             const changes: TransferUpdate = {}
-            const keys = ['reference_number', 'transferred_at', 'description', 'amount'] as const
+            const keys = ['reference_number', 'transferred_at', 'description', 'amount', 'source_account_id', 'destination_account_id'] as const
 
             for (const key of keys) {
                 const currentValue = item[key]
@@ -90,7 +90,7 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
                     changes[key] = currentValue as never
                 }
             }
-            // await updateTransfer(selectedTransfer.value.id, changes)
+            await updateTransfer(selectedTransfer.value.id, changes)
             toast.add({
                 title: 'Transfer Updated.',
                 color: 'success',

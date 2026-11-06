@@ -1,4 +1,8 @@
 import uuid
+from datetime import datetime
+from decimal import Decimal
+
+from sqlmodel import SQLModel
 
 from app.models import AccountTransferBase
 
@@ -13,5 +17,13 @@ class AccountTransferPublic(AccountTransferBase):
 
 
 class AccountTransferCreate(AccountTransferBase):
-    source_account_id: uuid.UUID
-    destination_account_id: uuid.UUID
+    pass
+
+
+class AccountTransferUpdate(SQLModel):
+    reference_number: str | None = None
+    description: str | None = None
+    amount: Decimal | None = None
+    transferred_at: datetime | None = None
+    source_account_id: uuid.UUID | None = None
+    destination_account_id: uuid.UUID | None = None
