@@ -5,7 +5,7 @@ import { ref, onMounted } from 'vue';
 import type { Transfer, TransferCreate, TransferUpdate } from '@/types/transfer';
 // Component imports
 import { useAuthStore } from '@/stores/auth';
-import { getAllTransfers, createTransfer, updateTransfer } from '@/api/transfer';
+import { archiveTransfer, getAllTransfers, createTransfer, updateTransfer } from '@/api/transfer';
 import TransfersTable from '@/components/TransfersTable.vue';
 import TransferForm from '@/components/TransferForm.vue';
 import { formatDate } from '@/utils/formatters';
@@ -113,10 +113,35 @@ const saveNewTransferToDb = async (item: TransferCreate) => {
         isAddTransferFormOpen.value = false
     }
 }
+
+const confirmArchiveTransfer = async () => {
+    if (!selectedTransfer.value) return
+    try {
+        await archiveTransfer(selectedTransfer.value.id)
+        toast.add({
+            title: 'Transfer Archived.',
+            color: 'success',
+            icon: 'i-lucide-circle-check'
+        })
+        await fetchData()
+    }
+    catch (error: unknown) {
+        console.error('Error archiving transfer:', error)
+        toast.add({
+            title: 'Error archiving transfer.',
+            color: 'error',
+            icon: 'i-lucide-alert-circle'
+        })
+    }
+    finally {
+        isConfirmVoidModalOpen.value = false
+        selectedTransfer.value = undefined
+    }
+}
 </script>
 
 <template>
-    <ConfirmModalWithDetails v-model:open="isConfirmVoidModalOpen" title="You are about to void a transfer"
+    <ConfirmModalWithDetails v-model:open="isConfirmVoidModalOpen" @confirm="confirmArchiveTransfer" title="You are about to void a transfer"
         description="This will archive the transfer data and reverse the transaction related to it.">
         <template #details>
             <div class="flex justify-between gap-4">

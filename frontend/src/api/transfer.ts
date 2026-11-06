@@ -23,3 +23,8 @@ export const updateTransfer = async (transfer_id: string, payload: TransferUpdat
     const res = await http.patch(`/transfers/${transfer_id}`, payload)
     return res.data
 }
+
+export const archiveTransfer = async (transfer_id: string) => {
+    const res = await http.patch(`/transfers/${transfer_id}/archive`)
+    return res.data
+}

@@ -251,3 +251,59 @@ def update_transfer(
     except Exception:
         db.rollback()
         raise
+
+
+def archive_transfer(db: Session, transfer_id: uuid.UUID, current_user: User):
+    try:
+        transfer = db.get(AccountTransfer, transfer_id)
+        if not transfer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transfer not found",
+            )
+        if transfer.is_archived:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Transfer is already archived.",
+            )
+
+        transfer.is_archived = True
+        transfer.voided_by_id = current_user.id
+        transfer.updated_at = datetime.now(UTC)
+        db.add(transfer)
+
+        db.add(
+            AccountTransaction(
+                date=transfer.transferred_at,
+                amount=transfer.amount,
+                source_type=TransactionSource.REVERSAL,
+                source_id=transfer.id,
+                account=db.get(Account, transfer.source_account_id),
+                description=f"Reversal of transfer: {transfer.description}",
+            )
+        )
+        db.add(
+            AccountTransaction(
+                date=transfer.transferred_at,
+                amount=-transfer.amount,
+                source_type=TransactionSource.REVERSAL,
+                source_id=transfer.id,
+                account=db.get(Account, transfer.destination_account_id),
+                description=f"Reversal of transfer: {transfer.description}",
+            )
+        )
+
+        db.add(
+            AuditLog(
+                action="Archived transfer",
+                user_id=current_user.id,
+            )
+        )
+        db.commit()
+        return "Transfer archived successfully."
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
