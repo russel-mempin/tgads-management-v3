@@ -43,20 +43,20 @@ onMounted(fetchData)
                     </div>
                     <AccountBalances :data="ownerData.accounts_balances" />
                 </section>
-                <section>
+                <section class="flex flex-col">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-1 h-6 bg-orange-600 rounded-r-full"></div>
                         <p class="text-sm font-semibold montserrat text-highlighted">PRODUCTION</p>
                     </div>
-                    <div class="flex flex-col gap-6">
+                    <div class="flex-1 flex flex-col gap-6">
                         <div
-                            class="bg-default border border-slate-200 border-l-4 border-l-orange-600 rounded-lg p-5 hover:shadow-md transition-shadow">
+                            class="flex-1 flex flex-col justify-center bg-default border border-slate-200 border-l-4 border-l-orange-600 rounded-lg p-5 hover:shadow-md transition-shadow">
                             <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Overdue Jobs</p>
                             <p class="text-3xl font-bold tracking-tight text-highlighted mb-2 tabular-nums">
                                 {{ ownerData?.overdue_jobs }}</p>
                         </div>
                         <div
-                            class="bg-default border border-slate-200 border-l-4 border-l-orange-600 rounded-lg p-5 hover:shadow-md transition-shadow">
+                            class="flex-1 flex flex-col justify-center bg-default border border-slate-200 border-l-4 border-l-orange-600 rounded-lg p-5 hover:shadow-md transition-shadow">
                             <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Pending Jobs</p>
                             <p class="text-3xl font-bold tracking-tight text-highlighted mb-2 tabular-nums">
                                 {{ ownerData?.pending_jobs }}</p>
