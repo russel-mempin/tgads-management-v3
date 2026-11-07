@@ -86,7 +86,7 @@ onMounted(fetchData)
                     </div>
                     <div
                         class="bg-default border border-slate-200 border-l-4 border-l-violet-600 rounded-lg p-5 hover:shadow-md transition-shadow">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Outstanding Receivables
+                        <p class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Outstanding Balances
                         </p>
                         <p class="text-3xl font-bold tracking-tight text-highlighted mb-2 tabular-nums">
                             {{ formatCurrency(Number(ownerData?.outstanding_receivables)) }}</p>
@@ -102,10 +102,10 @@ onMounted(fetchData)
             <!-- Sales-->
             <section>
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-1 h-6 bg-green-600 rounded-r-full"></div>
-                    <p class="text-sm font-semibold montserrat text-highlighted">SALES PER SERVICE THIS YEAR</p>
+                    <div class="w-1 h-6 bg-red-600 rounded-r-full"></div>
+                    <p class="text-sm font-semibold montserrat text-highlighted uppercase tracking-wide">Outstanding Balances</p>
                 </div>
-                <div class="bg-default border border-slate-200 border-l-4 border-l-green-600 rounded-lg">
+                <div class="bg-default border border-slate-200 border-l-4 border-l-red-600 rounded-lg">
                     <SalesPerService :data="ownerData.sales_per_service" />
                 </div>
             </section>

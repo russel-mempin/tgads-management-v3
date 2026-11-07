@@ -54,6 +54,7 @@ const allItems = computed<NavItem[]>(() => [
   { to: '/expenses', label: 'Expenses', icon: 'i-lucide-banknote-arrow-down', category: authStore.isOwner ? 'Finance' : 'Operations', },
   { to: '/transactions', label: 'Transactions', icon: 'i-lucide-badge-dollar-sign', category: 'Finance', ownerOnly: true },
   { to: '/transfers', label: 'Transfers', icon: 'i-lucide-arrow-left-right', category: authStore.isOwner ? 'Finance' : 'Operations', },
+  { to: '/sales', label: 'Sales', icon: 'i-lucide-banknote-arrow-up', category: 'Reports', ownerOnly: true },
   // { to: '/deposits', label: 'Deposits', icon: 'i-lucide-landmark', category: 'Finance', adminOnly: true },
   { 
     to: '/manage-services', 
@@ -64,7 +65,7 @@ const allItems = computed<NavItem[]>(() => [
     active: route.path.startsWith('/manage-services')
   },
   { to: '/manage-extras', label: 'Manage Extras', icon: 'i-lucide-layers', category: 'Settings', adminOnly: true },
-  // { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
+  { to: '/manage-users', label: 'Manage Users', icon: 'i-lucide-user-cog', category: 'Settings', adminOnly: true },
 ])
 
 const visibleItems = computed(() =>

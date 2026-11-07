@@ -180,6 +180,16 @@ const router = createRouter({
           }
         },
         {
+          path: 'sales',
+          component: () => import('@/views/Sales.vue'),
+          meta: {
+            title: 'Sales',
+            breadcrumb: 'Sales',
+            breadcrumbParent: { label: 'Sales', to: 'sales' },
+            subtitle: 'View sales data.'
+          }
+        },
+        {
           path: 'manage-services',
           component: () => import('@/views/manage_services/ManageServices.vue'),
           meta: {
@@ -217,6 +227,16 @@ const router = createRouter({
             breadcrumb: 'Manage Extras',
             breadcrumbParent: { label: 'Manage Extras', to: 'manage-extras' },
             subtitle: 'View and manage extras to be used with the main services.'
+          }
+        },
+        {
+          path: 'manage-users',
+          component: () => import('@/views/ManageUsers.vue'),
+          meta: {
+            title: 'Manage Users',
+            breadcrumb: 'Manage Users',
+            breadcrumbParent: { label: 'Manage Users', to: 'manage-users' },
+            subtitle: 'View and manage users.'
           }
         },
       ]
