@@ -13,6 +13,7 @@ from app.routes import (
     for_reviews,
     job_orders,
     misc_sales,
+    performances,
     reports,
     services,
     transactions,
@@ -54,3 +55,4 @@ app.include_router(misc_sales.router)
 app.include_router(reports.router)
 app.include_router(dashboards.router)
 app.include_router(transfers.router)
+app.include_router(performances.router)

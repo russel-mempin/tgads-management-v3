@@ -180,13 +180,13 @@ const router = createRouter({
           }
         },
         {
-          path: 'sales',
-          component: () => import('@/views/Sales.vue'),
+          path: 'monthly-performance',
+          component: () => import('@/views/MonthlyPerformance.vue'),
           meta: {
-            title: 'Sales',
-            breadcrumb: 'Sales',
-            breadcrumbParent: { label: 'Sales', to: 'sales' },
-            subtitle: 'View sales data.'
+            title: 'Monthly Performance',
+            breadcrumb: 'Monthly Performance',
+            breadcrumbParent: { label: 'Monthly Performance', to: 'monthly-performance' },
+            subtitle: 'View monthly performance data.'
           }
         },
         {

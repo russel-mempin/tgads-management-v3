@@ -48,15 +48,14 @@ class JobStatus(str, Enum):
     
     
 class TransactionSource(str, Enum):
-    PAYMENT = "payment"
-    BANK_INTEREST = "bank_interest"
-    EXPENSE = "expense"
-    MISC_SALE = "misc_sale"
-    TRANSFER_SOURCE = "transfer_source"
-    TRANSFER_DESTINATION = "transfer_destination"
-    ADJUSTMENT = "adjustment"
-    REVERSAL = "reversal"
-    REFUND = "refund"
+    PAYMENT = "payment" # Income
+    BANK_INTEREST = "bank_interest" # Incom
+    EXPENSE = "expense" # Expense
+    MISC_SALE = "misc_sale" # Income
+    TRANSFER_SOURCE = "transfer_source" # Transfer
+    TRANSFER_DESTINATION = "transfer_destination" # Transfer
+    REVERSAL = "reversal" # For reversing a transaction, can be used for both income and expense
+    REFUND = "refund" # Expense
     
 
 class ExpenseCategory(str, Enum):
