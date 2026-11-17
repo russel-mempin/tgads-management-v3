@@ -1,6 +1,9 @@
+import type { Expense } from "./expense"
+import type { MiscSale } from "./miscSale"
+
 export interface CustomerPerformance {
     name: string
-    quantity: number
+    order_quantity: number
     sales: string
     balance: string
     last_order: string
@@ -44,6 +47,6 @@ export interface MonthlyPerformance {
     customer_performances: CustomerPerformance[]
     product_performances: ProductPerformance[]
     job_order_sales: JobOrderSales[]
-    miscellaneous_sales: []
-    expenses_list: []
+    miscellaneous_sales: MiscSale[]
+    expenses_list: Expense[]
 }

@@ -11,6 +11,7 @@ export interface MiscSale extends MiscSaleBase {
     account_name: string
     created_by_name: string
     updated_by_name: string | null
+    is_archived: boolean
 }
 
 export interface MiscSaleCreate extends MiscSaleBase {
