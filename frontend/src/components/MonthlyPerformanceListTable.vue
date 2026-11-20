@@ -14,6 +14,7 @@ const UButton = resolveComponent('UButton')
 
 const details = ref<Record<string, MonthlyPerformance>>({})
 const loadingMonths = ref<string[]>([])
+const expanded = ref({})
 
 const getKey = (month: string) => `${props.year}-${Number(month)}`
 
@@ -34,7 +35,13 @@ const toggleRow = async (row: any) => {
     loadingMonths.value.push(key)
 
     try {
-        details.value[key] = await getMonthlyPerformance(props.year, month)
+        const result = await getMonthlyPerformance(props.year, month)
+
+        console.log('API result:', result)
+
+        details.value[key] = result
+    } catch (error) {
+        console.error('Failed to fetch monthly performance:', error)
     } finally {
         loadingMonths.value = loadingMonths.value.filter(m => m !== key)
     }
@@ -96,23 +103,22 @@ const columns: TableColumn<MonthlyPerformanceBase>[] = [
 </script>
 
 <template>
-    <UTable
-        :data="data"
-        :columns="columns"
-        :get-row-can-expand="() => true"
-        sticky
-        class="overflow-y-auto h-full"
-    >
+    <UTable v-model:expanded="expanded" :data="data" :columns="columns" :get-row-can-expand="() => true" sticky
+        class="overflow-y-auto h-full">
         <template #expanded="{ row }">
             <div class="p-4">
-                <div v-if="loadingMonths.includes(getKey(row.original.month))">
-                    <UIcon name="i-lucide-loader-circle" class="animate-spin" />
+                <p>Expanded: {{ row.original.month }}</p>
+
+                <div v-if="loadingMonths.includes(getKey(row.original.month.toString()))">
                     Loading details...
                 </div>
 
-                <div v-else-if="details[getKey(row.original.month)]">
-                    <!-- Display your monthly performance details here -->
-                    <pre>{{ details[getKey(row.original.month)] }}</pre>
+                <div v-else-if="details[getKey(row.original.month.toString())]">
+                    <pre>{{ details[getKey(row.original.month.toString())] }}</pre>
+                </div>
+
+                <div v-else>
+                    No details loaded.
                 </div>
             </div>
         </template>

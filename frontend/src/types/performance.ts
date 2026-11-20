@@ -34,7 +34,7 @@ export interface PerAccountCollections {
 }
 
 export interface MonthlyPerformanceBase {
-    month: string
+    month: number
     collected: string
     expenses: string
     net: string

@@ -41,7 +41,7 @@ class PerAccountCollections(SQLModel):
 
 
 class MonthlyPerformanceBase(SQLModel):
-    month: str
+    month: int
     collected: Decimal # Sum of collections for the month. (Money on account)
     expenses: Decimal # Sum of expenses for the month
     net: Decimal # Collected - expenses

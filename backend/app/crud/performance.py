@@ -390,7 +390,7 @@ def get_monthly_performance_list(
 
         performance.append(
             MonthlyPerformanceBase(
-                month=month_start.strftime("%B"),
+                month=month,
                 collected=collected_amount,
                 expenses=expenses_amount,
                 net=collected_amount - expenses_amount,
@@ -678,7 +678,7 @@ def get_monthly_performance(
     ).all()
 
     return MonthlyPerformance(
-        month=month_start.strftime("%B"),
+        month=month,
         collected=collected_amount,
         expenses=expenses_amount,
         net=collected_amount - expenses_amount,
