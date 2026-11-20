@@ -14,6 +14,7 @@ from app.enums import (
     PriceUnit,
     PricingStrategy,
     ReasonCategory,
+    Receipts,
     ReviewEntityType,
     SizeUnit,
     TransactionSource,
@@ -479,6 +480,7 @@ class PaymentBase(SQLModel):
     )
     reference_number: str | None = Field(default=None)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    receipt_issued: Receipts | None = Field(default=Receipts.BILLING_STATEMENT)
     notes: str | None = Field(default=None)
 
 
@@ -493,6 +495,11 @@ class Payment(PaymentBase, table=True):
     )
     account: Account = Relationship(back_populates="payments")
     account_id: uuid.UUID = Field(foreign_key="accounts.id", nullable=False)
+    signatory_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="users.id",
+        nullable=True,
+    )
 
     job_order: JobOrder = Relationship(back_populates="payments")
     refunds: list[Refund] = Relationship(back_populates="payment")
@@ -719,7 +726,10 @@ class Account(SQLModel, table=True):
     name: str = Field(unique=True, index=True)  # "Cash on Hand", "BPI Savings", "GCash"
     type: AccountType = Field()
     beginning_balance: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
-    beginning_balance_date: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    beginning_balance_date: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     is_active: bool = Field(default=True)
 
     payments: list[Payment] = Relationship(back_populates="account")
@@ -751,7 +761,10 @@ class AccountTransaction(SQLModel, table=True):
     source_type: TransactionSource
     description: str = Field()
     source_id: uuid.UUID | None = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
     account: Account = Relationship(back_populates="transactions")
     
@@ -770,6 +783,7 @@ class UnlinkedPayment(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     reference_number: str | None = Field(default=None)
+    receipt_issued: Receipts | None = Field(default=Receipts.BILLING_STATEMENT)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
     customer_name: str | None = Field(default=None)
     description: str | None = Field(default=None)

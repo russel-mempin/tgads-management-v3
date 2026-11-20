@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
-from app.crud.performance import get_monthly_performance_list
+from app.crud.performance import get_monthly_performance, get_monthly_performance_list
 from app.database import get_session
 from app.schemas.performance import MonthlyPerformance, MonthlyPerformanceBase
 from app.services.dependencies import get_current_active_user
@@ -16,4 +16,4 @@ def read_monthly_performance_list(year: int, db: Session = Depends(get_session))
 
 @router.get("/{year}/{month}", response_model=MonthlyPerformance)
 def read_month_performance(year: int, month: int, db: Session = Depends(get_session)):
-    print("hi")
+    return get_monthly_performance(db, year, month)

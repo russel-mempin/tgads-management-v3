@@ -49,7 +49,7 @@ class JobStatus(str, Enum):
     
 class TransactionSource(str, Enum):
     PAYMENT = "payment" # Income
-    BANK_INTEREST = "bank_interest" # Incom
+    BANK_INTEREST = "bank_interest" # Income
     EXPENSE = "expense" # Expense
     MISC_SALE = "misc_sale" # Income
     TRANSFER_SOURCE = "transfer_source" # Transfer
@@ -100,3 +100,8 @@ class DatePeriod(str, Enum):
     LAST_MONTH = "last_month"
     THIS_YEAR = "this_year"
     ALL = "all"
+
+
+class Receipts(str, Enum):
+    BILLING_STATEMENT = "Billing Statement"
+    SERVICE_INVOICE = "Service Invoice"

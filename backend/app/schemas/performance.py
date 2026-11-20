@@ -8,7 +8,7 @@ from app.schemas.misc_sale import MiscSalePublic
 
 
 class CustomerPerformance(SQLModel):
-    name: str
+    name: str | None
     order_quantity: int
     sales: Decimal
     balance: Decimal
@@ -16,8 +16,8 @@ class CustomerPerformance(SQLModel):
     sales_percentage: float
 
 
-class ProductPerformance(SQLModel):
-    full_product_name: str
+class ServicePerformance(SQLModel):
+    full_service_name: str
     order_quantity: int
     material_consumed_in_sqft: Decimal
     sales: Decimal
@@ -26,7 +26,7 @@ class ProductPerformance(SQLModel):
 
 class JobOrderSales(SQLModel):
     jo_number: int
-    customer_name: str
+    customer_name: str | None
     date_received: datetime
     total_due: Decimal
     total_paid: Decimal
@@ -36,6 +36,7 @@ class JobOrderSales(SQLModel):
 class PerAccountCollections(SQLModel):
     account_name: str
     collections: Decimal
+    deductions: Decimal
     ending_balance: Decimal
 
 
@@ -49,9 +50,9 @@ class MonthlyPerformanceBase(SQLModel):
 
 
 class MonthlyPerformance(MonthlyPerformanceBase):
-    total_of_accounts: Decimal # Total of all accounts at the end of the month
+    snapshots_of_accounts: list[PerAccountCollections]# Snapshots of all accounts at the end of the month
     customer_performances: list[CustomerPerformance] # Top customers for the month based on sales
-    product_performances: list[ProductPerformance] # Top products for the month based on sales
+    service_performances: list[ServicePerformance] # Top products for the month based on sales
     job_order_sales: list[JobOrderSales] # List of job orders for the month with their payment data
     miscellaneous_sales_list: list[MiscSalePublic] # List of miscellaneous sales for the month
     expenses_list: list[ExpensePublic] # List of expenses for the month

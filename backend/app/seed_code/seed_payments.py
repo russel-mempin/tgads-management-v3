@@ -12,12 +12,14 @@ from app.models import (
     ForReview,
     JobOrder,
     Payment,
+    Receipts,
     UnlinkedPayment,
+    User,
 )
 from app.utils.utils import get_system_admin, parse_currency, parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "payments.csv")
+PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "billingandinvoice.csv")
 
 ACCOUNT_NAME_BY_METHOD: dict[str, str] = {
     "Cash": "Cash",
@@ -33,19 +35,40 @@ def get_account(session: Session, method: str) -> Account | None:
     return session.exec(select(Account).where(Account.name == account_name)).first()
 
 
+def get_user_from_signatory(session: Session, full_name: str) -> User | None:
+    parts = full_name.strip().split(maxsplit=1)
+
+    if len(parts) != 2:
+        return None
+
+    first_name, last_name = parts
+
+    return session.exec(
+        select(User).where(
+            User.first_name == first_name,
+            User.last_name == last_name,
+        )
+    ).first()
+
+
 def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
     with Session(engine) as session:
         sysadmin = get_system_admin(session)
         with open(file_path, newline="") as f:
             for row in csv.DictReader(f):
-                account = get_account(session, row.get("method", ""))
+                method = (row.get("method") or "").strip() or "Cash"
+                account = get_account(session, method)
+
                 if account is None:
-                    print("Account not found.")
+                    print(f"Account not found: {method}")
                     continue
 
-                date_received = parse_date(row["date_received"])
+                signatory_name = (row.get("signatory") or "").strip()
+                signatory = get_user_from_signatory(session, signatory_name) if signatory_name else None
+
+                date_received = parse_date(row["date_issued"])
                 reference_number = row.get("reference_number", "").strip()
-                amount = parse_currency(row.get("amount", ""))
+                amount = parse_currency(row.get("total_amount", ""))
                 jo_number_raw = row.get("jo_number", "").strip()
 
                 job_order = None
@@ -68,6 +91,8 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                         date_received=date_received,
                         reference_number=reference_number,
                         amount=Decimal(amount),
+                        receipt_issued = Receipts(row["receipt_issued"]),
+                        signatory_id=signatory.id if signatory else None,
                         account_id=account.id,
                         job_order_id=job_order.id,
                         job_order=job_order,
@@ -96,6 +121,7 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
                         reference_number=reference_number,
                         amount=Decimal(amount),
                         customer_name=row.get("name", "").strip() or None,
+                        signatory_id=signatory.id if signatory else None,
                         description=description,
                         account_id=account.id,
                     )
