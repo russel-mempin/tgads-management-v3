@@ -40,6 +40,7 @@ declare module 'vue' {
     MiscSaleDisplay: typeof import('./src/components/MiscSaleDisplay.vue')['default']
     MiscSaleForm: typeof import('./src/components/MiscSaleForm.vue')['default']
     MiscSaleTable: typeof import('./src/components/MiscSaleTable.vue')['default']
+    MonthlyPerformanceDisplay: typeof import('./src/components/MonthlyPerformanceDisplay.vue')['default']
     MonthlyPerformanceListTable: typeof import('./src/components/MonthlyPerformanceListTable.vue')['default']
     OptionCard: typeof import('./src/components/OptionCard.vue')['default']
     OptionPriceTierFields: typeof import('./src/components/service-option-form/OptionPriceTierFields.vue')['default']

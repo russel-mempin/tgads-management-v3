@@ -30,6 +30,7 @@ export interface JobOrderSales {
 export interface PerAccountCollections {
     account_name: string
     collections: string
+    deductions: string
     ending_balance: string
 }
 
@@ -42,8 +43,8 @@ export interface MonthlyPerformanceBase {
     receivables: string
 }
 
-export interface MonthlyPerformance {
-    total_of_accounts: string
+export interface MonthlyPerformance extends MonthlyPerformanceBase {
+    snapshots_of_accounts: PerAccountCollections[]
     customer_performances: CustomerPerformance[]
     product_performances: ProductPerformance[]
     job_order_sales: JobOrderSales[]

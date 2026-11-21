@@ -4,6 +4,8 @@ import type { TableColumn } from '@nuxt/ui';
 import { formatCurrency } from '@/utils/formatters';
 import { getMonthlyPerformance } from '@/api/performances';
 import type { MonthlyPerformanceBase, MonthlyPerformance } from '@/types/performance';
+// Component imports
+import MonthlyPerformanceDisplay from './MonthlyPerformanceDisplay.vue';
 
 const props = defineProps<{
     data: MonthlyPerformanceBase[]
@@ -103,19 +105,18 @@ const columns: TableColumn<MonthlyPerformanceBase>[] = [
 </script>
 
 <template>
-    <UTable v-model:expanded="expanded" :data="data" :columns="columns" :get-row-can-expand="() => true" sticky
+    <UTable v-model:expanded="expanded" :data="data" :columns="columns" :get-row-can-expand="() => true"
         class="overflow-y-auto h-full">
         <template #expanded="{ row }">
-            <div class="p-4">
-                <p>Expanded: {{ row.original.month }}</p>
-
+            <div>
                 <div v-if="loadingMonths.includes(getKey(row.original.month.toString()))">
                     Loading details...
                 </div>
 
-                <div v-else-if="details[getKey(row.original.month.toString())]">
-                    <pre>{{ details[getKey(row.original.month.toString())] }}</pre>
-                </div>
+                <MonthlyPerformanceDisplay
+                    v-else-if="details[getKey(row.original.month.toString())]"
+                    :data="details[getKey(row.original.month.toString())]!"
+                />
 
                 <div v-else>
                     No details loaded.
