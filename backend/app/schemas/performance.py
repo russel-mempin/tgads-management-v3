@@ -5,6 +5,7 @@ from sqlmodel import SQLModel
 
 from app.schemas.expense import ExpensePublic
 from app.schemas.misc_sale import MiscSalePublic
+from app.schemas.transaction import TransactionPublic
 
 
 class CustomerPerformance(SQLModel):
@@ -51,6 +52,7 @@ class MonthlyPerformanceBase(SQLModel):
 
 class MonthlyPerformance(MonthlyPerformanceBase):
     snapshots_of_accounts: list[PerAccountCollections]# Snapshots of all accounts at the end of the month
+    collected_list: list[TransactionPublic]
     customer_performances: list[CustomerPerformance] # Top customers for the month based on sales
     service_performances: list[ServicePerformance] # Top products for the month based on sales
     job_order_sales: list[JobOrderSales] # List of job orders for the month with their payment data

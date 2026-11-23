@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, resolveComponent, h } from 'vue';
-import type { MonthlyPerformance, CustomerPerformance, JobOrderSales } from '@/types/performance';
-import type { Expense } from '@/types/expense';
-import { formatCurrency, formatDate, mapExpenseCategory } from '@/utils/formatters';
-import type { TableColumn } from '@nuxt/ui';
+// Dependecy imports
+import { computed, resolveComponent, h, ref } from 'vue';
+import type { TableColumn, RadioGroupItem } from '@nuxt/ui';
+// Type imports
+import type { MonthlyPerformance, CustomerPerformance, JobOrderSales, ServicePerformance } from '@/types/performance';
+// Component imports
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { useReferenceStore } from '@/stores/reference';
+import ExpenseTable from './ExpenseTable.vue';
+import TransactionsTable from './TransactionsTable.vue';
 
-const UBadge = resolveComponent('UBadge')
+const referenceStore = useReferenceStore()
 
 const props = defineProps<{
     data: MonthlyPerformance
@@ -17,6 +22,32 @@ const totalEndingBalance = computed(() =>
         0
     )
 )
+
+// Accounts Choices
+const items = computed<RadioGroupItem[]>(() =>
+    referenceStore.accountOptions.map(account => ({
+        label: account.name,
+        value: account.id,
+        class: 'w-30'
+    }))
+)
+const salesItems = ref<RadioGroupItem[]>([
+    {
+        label: 'All',
+        value: 'System',
+        class: 'w-36'
+    },
+    {
+        label: 'Receivables',
+        value: 'Light',
+        class: 'w-36'
+    },
+    {
+        label: 'No Balance',
+        value: 'Dark',
+        class: 'w-36'
+    }
+])
 
 const customerColumns: TableColumn<CustomerPerformance>[] = [
     {
@@ -53,38 +84,28 @@ const customerColumns: TableColumn<CustomerPerformance>[] = [
     },
 ]
 
-const expenseColumns: TableColumn<Expense>[] = [
+const serviceColumns: TableColumn<ServicePerformance>[] = [
     {
-        accessorKey: 'date',
-        header: 'Date',
-        cell: ({ row }) => `${formatDate(row.getValue('date'))}`
+        accessorKey: 'full_service_name',
+        header: 'Name',
     },
     {
-        accessorKey: 'category',
-        header: 'Category',
-        cell: ({ row }) => {
-            const category = row.getValue('category') as string
-            return h(UBadge, { class: mapExpenseCategory(category) },
-                () => category
-            )
-        }
+        accessorKey: 'order_quantity',
+        header: 'Order Quantity',
     },
     {
-        accessorKey: 'description',
-        header: 'Description',
+        accessorKey: 'material_consumed_in_sqft',
+        header: 'Material Consumed (sqft.)',
     },
     {
-        accessorKey: 'amount',
-        header: 'Amount',
-        cell: ({ row }) => `${formatCurrency(row.getValue('amount'))}`
+        accessorKey: 'sales',
+        header: 'Sales',
+        cell: ({ row }) => `${formatCurrency(row.getValue('sales'))}`
     },
     {
-        accessorKey: 'account_name',
-        header: 'Method',
-    },
-    {
-        accessorKey: 'created_by_name',
-        header: 'Created By',
+        accessorKey: 'sales_percentage',
+        header: 'sales_percentage',
+        cell: ({ row }) => `${row.original.sales_percentage.toFixed(1)}%`,
     },
 ]
 
@@ -167,16 +188,26 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
             </div>
         </div>
         <!-- Collected Section -->
-
+        <div class="mt-6 border border-default rounded-md">
+            <div class="p-4 flex items-center justify-between border-b border-default">
+                <p class="font-semibold uppercase text-muted">Collections List</p>
+                <URadioGroup size="sm" indicator="hidden" orientation="horizontal" variant="table" default-value="Cash"
+                    :items="items" />
+            </div>
+            <div class="max-h-100 overflow-y-auto">
+                <TransactionsTable :data="data.collected_list" />
+            </div>
+        </div>
         <!-- Expenses Section -->
         <div class="flex gap-6">
             <div class="flex-1 mt-6 border border-default rounded-md">
                 <div class="p-4 flex items-center justify-between border-b border-default">
                     <p class="font-semibold uppercase text-muted">Expense List</p>
-                    <p class="font-semibold uppercase text-error">Total: {{ formatCurrency(Number(data.expenses)) }}</p>
+                    <URadioGroup size="sm" indicator="hidden" orientation="horizontal" variant="table"
+                        default-value="Cash" :items="items" />
                 </div>
                 <div class="max-h-100 overflow-y-auto">
-                    <UTable :data="data.expenses_list" :columns="expenseColumns" />
+                    <ExpenseTable :expense="data.expenses_list" />
                 </div>
             </div>
             <div class="mt-6 border border-default rounded-md">
@@ -189,12 +220,19 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
         </div>
         <!-- Sales List (TODO: Toggle to see all or with balances only to see collectibles)-->
         <div class="mt-6 border border-default rounded-md">
-            <div>
-                <p class="p-4 border-b border-default font-semibold uppercase text-muted">Job Order Sales List</p>
+            <div class="p-4 flex items-center justify-between border-b border-default">
+                <p class="font-semibold uppercase text-muted">Job Order Sales List</p>
+                <URadioGroup size="xs" indicator="hidden" orientation="horizontal" variant="table" default-value="All"
+                    :items="salesItems" />
             </div>
             <div class="max-h-100 overflow-y-auto">
                 <UTable :data="data.job_order_sales" :columns="salesColumns" />
             </div>
+        </div>
+        <!-- Service Performance -->
+        <div class="mt-6 border border-default rounded-md">
+            <p class="p-4 border-b border-default font-semibold uppercase text-muted">Top Services</p>
+            <UTable :data="data.service_performances" :columns="serviceColumns" />
         </div>
         <!-- Customers Section -->
         <div class="mt-6 border border-default rounded-md">

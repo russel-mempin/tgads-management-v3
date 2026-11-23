@@ -2,6 +2,7 @@
 import { resolveComponent, h } from 'vue';
 import type { Expense } from '@/types/expense';
 import type { TableColumn } from '@nuxt/ui';
+import type { TableMeta, Row } from '@tanstack/vue-table'
 import { formatDate, formatCurrency, mapExpenseCategory } from '@/utils/formatters';
 
 const UBadge = resolveComponent('UBadge')
@@ -21,7 +22,7 @@ const columns: TableColumn<Expense>[] = [
         header: 'Category',
         cell: ({ row }) => {
             const category = row.getValue('category') as string
-            return h(UBadge, {class: mapExpenseCategory(category)},
+            return h(UBadge, { class: mapExpenseCategory(category) },
                 () => category
             )
         }
@@ -33,7 +34,11 @@ const columns: TableColumn<Expense>[] = [
     {
         accessorKey: 'amount',
         header: 'Amount',
-        cell: ({ row }) => `${formatCurrency(row.getValue('amount'))}`
+        cell: ({ row }) => h(
+            'span',
+            { class: 'font-semibold text-red-600' },
+            formatCurrency(row.getValue('amount'))
+        )
     },
     {
         accessorKey: 'account_name',
@@ -48,10 +53,16 @@ const columns: TableColumn<Expense>[] = [
         header: ''
     }
 ]
+
+const meta: TableMeta<Expense> = {
+    class: {
+        tr: () => 'bg-error/10!'
+    }
+}
 </script>
 
 <template>
-    <UTable :data="expense" :columns="columns">
+    <UTable :data="expense" :columns="columns" :meta="meta">
         <template #actions-cell="{ row }">
             <slot name="actions" :item="row.original" :index="row.index" />
         </template>

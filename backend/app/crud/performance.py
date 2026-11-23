@@ -402,6 +402,19 @@ def get_monthly_performance_list(
     return performance
 
 
+def _get_account_snapshots(db: Session) -> list[PerAccountCollections]:
+    # Get all accounts
+    # Get all transactions of the month
+    # Somehow filter collections and collections
+    # Return all data per account
+    accounts = db.exec(select(Account)).all()
+    
+    transactions = db.exec(select(AccountTransaction).where(
+        EXTRACT(MONTH FROM AccountTransaction.date ) = 1
+    ))  
+    pass
+
+
 # TODO: Fully AI generated
 def get_account_snapshots(
     db: Session,
@@ -507,6 +520,22 @@ def get_monthly_performance(
         ),
         0,
     )
+    collected_list = db.exec(
+        select(AccountTransaction).where(
+            AccountTransaction.source_type.in_(
+                [
+                    TransactionSource.PAYMENT,
+                    TransactionSource.BANK_INTEREST,
+                    TransactionSource.MISC_SALE,
+                ]
+            )
+            |
+            (
+                (AccountTransaction.source_type == TransactionSource.REVERSAL)
+                & (AccountTransaction.amount < 0)
+            )
+        )
+    ).all()
 
     # Expense transactions
     expenses = func.coalesce(
@@ -685,6 +714,7 @@ def get_monthly_performance(
         sales=job_result.sales,
         receivables=job_result.receivables,
         snapshots_of_accounts=snapshots_of_accounts,
+        collected_list=collected_list,
         customer_performances=customer_performances,
         service_performances=service_performances,
         job_order_sales=job_order_sales,

@@ -1,5 +1,6 @@
 import type { Expense } from "./expense"
 import type { MiscSale } from "./miscSale"
+import type { Transaction } from "./transaction"
 
 export interface CustomerPerformance {
     name: string
@@ -10,7 +11,7 @@ export interface CustomerPerformance {
     sales_percentage: number
 }
 
-export interface ProductPerformance {
+export interface ServicePerformance {
     full_product_name: string
     order_quantity: number
     material_consumed_in_sqft: string
@@ -45,8 +46,9 @@ export interface MonthlyPerformanceBase {
 
 export interface MonthlyPerformance extends MonthlyPerformanceBase {
     snapshots_of_accounts: PerAccountCollections[]
+    collected_list: Transaction[]
     customer_performances: CustomerPerformance[]
-    product_performances: ProductPerformance[]
+    service_performances: ServicePerformance[]
     job_order_sales: JobOrderSales[]
     miscellaneous_sales: MiscSale[]
     expenses_list: Expense[]
