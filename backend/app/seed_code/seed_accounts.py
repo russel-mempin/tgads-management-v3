@@ -20,14 +20,14 @@ def seed_accounts():
                 name="Cash",
                 type=AccountType.CASH_ON_HAND,
                 beginning_balance=-Decimal("6259.98"),
-                beginning_balance_date=datetime(2026, 4, 1, 0, 0, 0, tzinfo=UTC),
+                beginning_balance_date=datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC),
                 current_balance=Decimal(0),
             ),
             Account(
                 name="GCash",
                 type=AccountType.EWALLET,
                 beginning_balance=Decimal("10003.46"),
-                beginning_balance_date=datetime(2026, 4, 1, 0, 0, 0, tzinfo=UTC),
+                beginning_balance_date=datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC),
                 current_balance=Decimal(0),
             ),
             Account(

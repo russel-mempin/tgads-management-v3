@@ -44,11 +44,7 @@ def to_feet(value: float, unit: SizeUnit) -> Decimal:
 
 # TODO: Fully AI generated
 def calculate_material_consumption(item: JobItem) -> Decimal:
-    if (
-        item.height is None
-        or item.width is None
-        or item.size_unit is None
-    ):
+    if item.height is None or item.width is None or item.size_unit is None:
         return Decimal(0)
 
     height = to_feet(item.height, item.size_unit)
@@ -77,8 +73,7 @@ def get_service_performances(
             JobOrder.voided_at.is_(None),
         )
         .options(
-            selectinload(JobItem.service_option)
-            .selectinload(ServiceOption.service)
+            selectinload(JobItem.service_option).selectinload(ServiceOption.service)
         )
     ).all()
 
@@ -96,15 +91,11 @@ def get_service_performances(
 
         data = service_data[option_id]
 
-        data["full_service_name"] = (
-            item.service_option.full_service_name
-        )
+        data["full_service_name"] = item.service_option.full_service_name
 
         data["order_quantity"] += item.quantity
 
-        data["material_consumed_in_sqft"] += (
-            calculate_material_consumption(item)
-        )
+        data["material_consumed_in_sqft"] += calculate_material_consumption(item)
 
         data["sales"] += item.subtotal
 
@@ -117,18 +108,14 @@ def get_service_performances(
 
     for data in service_data.values():
         sales_percentage = (
-            float(data["sales"] / total_sales * 100)
-            if total_sales > 0
-            else 0.0
+            float(data["sales"] / total_sales * 100) if total_sales > 0 else 0.0
         )
 
         performances.append(
             ServicePerformance(
                 full_service_name=data["full_service_name"],
                 order_quantity=data["order_quantity"],
-                material_consumed_in_sqft=data[
-                    "material_consumed_in_sqft"
-                ],
+                material_consumed_in_sqft=data["material_consumed_in_sqft"],
                 sales=data["sales"],
                 sales_percentage=sales_percentage,
             )
@@ -213,10 +200,7 @@ def get_customer_performances(
         data["balance"] += total_due - total_paid
 
         # Most recent order
-        if (
-            data["last_order"] is None
-            or job_order.date_received > data["last_order"]
-        ):
+        if data["last_order"] is None or job_order.date_received > data["last_order"]:
             data["last_order"] = job_order.date_received
 
     # Calculate total sales across all customers
@@ -229,9 +213,7 @@ def get_customer_performances(
 
     for data in customer_data.values():
         sales_percentage = (
-            float(data["sales"] / total_sales * 100)
-            if total_sales > 0
-            else 0.0
+            float(data["sales"] / total_sales * 100) if total_sales > 0 else 0.0
         )
 
         performances.append(
@@ -402,31 +384,19 @@ def get_monthly_performance_list(
     return performance
 
 
-def _get_account_snapshots(db: Session) -> list[PerAccountCollections]:
+def _get_account_snapshots(
+    db: Session, month_start: datetime, next_month: datetime
+) -> list[PerAccountCollections]:
     # Get all accounts
     # Get all transactions of the month
     # Somehow filter collections and collections
     # Return all data per account
-    accounts = db.exec(select(Account)).all()
-    
-    transactions = db.exec(select(AccountTransaction).where(
-        EXTRACT(MONTH FROM AccountTransaction.date ) = 1
-    ))  
-    pass
-
-
-# TODO: Fully AI generated
-def get_account_snapshots(
-    db: Session,
-    month_start: datetime,
-    next_month: datetime,
-) -> list[PerAccountCollections]:
-
+    # Also include transfers data
     accounts = db.exec(select(Account)).all()
 
     transactions = db.exec(
         select(AccountTransaction).where(
-            AccountTransaction.date < next_month,
+            AccountTransaction.date >= month_start, AccountTransaction.date < next_month
         )
     ).all()
 
@@ -438,47 +408,48 @@ def get_account_snapshots(
         }
     )
 
+    # For every account, initialize the dict's ending balance to prepare it for collections and deductions.
     for account in accounts:
-        account_data[account.id]["ending_balance"] = (
-            account.beginning_balance
-        )
+        account_data[account.id]["ending_balance"] = account.beginning_balance
 
+    accounts_by_id = {account.id: account for account in accounts}
     for transaction in transactions:
-        account = next(
-            (a for a in accounts if a.id == transaction.account_id),
-            None,
-        )
-
+        # Get the account id in the transaction and match it with the accounts_by_id
+        account = accounts_by_id.get(transaction.account_id)
+        # Skip conditions
         if account is None:
             continue
 
-        # Ignore transactions before the account's
-        # beginning balance date.
         if transaction.date < account.beginning_balance_date:
             continue
+        
+        # Collections
+        if transaction.source_type in (
+            TransactionSource.PAYMENT,
+            TransactionSource.BANK_INTEREST,
+            TransactionSource.MISC_SALE,
+        ):
+            data = account_data[account.id]
+            data["collections"] += transaction.amount
 
-        data = account_data[account.id]
-        amount = transaction.amount
-
-        # Add every transaction to the ending balance.
-        data["ending_balance"] += amount
-
-        # Only count transactions within ttimezonehe selected month.
-        if transaction.date < month_start:
-            continue
-
-        if amount > 0:
-            data["collections"] += amount
-
-        elif amount < 0:
-            data["deductions"] += abs(amount)
+        # Deductions
+        if transaction.source_type in (
+            TransactionSource.EXPENSE,
+            TransactionSource.REFUND,
+        ):
+            data = account_data[account.id]
+            data["deductions"] += abs(transaction.amount)
 
     return [
         PerAccountCollections(
             account_name=account.name,
             collections=account_data[account.id]["collections"],
             deductions=account_data[account.id]["deductions"],
-            ending_balance=account_data[account.id]["ending_balance"],
+            transfer_in=0,
+            transfer_out=0,
+            ending_balance=account_data[account.id]["ending_balance"]
+            + account_data[account.id]["collections"]
+            - account_data[account.id]["deductions"],
         )
         for account in accounts
     ]
@@ -495,6 +466,7 @@ def get_monthly_performance(
     next_month = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
 
     # Collected transactions
+    # TODO: Tama output pero pwede pa rewrite para mas maintindihan ko
     collected = func.coalesce(
         func.sum(
             case(
@@ -520,6 +492,7 @@ def get_monthly_performance(
         ),
         0,
     )
+    # TODO: Tama output pero pwede pa rewrite para mas maintindihan ko
     collected_list = db.exec(
         select(AccountTransaction).where(
             AccountTransaction.source_type.in_(
@@ -529,8 +502,7 @@ def get_monthly_performance(
                     TransactionSource.MISC_SALE,
                 ]
             )
-            |
-            (
+            | (
                 (AccountTransaction.source_type == TransactionSource.REVERSAL)
                 & (AccountTransaction.amount < 0)
             )
@@ -633,11 +605,7 @@ def get_monthly_performance(
 
     month_start = date(year, month, 1)
 
-    next_month = (
-        date(year + 1, 1, 1)
-        if month == 12
-        else date(year, month + 1, 1)
-    )
+    next_month = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
 
     month_start_datetime = datetime.combine(
         month_start,
@@ -651,7 +619,7 @@ def get_monthly_performance(
         tzinfo=UTC,
     )
 
-    snapshots_of_accounts = get_account_snapshots(
+    snapshots_of_accounts = _get_account_snapshots(
         db,
         month_start_datetime,
         next_month_datetime,

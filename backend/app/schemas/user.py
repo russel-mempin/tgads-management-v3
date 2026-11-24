@@ -1,6 +1,9 @@
 from uuid import UUID
-from app.models import UserBase
+
 from pydantic import BaseModel
+
+from app.models import UserBase
+
 
 class UserPublic(UserBase):
     id: UUID

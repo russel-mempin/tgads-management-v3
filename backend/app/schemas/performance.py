@@ -38,6 +38,8 @@ class PerAccountCollections(SQLModel):
     account_name: str
     collections: Decimal
     deductions: Decimal
+    transfer_in: Decimal
+    transfer_out: Decimal
     ending_balance: Decimal
 
 

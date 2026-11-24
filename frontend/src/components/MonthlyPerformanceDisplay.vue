@@ -27,7 +27,7 @@ const totalEndingBalance = computed(() =>
 const items = computed<RadioGroupItem[]>(() =>
     referenceStore.accountOptions.map(account => ({
         label: account.name,
-        value: account.id,
+        value: account.name,
         class: 'w-30'
     }))
 )
@@ -164,10 +164,10 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
                 <div class="px-4 py-2 flex items-center justify-between border-b border-default">
                     <p class="text-xs font-semibold uppercase text-muted">Collections</p>
                     <p class="text-lg font-semibold" :class="{
-                        'text-green-600': Number(account.deductions) !== 0,
-                        'text-default': Number(account.deductions) === 0
+                        'text-green-600': Number(account.collections) !== 0,
+                        'text-default': Number(account.collections) === 0
                     }">
-                        {{ formatCurrency(Number(account.deductions)) }}
+                        {{ formatCurrency(Number(account.collections)) }}
                     </p>
                 </div>
                 <div class="px-4 py-2 flex items-center justify-between border-b border-default">
