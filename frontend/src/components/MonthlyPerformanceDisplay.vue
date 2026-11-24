@@ -24,13 +24,19 @@ const totalEndingBalance = computed(() =>
 )
 
 // Accounts Choices
-const items = computed<RadioGroupItem[]>(() =>
-    referenceStore.accountOptions.map(account => ({
+const items = computed<RadioGroupItem[]>(() => [
+    {
+        label: 'All',
+        value: 'all',
+        class: 'w-30'
+    },
+    ...referenceStore.accountOptions.map(account => ({
         label: account.name,
         value: account.name,
         class: 'w-30'
     }))
-)
+])
+
 const salesItems = ref<RadioGroupItem[]>([
     {
         label: 'All',
@@ -48,6 +54,25 @@ const salesItems = ref<RadioGroupItem[]>([
         class: 'w-36'
     }
 ])
+
+// Filtering variables
+const selectedCollectionsAccount = ref<string>('all')
+
+const filteredCollectedList = computed(() => {
+    if (selectedCollectionsAccount.value === 'all') {
+        return props.data.collected_list
+    }
+
+    return props.data.collected_list.filter(
+        transaction => transaction.account_name === selectedCollectionsAccount.value
+    )
+})
+const totalCollected = computed(() =>
+    filteredCollectedList.value.reduce(
+        (total, transaction) => total + Number(transaction.amount),
+        0
+    )
+)
 
 const customerColumns: TableColumn<CustomerPerformance>[] = [
     {
@@ -158,6 +183,7 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
             <p class="font-semibold uppercase text-muted">Accounts</p>
             <p class="font-semibold uppercase text-muted">Total: {{ formatCurrency(totalEndingBalance) }}</p>
         </div>
+        <!-- Account Snapshots -->
         <div class="flex gap-6 justify-between">
             <div v-for="account in data.snapshots_of_accounts" class="flex-1 border border-default rounded-md">
                 <p class="border-b border-default p-4 bg-elevated rounded-t-md">{{ account.account_name }}</p>
@@ -191,12 +217,13 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
         <div class="mt-6 border border-default rounded-md">
             <div class="p-4 flex items-center justify-between border-b border-default">
                 <p class="font-semibold uppercase text-muted">Collections List</p>
-                <URadioGroup size="sm" indicator="hidden" orientation="horizontal" variant="table" default-value="Cash"
-                    :items="items" />
+                <URadioGroup v-model="selectedCollectionsAccount" size="sm" indicator="hidden" orientation="horizontal"
+                    variant="table" default-value="Cash" :items="items" />
             </div>
             <div class="max-h-100 overflow-y-auto">
-                <TransactionsTable :data="data.collected_list" />
+                <TransactionsTable :data="filteredCollectedList" />
             </div>
+            <p class="border-t border-default p-4 text-end font-semibold uppercase bg-elevated rounded-b-md">Total: {{ formatCurrency(totalCollected) }}</p>
         </div>
         <!-- Expenses Section -->
         <div class="flex gap-6">
