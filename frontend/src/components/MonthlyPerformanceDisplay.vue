@@ -57,6 +57,7 @@ const salesItems = ref<RadioGroupItem[]>([
 
 // Filtering variables
 const selectedCollectionsAccount = ref<string>('all')
+const selectedExpensesAccount = ref<string>('all')
 
 const filteredCollectedList = computed(() => {
     if (selectedCollectionsAccount.value === 'all') {
@@ -67,12 +68,28 @@ const filteredCollectedList = computed(() => {
         transaction => transaction.account_name === selectedCollectionsAccount.value
     )
 })
+const filteredExpenseList = computed(() => {
+    if (selectedExpensesAccount.value === 'all') {
+        return props.data.expenses_list
+    }
+
+    return props.data.expenses_list.filter(
+        expense => expense.account_name === selectedExpensesAccount.value
+    )
+})
 const totalCollected = computed(() =>
     filteredCollectedList.value.reduce(
         (total, transaction) => total + Number(transaction.amount),
         0
     )
 )
+const totalExpense = computed(() =>
+    filteredExpenseList.value.reduce(
+        (total, expense) => total + Number(expense.amount),
+        0
+    )
+)
+
 
 const customerColumns: TableColumn<CustomerPerformance>[] = [
     {
@@ -223,19 +240,22 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
             <div class="max-h-100 overflow-y-auto">
                 <TransactionsTable :data="filteredCollectedList" />
             </div>
-            <p class="border-t border-default p-4 text-end font-semibold uppercase bg-elevated rounded-b-md">Total: {{ formatCurrency(totalCollected) }}</p>
+            <p class="border-t border-default p-4 text-end font-semibold uppercase bg-elevated rounded-b-md">Total: {{
+                formatCurrency(totalCollected) }}</p>
         </div>
         <!-- Expenses Section -->
         <div class="flex gap-6">
             <div class="flex-1 mt-6 border border-default rounded-md">
                 <div class="p-4 flex items-center justify-between border-b border-default">
                     <p class="font-semibold uppercase text-muted">Expense List</p>
-                    <URadioGroup size="sm" indicator="hidden" orientation="horizontal" variant="table"
-                        default-value="Cash" :items="items" />
+                    <URadioGroup v-model="selectedExpensesAccount" size="sm" indicator="hidden" orientation="horizontal"
+                        variant="table" default-value="Cash" :items="items" />
                 </div>
                 <div class="max-h-100 overflow-y-auto">
-                    <ExpenseTable :expense="data.expenses_list" />
+                    <ExpenseTable :expense="filteredExpenseList" />
                 </div>
+                <p class="border-t border-default p-4 text-end font-semibold uppercase bg-elevated rounded-b-md">Total:
+                    {{ formatCurrency(totalExpense) }}</p>
             </div>
             <div class="mt-6 border border-default rounded-md">
                 <p class="p-4 font-semibold uppercase text-muted border-b border-default">Expenses By Category (Pie
