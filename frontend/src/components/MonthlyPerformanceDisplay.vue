@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Dependecy imports
-import { computed, resolveComponent, h, ref } from 'vue';
+import { computed, resolveComponent, h, ref, BaseTransitionPropsValidators } from 'vue';
 import type { TableColumn, RadioGroupItem } from '@nuxt/ui';
 // Type imports
 import type { MonthlyPerformance, CustomerPerformance, JobOrderSales, ServicePerformance } from '@/types/performance';
@@ -40,17 +40,22 @@ const items = computed<RadioGroupItem[]>(() => [
 const salesItems = ref<RadioGroupItem[]>([
     {
         label: 'All',
-        value: 'System',
+        value: 'all',
         class: 'w-36'
     },
     {
         label: 'Receivables',
-        value: 'Light',
+        value: 'receivables',
         class: 'w-36'
     },
     {
         label: 'No Balance',
-        value: 'Dark',
+        value: 'no-balance',
+        class: 'w-36'
+    },
+    {
+        label: 'Overpaid',
+        value: 'overpaid',
         class: 'w-36'
     }
 ])
@@ -58,6 +63,7 @@ const salesItems = ref<RadioGroupItem[]>([
 // Filtering variables
 const selectedCollectionsAccount = ref<string>('all')
 const selectedExpensesAccount = ref<string>('all')
+const selectedSalesMode = ref<string>('all')
 
 const filteredCollectedList = computed(() => {
     if (selectedCollectionsAccount.value === 'all') {
@@ -77,6 +83,24 @@ const filteredExpenseList = computed(() => {
         expense => expense.account_name === selectedExpensesAccount.value
     )
 })
+const filteredSalesList = computed(() => {
+    if (selectedSalesMode.value === 'receivables') {
+        return props.data.job_order_sales.filter(
+            job => Number(job.balance) > 0
+        )
+    }
+    else if (selectedSalesMode.value === 'no-balance') {
+        return props.data.job_order_sales.filter(
+            job => Number(job.balance) === 0
+        )
+    }
+    else if (selectedSalesMode.value === 'overpaid') {
+        return props.data.job_order_sales.filter(
+            job => Number(job.balance) < 0
+        )
+    }
+    return props.data.job_order_sales
+})
 const totalCollected = computed(() =>
     filteredCollectedList.value.reduce(
         (total, transaction) => total + Number(transaction.amount),
@@ -88,6 +112,27 @@ const totalExpense = computed(() =>
         (total, expense) => total + Number(expense.amount),
         0
     )
+)
+const totalSales = computed(() =>
+    props.data.job_order_sales.reduce(
+        (total, job) => total + Number(job.total_due),
+        0
+    )
+)
+const totalReceivables = computed(() =>
+    props.data.job_order_sales
+        .filter(job => Number(job.balance) > 0)
+        .reduce((total, job) => total + Number(job.balance), 0)
+)
+const jobsWithoutBalance = computed(() =>
+    props.data.job_order_sales.filter(
+        job => Number(job.balance) === 0
+    ).length
+)
+const totalOverpayments = computed(() =>
+    props.data.job_order_sales
+        .filter(job => Number(job.balance) < 0)
+        .reduce((total, job) => total + Math.abs(Number(job.balance)), 0)
 )
 
 
@@ -153,6 +198,10 @@ const serviceColumns: TableColumn<ServicePerformance>[] = [
 
 const salesColumns: TableColumn<JobOrderSales>[] = [
     {
+        header: '#',
+        cell: ({ row }) => row.index + 1,
+    },
+    {
         accessorKey: 'jo_number',
         header: 'JO Number',
     },
@@ -181,14 +230,19 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
         header: 'Balance',
         cell: ({ row }) => {
             const balance = Number(row.getValue('balance'))
+
             return h(
                 'span',
                 {
-                    class: balance === 0 ? 'text-green-600' : 'text-red-600'
+                    class: balance === 0
+                        ? 'text-green-600'
+                        : balance < 0
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                 },
                 formatCurrency(balance)
             )
-        }
+        },
     },
 ]
 </script>
@@ -269,11 +323,29 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
         <div class="mt-6 border border-default rounded-md">
             <div class="p-4 flex items-center justify-between border-b border-default">
                 <p class="font-semibold uppercase text-muted">Job Order Sales List</p>
-                <URadioGroup size="xs" indicator="hidden" orientation="horizontal" variant="table" default-value="All"
-                    :items="salesItems" />
+                <URadioGroup v-model="selectedSalesMode" size="xs" indicator="hidden" orientation="horizontal"
+                    variant="table" default-value="All" :items="salesItems" />
             </div>
             <div class="max-h-100 overflow-y-auto">
-                <UTable :data="data.job_order_sales" :columns="salesColumns" />
+                <UTable :data="filteredSalesList" :columns="salesColumns" />
+            </div>
+            <div class="border-t border-default p-4 bg-elevated rounded-b-md grid grid-cols-4">
+                <div>
+                    <p class="font-semibold text-sm uppercase">Sales</p>
+                    <p>{{ formatCurrency(totalSales) }}</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm uppercase">Receivables</p>
+                    <p>{{ formatCurrency(totalReceivables) }}</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm uppercase">0 Balance Jobs</p>
+                    <p>{{ jobsWithoutBalance }} jobs</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm uppercase">Overpaid</p>
+                    <p>{{ formatCurrency(totalOverpayments) }}</p>
+                </div>
             </div>
         </div>
         <!-- Service Performance -->
