@@ -677,6 +677,7 @@ class MiscSaleBase(SQLModel):
     description: str = Field()
     reference_number: str | None = Field(default=None, nullable=True)
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
+    receipt_issued: Receipts | None = Field(default=Receipts.BILLING_STATEMENT)
     is_archived: bool = Field(default=False)
 
 
@@ -692,6 +693,11 @@ class MiscSale(MiscSaleBase, table=True):
         foreign_key="users.id",
         nullable=False,
         index=True,
+    )
+    signatory_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="users.id",
+        nullable=True,
     )
     updated_by_id: uuid.UUID | None = Field(foreign_key="users.id", nullable=True, index=True)
 

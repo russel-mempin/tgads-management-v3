@@ -11,6 +11,7 @@ from app.models import (
     AccountTransaction,
     ForReview,
     JobOrder,
+    MiscSale,
     Payment,
     Receipts,
     UnlinkedPayment,
@@ -21,18 +22,11 @@ from app.utils.utils import get_system_admin, parse_currency, parse_date
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "billingandinvoice.csv")
 
-ACCOUNT_NAME_BY_METHOD: dict[str, str] = {
-    "Cash": "Cash",
-    "GCash": "GCash",
-    "Bank": "RCBC",
-}
-
 
 def get_account(session: Session, method: str) -> Account | None:
-    account_name = ACCOUNT_NAME_BY_METHOD.get(method.strip())
-    if account_name is None:
-        return None
-    return session.exec(select(Account).where(Account.name == account_name)).first()
+    return session.exec(
+        select(Account).where(Account.name == method.strip())
+    ).first()
 
 
 def get_user_from_signatory(session: Session, full_name: str) -> User | None:
@@ -68,10 +62,40 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
 
                 date_received = parse_date(row["date_issued"])
                 reference_number = row.get("reference_number", "").strip()
+                description = row.get("description", "").strip()
                 amount = parse_currency(row.get("total_amount", ""))
                 jo_number_raw = row.get("jo_number", "").strip()
+                is_misc_sale = (row.get("is_misc_sale") or "").strip().upper() == "TRUE"
+                receipt_issued = Receipts(row["receipt_issued"])
 
                 job_order = None
+                if is_misc_sale:
+                    misc_sale = MiscSale(
+                        date=date_received,
+                        description=description,
+                        reference_number=reference_number,
+                        amount=amount,
+                        receipt_issued=Receipts(row["receipt_issued"]) if receipt_issued else None,
+                        account_id=account.id,
+                        account_name_snapshot=account.name,
+                        signatory_id=signatory.id if signatory else None,
+                        created_by_id=sysadmin.id
+                    )
+                    session.add(misc_sale)
+                    session.flush()
+
+                    session.add(
+                        AccountTransaction(
+                            account_id=account.id,
+                            amount=Decimal(amount),
+                            source_type=TransactionSource.MISC_SALE,
+                            source_id=misc_sale.id,
+                            date=date_received,
+                            description=f"{row["name"]}: {description}",
+                        )
+                    )
+                    continue
+
                 if jo_number_raw:
                     job_order = session.exec(
                         select(JobOrder).where(JobOrder.jo_number == int(jo_number_raw))

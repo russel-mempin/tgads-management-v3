@@ -15,25 +15,19 @@ CSV_PATH = os.path.join(BASE_DIR, "seed_data", "transfers.csv")
 def seed_transfers_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
         reader = csv.DictReader(f)
-        METHOD_TO_ACCOUNT = {
-            "Cash": "Cash",
-            "GCash": "GCash",
-            "RCBC Old": "RCBC Old",
-            "RCBC New": "RCBC New",
-        }
         
         for row in reader:
-            source_account_name = METHOD_TO_ACCOUNT.get(row["source"])
+            source_account_name = row.get("source", "").strip()
             if not source_account_name:
-                raise ValueError(f"No account mapped for source: {row['source']}")
+                raise ValueError("No source account specified")
             source_account = session.exec(
                 select(Account).where(Account.name == source_account_name)
             ).first()
             if not source_account:
                 raise ValueError(f"Account '{source_account_name}' not found in database")
-            destination_account_name = METHOD_TO_ACCOUNT.get(row["destination"])
+            destination_account_name = row.get("destination", "").strip()
             if not destination_account_name:
-                raise ValueError(f"No account mapped for destination: {row['destination']}")
+                raise ValueError("No destination account specified")
             destination_account = session.exec(
                 select(Account).where(Account.name == destination_account_name)
             ).first()

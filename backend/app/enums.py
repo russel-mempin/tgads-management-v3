@@ -105,3 +105,4 @@ class DatePeriod(str, Enum):
 class Receipts(str, Enum):
     BILLING_STATEMENT = "Billing Statement"
     SERVICE_INVOICE = "Service Invoice"
+    NO_RECEIPT = "No Receipt"

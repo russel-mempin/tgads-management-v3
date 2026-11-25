@@ -16,15 +16,9 @@ def seed_expenses_from_csv(file_path: str = CSV_PATH):
     with Session(engine) as session, open(file_path, newline="") as f:
         sysadmin = get_system_admin(session)
         reader = csv.DictReader(f)
-        METHOD_TO_ACCOUNT = {
-            "Cash": "Cash",
-            "GCash": "GCash",
-            "RCBC Old": "RCBC Old",
-            "RCBC New": "RCBC New",
-        }
         
         for row in reader:
-            account_name = METHOD_TO_ACCOUNT.get(row["method"])
+            account_name = row.get("method", "").strip()
             if not account_name:
                 raise ValueError(f"No account mapped for method: {row['method']}")
             account = session.exec(
