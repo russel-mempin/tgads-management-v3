@@ -23,6 +23,7 @@ declare module 'vue' {
     EditServiceForm: typeof import('./src/components/EditServiceForm.vue')['default']
     ExpenseCards: typeof import('./src/components/ExpenseCards.vue')['default']
     ExpenseForm: typeof import('./src/components/ExpenseForm.vue')['default']
+    ExpensePieChart: typeof import('./src/components/ExpensePieChart.vue')['default']
     ExpenseTable: typeof import('./src/components/ExpenseTable.vue')['default']
     ExtraForm: typeof import('./src/components/ExtraForm.vue')['default']
     ExtrasTable: typeof import('./src/components/ExtrasTable.vue')['default']

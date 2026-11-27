@@ -20,7 +20,7 @@ from app.models import (
 from app.utils.utils import get_system_admin, parse_currency, parse_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "billingandinvoice.csv")
+PAYMENTS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "payments.csv")
 
 
 def get_account(session: Session, method: str) -> Account | None:

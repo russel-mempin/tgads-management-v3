@@ -342,8 +342,20 @@ def get_monthly_performance_list(
                 func.coalesce(func.sum(job_totals.c.total_due), 0).label("sales"),
                 func.coalesce(
                     func.sum(
-                        job_totals.c.total_due
-                        - func.coalesce(payment_totals.c.total_paid, 0)
+                        case(
+                            (
+                                (
+                                    job_totals.c.total_due
+                                    - func.coalesce(payment_totals.c.total_paid, 0)
+                                )
+                                > 0,
+                                (
+                                    job_totals.c.total_due
+                                    - func.coalesce(payment_totals.c.total_paid, 0)
+                                ),
+                            ),
+                            else_=0,
+                        )
                     ),
                     0,
                 ).label("receivables"),
@@ -422,7 +434,7 @@ def _get_account_snapshots(
 
         if transaction.date < account.beginning_balance_date:
             continue
-        
+
         # Collections
         if transaction.source_type in (
             TransactionSource.PAYMENT,
@@ -455,7 +467,7 @@ def _get_account_snapshots(
     ]
 
 
-# TODO: Fully AI generated
+# TODO: Mostly AI generated
 def get_monthly_performance(
     db: Session,
     year: int,
@@ -495,6 +507,8 @@ def get_monthly_performance(
     # TODO: Tama output pero pwede pa rewrite para mas maintindihan ko
     collected_list = db.exec(
         select(AccountTransaction).where(
+            AccountTransaction.date >= month_start,
+            AccountTransaction.date < next_month,
             AccountTransaction.source_type.in_(
                 [
                     TransactionSource.PAYMENT,
@@ -505,7 +519,7 @@ def get_monthly_performance(
             | (
                 (AccountTransaction.source_type == TransactionSource.REVERSAL)
                 & (AccountTransaction.amount < 0)
-            )
+            ),
         )
     ).all()
 
@@ -575,8 +589,20 @@ def get_monthly_performance(
             func.coalesce(func.sum(job_totals.c.total_due), 0).label("sales"),
             func.coalesce(
                 func.sum(
-                    job_totals.c.total_due
-                    - func.coalesce(payment_totals.c.total_paid, 0)
+                    case(
+                        (
+                            (
+                                job_totals.c.total_due
+                                - func.coalesce(payment_totals.c.total_paid, 0)
+                            )
+                            > 0,
+                            (
+                                job_totals.c.total_due
+                                - func.coalesce(payment_totals.c.total_paid, 0)
+                            ),
+                        ),
+                        else_=0,
+                    )
                 ),
                 0,
             ).label("receivables"),
@@ -662,15 +688,15 @@ def get_monthly_performance(
 
     misc_sales_list = db.exec(
         select(MiscSale).where(
-            MiscSale.date >= datetime(2026, 1, 1, tzinfo=UTC),
-            MiscSale.date < datetime(2026, 2, 1, tzinfo=UTC),
+            MiscSale.date >= datetime.combine(month_start, time.min, tzinfo=UTC),
+            MiscSale.date < datetime.combine(next_month, time.min, tzinfo=UTC),
         )
     ).all()
 
     expenses_list = db.exec(
         select(Expense).where(
-            Expense.date >= datetime(2026, 1, 1, tzinfo=UTC),
-            Expense.date < datetime(2026, 2, 1, tzinfo=UTC),
+            Expense.date >= datetime.combine(month_start, time.min, tzinfo=UTC),
+            Expense.date < datetime.combine(next_month, time.min, tzinfo=UTC),
         )
     ).all()
 

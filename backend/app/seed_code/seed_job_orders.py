@@ -32,11 +32,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 JOB_ORDERS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_orders.csv")
 JOB_ITEMS_CSV_PATH = os.path.join(BASE_DIR, "seed_data", "job_items.csv")
 
-
-VOID_REASONS = {
-    "1": "No physical paper on Job pile",
-    "2": "Listed as cancelled(either on paper or JO Summary) and no service info on physical paper",
-}
 TO_METERS = {
     SizeUnit.MILLIMETER: 0.001,
     SizeUnit.CENTIMETER: 0.01,
@@ -127,8 +122,7 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
 
             customer = get_or_create_customer(session, customer_name)
 
-            if void_choice:
-                void_reason = VOID_REASONS[void_choice]
+            if void_choice: 
                 job_order = JobOrder(
                     date_received=date_received,
                     jo_number=jo_number,
@@ -137,10 +131,10 @@ def seed_job_orders(file_path: str = JOB_ORDERS_CSV_PATH):
                     updated_by_id=sysadmin.id,
                     overall_job_status=JobStatus.RELEASED,
                     voided_at=datetime.now(UTC),
-                    void_reason=void_reason,
+                    void_reason=void_choice,
                     voided_by_id=sysadmin.id
                 )
-                print(f"JO {jo_number} has been VOIDED. Reason: {void_reason}")
+                print(f"JO {jo_number} has been VOIDED. Reason: {void_choice}")
             else:
                 job_order = JobOrder(
                     date_received=date_received,
@@ -237,7 +231,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
                 select(ExtraService).where(ExtraService.name == extra_service)
             ).first()
             if extra:
-                extra_service_price = extra.price
+                extra_service_price = extra.price * extra_quantity
 
             sequence = (
                 item_sequence_by_jo_and_abbr.get((jo_number, service.abbreviation), 0)
@@ -291,7 +285,7 @@ def seed_job_items(file_path: str = JOB_ITEMS_CSV_PATH):
             touched_job_order_ids.add(job_order.id)
 
             # Now that item.id exists, run review checks
-            if service_requires_size:
+            if service_requires_size:  # noqa: SIM102
                 if height is None or width is None or size_unit is None:
                     print(
                         f"Missing size information for Job Order {jo_number} ({service.name}). Marking for review."

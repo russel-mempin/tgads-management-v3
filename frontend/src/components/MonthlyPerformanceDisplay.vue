@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from '@/utils/formatters';
 import { useReferenceStore } from '@/stores/reference';
 import ExpenseTable from './ExpenseTable.vue';
 import TransactionsTable from './TransactionsTable.vue';
+import ExpensePieChart from './ExpensePieChart.vue';
 
 const referenceStore = useReferenceStore()
 
@@ -315,7 +316,7 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
                 <p class="p-4 font-semibold uppercase text-muted border-b border-default">Expenses By Category (Pie
                     Chart)</p>
                 <div>
-                    <VueApexCharts type="pie" height="350" />
+                    <ExpensePieChart :data="props.data.expenses_list" />
                 </div>
             </div>
         </div>
@@ -348,16 +349,16 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
                 </div>
             </div>
         </div>
-        <!-- Service Performance -->
-        <div class="mt-6 border border-default rounded-md">
+        <!-- TODO: Service Performance -->
+        <!-- <div class="mt-6 border border-default rounded-md">
             <p class="p-4 border-b border-default font-semibold uppercase text-muted">Top Services</p>
             <UTable :data="data.service_performances" :columns="serviceColumns" />
-        </div>
-        <!-- Customers Section -->
-        <div class="mt-6 border border-default rounded-md">
+        </div> -->
+        <!-- TODO: Customers Section -->
+        <!-- <div class="mt-6 border border-default rounded-md">
             <p class="p-4 border-b border-default font-semibold uppercase text-muted">Top
                 Customers</p>
             <UTable :data="data.customer_performances" :columns="customerColumns" />
-        </div>
+        </div> -->
     </div>
 </template>

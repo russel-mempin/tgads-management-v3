@@ -22,7 +22,7 @@ from app.enums import (
 )
 
 
-# ====================== AUDIT LOGS =========================
+# ====================== GOTO AUDIT LOGS =========================
 # For storing changes made by users on the database
 class AuditLog(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -44,7 +44,7 @@ class AuditLog(SQLModel, table=True):
         return f"{self.user.first_name} {self.user.last_name}"
 
 
-# ====================== USERS =========================
+# ====================== GOTO USERS =========================
 class UserBase(SQLModel):
     first_name: str = Field()
     last_name: str = Field()
@@ -62,7 +62,7 @@ class User(UserBase, table=True):
     hashed_password: str = Field()
 
 
-# ====================== CUSTOMERS =========================
+# ====================== GOTO CUSTOMERS =========================
 # Customer info, customer is optional
 class CustomerBase(SQLModel):
     name: str = Field(unique=True, index=True)
@@ -80,7 +80,7 @@ class Customer(CustomerBase, table=True):
     )
 
 
-# ====================== SERVICE OPTIONS =========================
+# ====================== GOTO SERVICE OPTIONS =========================
 # Defines the options available for the services.
 class ServiceOptionBase(SQLModel):
     name: str
@@ -122,7 +122,7 @@ class ServiceOption(ServiceOptionBase, table=True):
     )
 
 
-# ====================== SERVICE TYPES =========================
+# ====================== GOTO SERVICE TYPES =========================
 # Defines the group of services
 class ServiceBase(SQLModel):
     name: str = Field(unique=True, index=True)
@@ -159,7 +159,7 @@ class Service(ServiceBase, table=True):
     )
 
 
-# ====================== SERVICE PRICE TIER =========================
+# ====================== GOTO SERVICE PRICE TIER =========================
 # For services that have different tiers of pricing based on consumption.
 # min_threshold defines the minimum consumption to reach a tier
 # max_threshold defines the highest consumption before the next tier
@@ -195,7 +195,7 @@ class ServicePriceTier(ServicePriceTierBase, table=True):
     service_option: ServiceOption = Relationship(back_populates="price_tiers")
 
 
-# ====================== EXTRA SERVICES =========================
+# ====================== GOTO EXTRA SERVICES =========================
 # Holds all information about extra services similar to Service
 class ExtraServiceBase(SQLModel):
     name: str = Field(unique=True, index=True)
@@ -226,7 +226,7 @@ class ExtraService(ExtraServiceBase, table=True):
     job_item_extras: list[JobItemExtra] = Relationship(back_populates="extra_service")
 
 
-# ====================== JOB ORDERS =========================
+# ====================== GOTO JOB ORDERS =========================
 class JobOrderBase(SQLModel):
     jo_number: int = Field(unique=True, index=True)
     date_received: datetime = Field(
@@ -389,7 +389,7 @@ class JobOrder(JobOrderBase, table=True):
         )
 
 
-# ====================== JOB ITEM EXTRAS =========================
+# ====================== GOTO JOB ITEM EXTRAS =========================
 class JobItemExtra(SQLModel, table=True):
     __tablename__ = "job_item_extras"  # type: ignore
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -407,7 +407,7 @@ class JobItemExtra(SQLModel, table=True):
     extra_service: ExtraService = Relationship(back_populates="job_item_extras")
 
 
-# ====================== JOB ITEMS =========================
+# ====================== GOTO JOB ITEMS =========================
 class JobItemBase(SQLModel):
     item_id: str = Field(unique=True, index=True)
 
