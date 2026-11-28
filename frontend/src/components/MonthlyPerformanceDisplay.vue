@@ -277,6 +277,24 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
                         {{ formatCurrency(Number(account.deductions)) }}
                     </p>
                 </div>
+                <div class="px-4 py-2 flex items-center justify-between border-b border-default">
+                    <p class="text-xs font-semibold uppercase text-muted">Transfer In</p>
+                    <p class="text-lg font-semibold" :class="{
+                        'text-green-600': Number(account.transfer_in) !== 0,
+                        'text-default': Number(account.transfer_in) === 0
+                    }">
+                        {{ formatCurrency(Number(account.transfer_in)) }}
+                    </p>
+                </div>
+                <div class="px-4 py-2 flex items-center justify-between border-b border-default">
+                    <p class="text-xs font-semibold uppercase text-muted">Transfer Out</p>
+                    <p class="text-lg font-semibold" :class="{
+                        'text-red-600': Number(account.transfer_out) !== 0,
+                        'text-default': Number(account.transfer_out) === 0
+                    }">
+                        {{ formatCurrency(Number(account.transfer_out)) }}
+                    </p>
+                </div>
                 <div class="px-4 py-2 flex items-center justify-between bg-accented rounded-b-md">
                     <p class="text-xs font-semibold uppercase text-muted">Ending Balance</p>
                     <p class="text-lg font-semibold" :class="Number(account.ending_balance) < 0 ? 'text-red-600' : ''">
@@ -312,10 +330,9 @@ const salesColumns: TableColumn<JobOrderSales>[] = [
                 <p class="border-t border-default p-4 text-end font-semibold uppercase bg-elevated rounded-b-md">Total:
                     {{ formatCurrency(totalExpense) }}</p>
             </div>
-            <div class="mt-6 border border-default rounded-md">
-                <p class="p-4 font-semibold uppercase text-muted border-b border-default">Expenses By Category (Pie
-                    Chart)</p>
-                <div>
+            <div class="mt-6 border border-default rounded-md flex flex-col">
+                <p class="p-4 font-semibold uppercase text-muted border-b border-default">Expenses By Category</p>
+                <div class="flex-1">
                     <ExpensePieChart :data="props.data.expenses_list" />
                 </div>
             </div>

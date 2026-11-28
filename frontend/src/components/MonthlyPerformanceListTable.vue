@@ -71,6 +71,12 @@ const columns: TableColumn<MonthlyPerformanceBase>[] = [
     {
         accessorKey: 'month',
         header: 'Month',
+        cell: ({ row }) => {
+            const month = row.original.month
+            return new Date(2000, month - 1).toLocaleString('en-US', {
+                month: 'long'
+            })
+        },
     },
     {
         accessorKey: 'collected',
@@ -113,10 +119,8 @@ const columns: TableColumn<MonthlyPerformanceBase>[] = [
                     Loading details...
                 </div>
 
-                <MonthlyPerformanceDisplay
-                    v-else-if="details[getKey(row.original.month.toString())]"
-                    :data="details[getKey(row.original.month.toString())]!"
-                />
+                <MonthlyPerformanceDisplay v-else-if="details[getKey(row.original.month.toString())]"
+                    :data="details[getKey(row.original.month.toString())]!" />
 
                 <div v-else>
                     No details loaded.

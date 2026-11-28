@@ -416,6 +416,8 @@ def _get_account_snapshots(
         lambda: {
             "collections": Decimal("0.00"),
             "deductions": Decimal("0.00"),
+            "transfer_in": Decimal("0.00"),
+            "transfer_out": Decimal("0.00"),
             "ending_balance": Decimal("0.00"),
         }
     )
@@ -452,13 +454,27 @@ def _get_account_snapshots(
             data = account_data[account.id]
             data["deductions"] += abs(transaction.amount)
 
+        # Transfer In
+        if transaction.source_type in (
+            TransactionSource.TRANSFER_SOURCE
+        ):
+            data = account_data[account.id]
+            data["transfer_in"] += abs(transaction.amount)
+
+        # Transfer Out
+        if transaction.source_type in (
+            TransactionSource.TRANSFER_DESTINATION
+        ):
+            data = account_data[account.id]
+            data["transfer_out"] += transaction.amount
+
     return [
         PerAccountCollections(
             account_name=account.name,
             collections=account_data[account.id]["collections"],
             deductions=account_data[account.id]["deductions"],
-            transfer_in=0,
-            transfer_out=0,
+            transfer_in=account_data[account.id]["transfer_in"],
+            transfer_out=account_data[account.id]["transfer_out"],
             ending_balance=account_data[account.id]["ending_balance"]
             + account_data[account.id]["collections"]
             - account_data[account.id]["deductions"],

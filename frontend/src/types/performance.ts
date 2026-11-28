@@ -32,6 +32,8 @@ export interface PerAccountCollections {
     account_name: string
     collections: string
     deductions: string
+    transfer_in: string
+    transfer_out: string
     ending_balance: string
 }
 

@@ -44,5 +44,5 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
-    <VueApexCharts type="pie" height="350" :options="chartOptions" :series="series" />
+    <VueApexCharts type="pie" height="450" :options="chartOptions" :series="series" />
 </template>

@@ -51,11 +51,14 @@ def seed_payments_from_csv(file_path: str = PAYMENTS_CSV_PATH):
         with open(file_path, newline="") as f:
             for row in csv.DictReader(f):
                 method = (row.get("method") or "").strip() or "Cash"
+                is_cancelled = (row.get("is_cancelled") or "").strip().upper() == "TRUE"
                 account = get_account(session, method)
 
                 if account is None:
                     print(f"Account not found: {method}")
                     continue
+                if is_cancelled:
+                    continue                
 
                 signatory_name = (row.get("signatory") or "").strip()
                 signatory = get_user_from_signatory(session, signatory_name) if signatory_name else None
